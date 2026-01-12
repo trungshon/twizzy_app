@@ -109,8 +109,8 @@ class _HomeScreenState extends State<HomeScreen> {
                 const Center(
                   child: AppLogo(
                     showText: true,
-                    width: 100,
-                    height: 100,
+                    width: 150,
+                    height: 150,
                   ),
                 ),
                 const SizedBox(height: 32),
@@ -190,18 +190,18 @@ class _HomeScreenState extends State<HomeScreen> {
                             user.website!,
                           ),
                         ],
-                        const Divider(),
-                        _buildInfoRow(
-                          context,
-                          'Ngày tạo',
-                          _formatDateTime(user.createdAt),
-                        ),
-                        const Divider(),
-                        _buildInfoRow(
-                          context,
-                          'Cập nhật lần cuối',
-                          _formatDateTime(user.updatedAt),
-                        ),
+                        // const Divider(),
+                        // _buildInfoRow(
+                        //   context,
+                        //   'Ngày tạo',
+                        //   _formatDateTime(user.createdAt),
+                        // ),
+                        // const Divider(),
+                        // _buildInfoRow(
+                        //   context,
+                        //   'Cập nhật lần cuối',
+                        //   _formatDateTime(user.updatedAt),
+                        // ),
                       ],
                     ),
                   ),

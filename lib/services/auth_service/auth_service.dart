@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import '../../core/constants/api_constants.dart';
 import '../../models/auth/auth_models.dart';
 import '../api/api_client.dart';
 import '../local_storage/token_storage.dart';
@@ -18,7 +19,7 @@ class AuthService {
   ) async {
     try {
       final response = await _apiClient.post(
-        '/users/register',
+        ApiConstants.register,
         body: request.toJson(),
       );
 
@@ -49,7 +50,7 @@ class AuthService {
   Future<LoginResponse> login(LoginRequest request) async {
     try {
       final response = await _apiClient.post(
-        '/users/login',
+        ApiConstants.login,
         body: request.toJson(),
       );
 
@@ -85,7 +86,7 @@ class AuthService {
         emailVerifyOtp: emailVerifyOtp,
       );
       final response = await _apiClient.post(
-        '/users/verify-email',
+        ApiConstants.verifyEmail,
         body: request.toJson(),
         includeAuth: false,
       );
@@ -119,7 +120,7 @@ class AuthService {
   Future<void> resendVerifyEmail() async {
     try {
       await _apiClient.post(
-        '/users/resend-verify-email',
+        ApiConstants.resendVerifyEmail,
         includeAuth: true,
       );
     } catch (e) {
@@ -147,7 +148,7 @@ class AuthService {
         refreshToken: refreshToken,
       );
       final response = await _apiClient.post(
-        '/users/refresh-token',
+        ApiConstants.refreshToken,
         body: request.toJson(),
         includeAuth: false,
       );
@@ -179,7 +180,7 @@ class AuthService {
   Future<GetMeResponse> getMe() async {
     try {
       final response = await _apiClient.get(
-        '/users/me',
+        ApiConstants.getMe,
         includeAuth: true,
       );
 
@@ -201,7 +202,7 @@ class AuthService {
     try {
       final request = ForgotPasswordRequest(email: email);
       final response = await _apiClient.post(
-        '/users/forgot-password',
+        ApiConstants.forgotPassword,
         body: request.toJson(),
         includeAuth: false,
       );
@@ -228,7 +229,7 @@ class AuthService {
         forgotPasswordOtp: otp,
       );
       final response = await _apiClient.post(
-        '/users/verify-forgot-password',
+        ApiConstants.verifyForgotPassword,
         body: request.toJson(),
         includeAuth: false,
       );
@@ -259,7 +260,7 @@ class AuthService {
         confirmPassword: confirmPassword,
       );
       final response = await _apiClient.post(
-        '/users/reset-password',
+        ApiConstants.resetPassword,
         body: request.toJson(),
         includeAuth: false,
       );
@@ -281,7 +282,7 @@ class AuthService {
       final refreshToken = await _tokenStorage.getRefreshToken();
       if (refreshToken != null) {
         await _apiClient.post(
-          '/users/logout',
+          ApiConstants.logout,
           body: {'refresh_token': refreshToken},
           includeAuth: true,
         );
@@ -292,6 +293,41 @@ class AuthService {
     } finally {
       // Xóa tokens dù API call thành công hay thất bại
       await _tokenStorage.clearTokens();
+    }
+  }
+
+  /// Google OAuth Mobile - Send ID token to backend for verification
+  Future<GoogleOAuthMobileResponse> googleOAuthMobile(
+    String idToken,
+  ) async {
+    try {
+      final request = GoogleOAuthMobileRequest(idToken: idToken);
+      final response = await _apiClient.post(
+        ApiConstants.googleOAuthMobile,
+        body: request.toJson(),
+        includeAuth: false,
+      );
+
+      final oauthResponse = GoogleOAuthMobileResponse.fromJson(
+        response,
+      );
+
+      // Lưu tokens vào secure storage
+      await _tokenStorage.saveAccessToken(
+        oauthResponse.result.accessToken,
+      );
+      await _tokenStorage.saveRefreshToken(
+        oauthResponse.result.refreshToken,
+      );
+
+      return oauthResponse;
+    } catch (e) {
+      if (e is ApiErrorResponse) {
+        rethrow;
+      }
+      throw ApiErrorResponse(
+        message: 'Lỗi đăng nhập bằng Google: ${e.toString()}',
+      );
     }
   }
 }

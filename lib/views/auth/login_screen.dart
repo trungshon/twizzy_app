@@ -7,6 +7,7 @@ import '../../viewmodels/auth/auth_viewmodel.dart';
 import '../home/home_screen.dart';
 import 'register_screen.dart';
 import 'forgot_password_screen.dart';
+import 'verify_email_screen.dart';
 
 /// Login Screen
 ///
@@ -26,12 +27,72 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _obscurePassword = true;
   String? _emailError;
   String? _passwordError;
+  bool _isGoogleLoading = false;
 
   @override
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
+  }
+
+  Future<void> _handleGoogleSignIn() async {
+    setState(() {
+      _isGoogleLoading = true;
+    });
+
+    final authViewModel = context.read<AuthViewModel>();
+    final result = await authViewModel.googleSignIn();
+
+    if (!mounted) return;
+
+    setState(() {
+      _isGoogleLoading = false;
+    });
+
+    if (result == 'success') {
+      // Existing user - go to home
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(
+          builder: (context) => const HomeScreen(),
+        ),
+        (route) => false,
+      );
+    } else if (result == 'new_user') {
+      // New user registered via Google - may need email verification
+      final email = authViewModel.registeredEmail;
+      if (email != null) {
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(
+            builder:
+                (context) => VerifyEmailScreen(email: email),
+          ),
+          (route) => false,
+        );
+      } else {
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(
+            builder: (context) => const HomeScreen(),
+          ),
+          (route) => false,
+        );
+      }
+    } else if (result == 'cancelled') {
+      // User cancelled - do nothing
+    } else {
+      // Error occurred
+      if (mounted && authViewModel.error != null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              authViewModel.error!,
+              style: const TextStyle(color: Colors.white),
+            ),
+            backgroundColor: Theme.of(context).colorScheme.error,
+          ),
+        );
+      }
+    }
   }
 
   void _validateEmail(String value) {
@@ -121,13 +182,17 @@ class _LoginScreenState extends State<LoginScreen> {
                   const SizedBox(height: 40),
 
                   // Nút đăng nhập bằng Google
-                  GoogleSignInButton(
-                    text: 'Đăng nhập bằng Google',
-                    onPressed: () {
-                      // TODO: Implement Google sign in
-                      debugPrint('Google sign in pressed');
-                    },
-                  ),
+                  _isGoogleLoading
+                      ? const SizedBox(
+                        height: 44,
+                        child: Center(
+                          child: CircularProgressIndicator(),
+                        ),
+                      )
+                      : GoogleSignInButton(
+                        text: 'Đăng nhập bằng Google',
+                        onPressed: _handleGoogleSignIn,
+                      ),
                   const SizedBox(height: 8),
 
                   // Divider "hoặc"

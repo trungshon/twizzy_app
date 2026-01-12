@@ -7,7 +7,13 @@ import 'services/api/api_client.dart';
 import 'services/local_storage/storage_service.dart';
 import 'services/local_storage/token_storage.dart';
 import 'services/auth_service/auth_service.dart';
+import 'services/google_auth/google_auth_service.dart';
 import 'viewmodels/auth/auth_viewmodel.dart';
+
+// Google OAuth Client IDs
+// Web Client ID (dùng cho serverClientId để lấy idToken)
+const String googleWebClientId =
+    '591303968844-g84d98j3qtgibkpbt510eenqrtc2fkpg.apps.googleusercontent.com';
 
 void main() {
   // Initialize services
@@ -16,6 +22,9 @@ void main() {
   final apiClient = ApiClient(tokenStorage);
   final authService = AuthService(apiClient, tokenStorage);
   final authViewModel = AuthViewModel(authService);
+
+  // Initialize Google Auth Service
+  GoogleAuthService().initialize(webClientId: googleWebClientId);
 
   runApp(
     MultiProvider(

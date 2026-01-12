@@ -667,6 +667,9 @@ class _CreateAccountScreenState
                                     if (_selectedDate == null) {
                                       ScaffoldMessenger.of(
                                         context,
+                                      ).clearSnackBars();
+                                      ScaffoldMessenger.of(
+                                        context,
                                       ).showSnackBar(
                                         const SnackBar(
                                           content: Text(
@@ -776,6 +779,9 @@ class _CreateAccountScreenState
                                               null) {
                                             ScaffoldMessenger.of(
                                               context,
+                                            ).clearSnackBars();
+                                            ScaffoldMessenger.of(
+                                              context,
                                             ).showSnackBar(
                                               SnackBar(
                                                 content: Text(
@@ -795,6 +801,9 @@ class _CreateAccountScreenState
                                           }
                                         });
                                       } else {
+                                        ScaffoldMessenger.of(
+                                          context,
+                                        ).clearSnackBars();
                                         // Show general error
                                         ScaffoldMessenger.of(
                                           context,

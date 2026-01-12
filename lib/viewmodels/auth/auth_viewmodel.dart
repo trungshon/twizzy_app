@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import '../../models/auth/auth_models.dart';
 import '../../services/auth_service/auth_service.dart';
+import '../../services/google_auth/google_auth_service.dart';
 
 /// Auth ViewModel
 ///
@@ -354,5 +355,73 @@ class AuthViewModel extends ChangeNotifier {
     _registeredEmail = null;
     _currentUser = null;
     notifyListeners();
+  }
+
+  /// Google Sign-In
+  ///
+  /// Returns:
+  /// - 'success' if login successful
+  /// - 'new_user' if new user registered (may need email verification)
+  /// - 'cancelled' if user cancelled
+  /// - null if error
+  Future<String?> googleSignIn() async {
+    _isLoading = true;
+    _error = null;
+    _apiError = null;
+    notifyListeners();
+
+    try {
+      // Step 1: Sign in with Google native
+      final googleAuthService = GoogleAuthService();
+      final result = await googleAuthService.signIn();
+
+      if (result == null) {
+        // User cancelled
+        _isLoading = false;
+        notifyListeners();
+        return 'cancelled';
+      }
+
+      if (result.idToken == null) {
+        _isLoading = false;
+        _error = 'Không thể lấy ID token từ Google';
+        notifyListeners();
+        return null;
+      }
+
+      // Step 2: Send ID token to backend
+      final response = await _authService.googleOAuthMobile(
+        result.idToken!,
+      );
+
+      _isLoading = false;
+      notifyListeners();
+
+      if (response.result.isNewUser) {
+        _registeredEmail = result.email;
+        return 'new_user';
+      }
+      return 'success';
+    } catch (e) {
+      _isLoading = false;
+      if (e is ApiErrorResponse) {
+        _apiError = e;
+        _error = e.message;
+      } else {
+        _error = 'Có lỗi xảy ra khi đăng nhập bằng Google';
+      }
+      notifyListeners();
+      return null;
+    }
+  }
+
+  /// Google Sign-Out
+  Future<void> googleSignOut() async {
+    try {
+      final googleAuthService = GoogleAuthService();
+      await googleAuthService.signOut();
+    } catch (e) {
+      debugPrint('Google sign out error: $e');
+    }
   }
 }

@@ -128,6 +128,64 @@ class RegisterResponse {
   }
 }
 
+/// Google OAuth Mobile Request Model
+class GoogleOAuthMobileRequest {
+  final String idToken;
+
+  GoogleOAuthMobileRequest({required this.idToken});
+
+  Map<String, dynamic> toJson() => {'id_token': idToken};
+}
+
+/// Google OAuth Mobile Response Model
+class GoogleOAuthMobileResponse {
+  final String message;
+  final GoogleOAuthResult result;
+
+  GoogleOAuthMobileResponse({
+    required this.message,
+    required this.result,
+  });
+
+  factory GoogleOAuthMobileResponse.fromJson(
+    Map<String, dynamic> json,
+  ) {
+    return GoogleOAuthMobileResponse(
+      message: json['message'] as String,
+      result: GoogleOAuthResult.fromJson(
+        json['result'] as Map<String, dynamic>,
+      ),
+    );
+  }
+}
+
+/// Google OAuth Result Model
+class GoogleOAuthResult {
+  final String accessToken;
+  final String refreshToken;
+  final int newUser; // 0 = existing user, 1 = new user
+  final int verify; // UserVerifyStatus
+
+  GoogleOAuthResult({
+    required this.accessToken,
+    required this.refreshToken,
+    required this.newUser,
+    required this.verify,
+  });
+
+  factory GoogleOAuthResult.fromJson(Map<String, dynamic> json) {
+    return GoogleOAuthResult(
+      accessToken: json['access_token'] as String,
+      refreshToken: json['refresh_token'] as String,
+      newUser: json['newUser'] as int,
+      verify: json['verify'] as int,
+    );
+  }
+
+  bool get isNewUser => newUser == 1;
+  bool get isVerified => verify == 1;
+}
+
 /// Verify Email Request Model
 class VerifyEmailRequest {
   final String email;

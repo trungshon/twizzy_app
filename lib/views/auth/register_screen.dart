@@ -1,15 +1,85 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../widgets/common/app_logo.dart';
 import '../../widgets/auth/google_sign_in_button.dart';
 import '../../widgets/common/divider_with_text.dart';
+import '../../viewmodels/auth/auth_viewmodel.dart';
 import 'login_screen.dart';
 import 'create_account_screen.dart';
+import 'verify_email_screen.dart';
+import '../home/home_screen.dart';
 
 /// Register Screen
 ///
 /// Màn hình đăng ký tài khoản
-class RegisterScreen extends StatelessWidget {
+class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
+
+  @override
+  State<RegisterScreen> createState() => _RegisterScreenState();
+}
+
+class _RegisterScreenState extends State<RegisterScreen> {
+  bool _isGoogleLoading = false;
+
+  Future<void> _handleGoogleSignIn() async {
+    setState(() {
+      _isGoogleLoading = true;
+    });
+
+    final authViewModel = context.read<AuthViewModel>();
+    final result = await authViewModel.googleSignIn();
+
+    if (!mounted) return;
+
+    setState(() {
+      _isGoogleLoading = false;
+    });
+
+    if (result == 'success') {
+      // Existing user - go to home
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(
+          builder: (context) => const HomeScreen(),
+        ),
+        (route) => false,
+      );
+    } else if (result == 'new_user') {
+      // New user registered via Google - may need email verification
+      final email = authViewModel.registeredEmail;
+      if (email != null) {
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(
+            builder:
+                (context) => VerifyEmailScreen(email: email),
+          ),
+          (route) => false,
+        );
+      } else {
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(
+            builder: (context) => const HomeScreen(),
+          ),
+          (route) => false,
+        );
+      }
+    } else if (result == 'cancelled') {
+      // User cancelled - do nothing
+    } else {
+      // Error occurred
+      if (mounted && authViewModel.error != null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              authViewModel.error!,
+              style: const TextStyle(color: Colors.white),
+            ),
+            backgroundColor: Theme.of(context).colorScheme.error,
+          ),
+        );
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -23,7 +93,7 @@ class RegisterScreen extends StatelessWidget {
             children: [
               // Logo
               const AppLogo(
-                showText: true, // Logo chỉ có hình
+                showText: true,
                 width: 150,
                 height: 150,
               ),
@@ -41,12 +111,16 @@ class RegisterScreen extends StatelessWidget {
               const SizedBox(height: 40),
 
               // Nút đăng ký bằng Google
-              GoogleSignInButton(
-                onPressed: () {
-                  // TODO: Implement Google sign in
-                  debugPrint('Google sign in pressed');
-                },
-              ),
+              _isGoogleLoading
+                  ? const SizedBox(
+                    height: 44,
+                    child: Center(
+                      child: CircularProgressIndicator(),
+                    ),
+                  )
+                  : GoogleSignInButton(
+                    onPressed: _handleGoogleSignIn,
+                  ),
               const SizedBox(height: 8),
 
               // Divider "hoặc"
@@ -57,15 +131,18 @@ class RegisterScreen extends StatelessWidget {
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
-                  onPressed: () {
-                    Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder:
-                            (context) =>
-                                const CreateAccountScreen(),
-                      ),
-                    );
-                  },
+                  onPressed:
+                      _isGoogleLoading
+                          ? null
+                          : () {
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder:
+                                    (context) =>
+                                        const CreateAccountScreen(),
+                              ),
+                            );
+                          },
                   style: ElevatedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(
                       vertical: 8,
@@ -95,14 +172,20 @@ class RegisterScreen extends StatelessWidget {
                         ?.copyWith(fontSize: 15),
                   ),
                   GestureDetector(
-                    onTap: () {
-                      Navigator.of(context).pushReplacement(
-                        MaterialPageRoute(
-                          builder:
-                              (context) => const LoginScreen(),
-                        ),
-                      );
-                    },
+                    onTap:
+                        _isGoogleLoading
+                            ? null
+                            : () {
+                              Navigator.of(
+                                context,
+                              ).pushReplacement(
+                                MaterialPageRoute(
+                                  builder:
+                                      (context) =>
+                                          const LoginScreen(),
+                                ),
+                              );
+                            },
                     child: Text(
                       'Đăng nhập',
                       style: themeData.textTheme.bodyMedium

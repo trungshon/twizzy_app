@@ -40,4 +40,8 @@ class ApiConstants {
       '/users/verify-forgot-password';
   static const String resetPassword = '/users/reset-password';
   static const String getMe = '/users/me';
+
+  // Google OAuth
+  static const String googleOAuthMobile =
+      '/users/oauth/google/mobile';
 }
