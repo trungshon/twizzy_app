@@ -4,10 +4,7 @@ import '../../widgets/common/app_logo.dart';
 import '../../widgets/auth/google_sign_in_button.dart';
 import '../../widgets/common/divider_with_text.dart';
 import '../../viewmodels/auth/auth_viewmodel.dart';
-import '../home/home_screen.dart';
-import 'register_screen.dart';
-import 'forgot_password_screen.dart';
-import 'verify_email_screen.dart';
+import '../../routes/route_names.dart';
 
 /// Login Screen
 ///
@@ -52,28 +49,22 @@ class _LoginScreenState extends State<LoginScreen> {
 
     if (result == 'success') {
       // Existing user - go to home
-      Navigator.of(context).pushAndRemoveUntil(
-        MaterialPageRoute(
-          builder: (context) => const HomeScreen(),
-        ),
+      Navigator.of(context).pushNamedAndRemoveUntil(
+        RouteNames.home,
         (route) => false,
       );
     } else if (result == 'new_user') {
       // New user registered via Google - may need email verification
       final email = authViewModel.registeredEmail;
       if (email != null) {
-        Navigator.of(context).pushAndRemoveUntil(
-          MaterialPageRoute(
-            builder:
-                (context) => VerifyEmailScreen(email: email),
-          ),
+        Navigator.of(context).pushNamedAndRemoveUntil(
+          RouteNames.verifyEmail,
           (route) => false,
+          arguments: email,
         );
       } else {
-        Navigator.of(context).pushAndRemoveUntil(
-          MaterialPageRoute(
-            builder: (context) => const HomeScreen(),
-          ),
+        Navigator.of(context).pushNamedAndRemoveUntil(
+          RouteNames.home,
           (route) => false,
         );
       }
@@ -389,12 +380,8 @@ class _LoginScreenState extends State<LoginScreen> {
                                       // Navigate to home screen
                                       Navigator.of(
                                         context,
-                                      ).pushAndRemoveUntil(
-                                        MaterialPageRoute(
-                                          builder:
-                                              (context) =>
-                                                  const HomeScreen(),
-                                        ),
+                                      ).pushNamedAndRemoveUntil(
+                                        RouteNames.home,
                                         (route) => false,
                                       );
                                     } else if (context.mounted &&
@@ -500,13 +487,9 @@ class _LoginScreenState extends State<LoginScreen> {
                     width: double.infinity,
                     child: OutlinedButton(
                       onPressed: () {
-                        Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder:
-                                (context) =>
-                                    const ForgotPasswordScreen(),
-                          ),
-                        );
+                        Navigator.of(
+                          context,
+                        ).pushNamed(RouteNames.forgotPassword);
                       },
                       style: OutlinedButton.styleFrom(
                         backgroundColor:
@@ -554,12 +537,10 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                       GestureDetector(
                         onTap: () {
-                          Navigator.of(context).pushReplacement(
-                            MaterialPageRoute(
-                              builder:
-                                  (context) =>
-                                      const RegisterScreen(),
-                            ),
+                          Navigator.of(
+                            context,
+                          ).pushReplacementNamed(
+                            RouteNames.register,
                           );
                         },
                         child: Text(

@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'core/theme/app_theme.dart';
-import 'views/auth/auth_check_screen.dart';
+import 'routes/app_router.dart';
+import 'routes/route_names.dart';
 import 'services/api/api_client.dart';
 import 'services/local_storage/storage_service.dart';
 import 'services/local_storage/token_storage.dart';
@@ -10,12 +12,10 @@ import 'services/auth_service/auth_service.dart';
 import 'services/google_auth/google_auth_service.dart';
 import 'viewmodels/auth/auth_viewmodel.dart';
 
-// Google OAuth Client IDs
-// Web Client ID (dùng cho serverClientId để lấy idToken)
-const String googleWebClientId =
-    '591303968844-g84d98j3qtgibkpbt510eenqrtc2fkpg.apps.googleusercontent.com';
+void main() async {
+  // Load environment variables
+  await dotenv.load(fileName: '.env');
 
-void main() {
   // Initialize services
   final storageService = StorageService();
   final tokenStorage = TokenStorage(storageService);
@@ -24,6 +24,8 @@ void main() {
   final authViewModel = AuthViewModel(authService);
 
   // Initialize Google Auth Service
+  // Web Client ID (dùng cho serverClientId để lấy idToken) - lấy từ env
+  final googleWebClientId = dotenv.get('GOOGLE_WEB_CLIENT_ID');
   GoogleAuthService().initialize(webClientId: googleWebClientId);
 
   runApp(
@@ -58,7 +60,8 @@ class MyApp extends StatelessWidget {
         Locale('en', 'US'), // English
         Locale('vi', 'VN'), // Vietnamese
       ],
-      home: const AuthCheckScreen(),
+      initialRoute: RouteNames.authCheck,
+      onGenerateRoute: AppRouter.generateRoute,
       debugShowCheckedModeBanner: false,
     );
   }

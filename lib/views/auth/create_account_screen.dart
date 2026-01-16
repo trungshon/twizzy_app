@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../viewmodels/auth/auth_viewmodel.dart';
-import 'verify_email_screen.dart';
+import '../../routes/route_names.dart';
 
 /// Create Account Screen
 ///
@@ -702,18 +702,13 @@ class _CreateAccountScreenState
                                     if (success &&
                                         context.mounted) {
                                       // Navigate to verify email screen
-                                      Navigator.of(context).push(
-                                        MaterialPageRoute(
-                                          builder:
-                                              (
-                                                context,
-                                              ) => VerifyEmailScreen(
-                                                email:
-                                                    _emailController
-                                                        .text
-                                                        .trim(),
-                                              ),
-                                        ),
+                                      Navigator.of(
+                                        context,
+                                      ).pushNamed(
+                                        RouteNames.verifyEmail,
+                                        arguments:
+                                            _emailController.text
+                                                .trim(),
                                       );
                                     } else if (context.mounted &&
                                         authViewModel.error !=

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../widgets/common/app_logo.dart';
 import '../../viewmodels/auth/auth_viewmodel.dart';
-import 'verify_forgot_password_screen.dart';
+import '../../routes/route_names.dart';
 
 /// Forgot Password Screen
 ///
@@ -198,14 +198,12 @@ class _ForgotPasswordScreenState
                                     if (success &&
                                         context.mounted) {
                                       // Navigate to verify forgot password screen
-                                      Navigator.of(context).push(
-                                        MaterialPageRoute(
-                                          builder:
-                                              (context) =>
-                                                  VerifyForgotPasswordScreen(
-                                                    email: email,
-                                                  ),
-                                        ),
+                                      Navigator.of(
+                                        context,
+                                      ).pushNamed(
+                                        RouteNames
+                                            .verifyForgotPassword,
+                                        arguments: email,
                                       );
                                     } else if (context.mounted &&
                                         authViewModel.error !=

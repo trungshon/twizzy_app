@@ -1,29 +1,42 @@
 import 'package:flutter/foundation.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 /// API Constants
 ///
 /// Định nghĩa base URL và các API endpoints
 class ApiConstants {
-  // Base URL - Tự động detect platform
+  // Base URL - Tự động detect platform từ env
   static String get baseUrl {
     if (kIsWeb) {
-      // Web: sử dụng localhost
-      return 'http://localhost:3000';
+      // Web: sử dụng BASE_URL_WEB từ env
+      return dotenv.get(
+        'BASE_URL_WEB',
+        fallback: 'http://localhost:3000',
+      );
     }
 
     // Mobile platforms
     switch (defaultTargetPlatform) {
       case TargetPlatform.android:
-        // Android emulator: sử dụng 10.0.2.2 để trỏ về localhost của máy host
-        // Nếu chạy trên physical device, thay bằng IP của máy host (ví dụ: http://192.168.1.100:3000)
-        return 'http://10.0.2.2:3000';
+        // Android emulator: sử dụng BASE_URL_ANDROID từ env
+        // Nếu chạy trên physical device, thay bằng IP của máy host trong .env
+        return dotenv.get(
+          'BASE_URL_ANDROID',
+          fallback: 'http://10.0.2.2:3000',
+        );
       case TargetPlatform.iOS:
-        // iOS simulator: sử dụng localhost
-        // Nếu chạy trên physical device, thay bằng IP của máy host
-        return 'http://localhost:3000';
+        // iOS simulator: sử dụng BASE_URL_IOS từ env
+        // Nếu chạy trên physical device, thay bằng IP của máy host trong .env
+        return dotenv.get(
+          'BASE_URL_IOS',
+          fallback: 'http://localhost:3000',
+        );
       default:
         // Desktop (Windows, macOS, Linux) và các platform khác
-        return 'http://localhost:3000';
+        return dotenv.get(
+          'BASE_URL_DEFAULT',
+          fallback: 'http://localhost:3000',
+        );
     }
   }
 
@@ -44,4 +57,9 @@ class ApiConstants {
   // Google OAuth
   static const String googleOAuthMobile =
       '/users/oauth/google/mobile';
+
+  // Static files (images, videos)
+  static String videoStream(String name) =>
+      '/static/video-stream/$name';
+  static String image(String name) => '/static/image/$name';
 }

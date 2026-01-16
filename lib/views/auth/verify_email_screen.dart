@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../widgets/common/app_logo.dart';
 import '../../viewmodels/auth/auth_viewmodel.dart';
-import '../home/home_screen.dart';
+import '../../routes/route_names.dart';
 
 /// Verify Email Screen
 ///
@@ -261,12 +261,8 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
                                       // Navigate to home screen
                                       Navigator.of(
                                         context,
-                                      ).pushAndRemoveUntil(
-                                        MaterialPageRoute(
-                                          builder:
-                                              (context) =>
-                                                  const HomeScreen(),
-                                        ),
+                                      ).pushNamedAndRemoveUntil(
+                                        RouteNames.home,
                                         (route) => false,
                                       );
                                     } else if (context.mounted &&
@@ -282,9 +278,12 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
                                         SnackBar(
                                           content: Text(
                                             authViewModel.error!,
-                                            style: const TextStyle(
-                                              color: Colors.white,
-                                            ),
+                                            style:
+                                                const TextStyle(
+                                                  color:
+                                                      Colors
+                                                          .white,
+                                                ),
                                           ),
                                           backgroundColor:
                                               themeData

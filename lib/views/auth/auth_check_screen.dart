@@ -2,8 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../services/local_storage/token_storage.dart';
 import '../../viewmodels/auth/auth_viewmodel.dart';
-import '../home/home_screen.dart';
-import 'register_screen.dart';
+import '../../routes/route_names.dart';
 
 /// Auth Check Screen
 ///
@@ -48,26 +47,20 @@ class _AuthCheckScreenState extends State<AuthCheckScreen> {
 
       // If getMe failed (token expired), navigate to register
       if (!success) {
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(
-            builder: (context) => const RegisterScreen(),
-          ),
-        );
+        Navigator.of(
+          context,
+        ).pushReplacementNamed(RouteNames.register);
         return;
       }
 
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(
-          builder: (context) => const HomeScreen(),
-        ),
-      );
+      Navigator.of(
+        context,
+      ).pushReplacementNamed(RouteNames.home);
     } else {
       // User is not logged in, navigate to register screen
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(
-          builder: (context) => const RegisterScreen(),
-        ),
-      );
+      Navigator.of(
+        context,
+      ).pushReplacementNamed(RouteNames.register);
     }
   }
 

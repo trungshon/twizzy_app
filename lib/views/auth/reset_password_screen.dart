@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../viewmodels/auth/auth_viewmodel.dart';
-import 'login_screen.dart';
+import '../../routes/route_names.dart';
 
 /// Reset Password Screen
 ///
@@ -397,12 +397,8 @@ class _ResetPasswordScreenState
                                       // Navigate to login screen
                                       Navigator.of(
                                         context,
-                                      ).pushAndRemoveUntil(
-                                        MaterialPageRoute(
-                                          builder:
-                                              (context) =>
-                                                  const LoginScreen(),
-                                        ),
+                                      ).pushNamedAndRemoveUntil(
+                                        RouteNames.login,
                                         (route) => false,
                                       );
                                     } else if (context.mounted &&

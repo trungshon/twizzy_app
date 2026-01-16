@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../widgets/common/app_logo.dart';
 import '../../viewmodels/auth/auth_viewmodel.dart';
-import 'reset_password_screen.dart';
+import '../../routes/route_names.dart';
 
 /// Verify Forgot Password Screen
 ///
@@ -250,20 +250,17 @@ class _VerifyForgotPasswordScreenState
                                     if (success &&
                                         context.mounted) {
                                       // Navigate to reset password screen
-                                      Navigator.of(context).push(
-                                        MaterialPageRoute(
-                                          builder:
-                                              (
-                                                context,
-                                              ) => ResetPasswordScreen(
-                                                email:
-                                                    widget.email,
-                                                otp:
-                                                    _codeController
-                                                        .text
-                                                        .trim(),
-                                              ),
-                                        ),
+                                      Navigator.of(
+                                        context,
+                                      ).pushNamed(
+                                        RouteNames.resetPassword,
+                                        arguments: {
+                                          'email': widget.email,
+                                          'otp':
+                                              _codeController
+                                                  .text
+                                                  .trim(),
+                                        },
                                       );
                                     } else if (context.mounted &&
                                         authViewModel.error !=

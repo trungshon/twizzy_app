@@ -4,10 +4,7 @@ import '../../widgets/common/app_logo.dart';
 import '../../widgets/auth/google_sign_in_button.dart';
 import '../../widgets/common/divider_with_text.dart';
 import '../../viewmodels/auth/auth_viewmodel.dart';
-import 'login_screen.dart';
-import 'create_account_screen.dart';
-import 'verify_email_screen.dart';
-import '../home/home_screen.dart';
+import '../../routes/route_names.dart';
 
 /// Register Screen
 ///
@@ -38,28 +35,22 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
     if (result == 'success') {
       // Existing user - go to home
-      Navigator.of(context).pushAndRemoveUntil(
-        MaterialPageRoute(
-          builder: (context) => const HomeScreen(),
-        ),
+      Navigator.of(context).pushNamedAndRemoveUntil(
+        RouteNames.home,
         (route) => false,
       );
     } else if (result == 'new_user') {
       // New user registered via Google - may need email verification
       final email = authViewModel.registeredEmail;
       if (email != null) {
-        Navigator.of(context).pushAndRemoveUntil(
-          MaterialPageRoute(
-            builder:
-                (context) => VerifyEmailScreen(email: email),
-          ),
+        Navigator.of(context).pushNamedAndRemoveUntil(
+          RouteNames.verifyEmail,
           (route) => false,
+          arguments: email,
         );
       } else {
-        Navigator.of(context).pushAndRemoveUntil(
-          MaterialPageRoute(
-            builder: (context) => const HomeScreen(),
-          ),
+        Navigator.of(context).pushNamedAndRemoveUntil(
+          RouteNames.home,
           (route) => false,
         );
       }
@@ -135,12 +126,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       _isGoogleLoading
                           ? null
                           : () {
-                            Navigator.of(context).push(
-                              MaterialPageRoute(
-                                builder:
-                                    (context) =>
-                                        const CreateAccountScreen(),
-                              ),
+                            Navigator.of(context).pushNamed(
+                              RouteNames.createAccount,
                             );
                           },
                   style: ElevatedButton.styleFrom(
@@ -178,12 +165,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             : () {
                               Navigator.of(
                                 context,
-                              ).pushReplacement(
-                                MaterialPageRoute(
-                                  builder:
-                                      (context) =>
-                                          const LoginScreen(),
-                                ),
+                              ).pushReplacementNamed(
+                                RouteNames.login,
                               );
                             },
                     child: Text(

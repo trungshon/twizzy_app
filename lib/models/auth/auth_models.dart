@@ -308,6 +308,8 @@ class User {
   final String? username;
   final String? avatar;
   final String? coverPhoto;
+  final int? followersCount;
+  final int? followingCount;
 
   User({
     required this.id,
@@ -323,6 +325,8 @@ class User {
     this.username,
     this.avatar,
     this.coverPhoto,
+    this.followersCount,
+    this.followingCount,
   });
 
   factory User.fromJson(Map<String, dynamic> json) {
@@ -424,6 +428,8 @@ class User {
       username: safeString(json['username']),
       avatar: safeString(json['avatar']),
       coverPhoto: safeString(json['cover_photo']),
+      followersCount: json['followers_count'] as int?,
+      followingCount: json['following_count'] as int?,
     );
   }
 }
