@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:twizzy_app/widgets/twizz/twizz_list.dart';
 import '../../viewmodels/auth/auth_viewmodel.dart';
+import '../../viewmodels/profile/profile_viewmodel.dart';
 import '../../core/utils/number_formatter.dart';
+import '../../routes/route_names.dart';
 
 /// My Profile Screen
 ///
@@ -35,8 +38,36 @@ class _MyProfileScreenState extends State<MyProfileScreen>
       length: _tabs.length,
       vsync: this,
     );
+    _tabController.addListener(_onTabChanged);
     _scrollController = ScrollController();
     _scrollController.addListener(_onScroll);
+
+    // Load initial data
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final authViewModel = context.read<AuthViewModel>();
+      final profileViewModel = context.read<ProfileViewModel>();
+      final userId = authViewModel.currentUser?.id;
+      if (userId != null) {
+        profileViewModel.loadTwizzs(
+          userId: userId,
+          tabIndex: ProfileViewModel.tabTwizz,
+        );
+      }
+    });
+  }
+
+  void _onTabChanged() {
+    if (!_tabController.indexIsChanging) {
+      final authViewModel = context.read<AuthViewModel>();
+      final profileViewModel = context.read<ProfileViewModel>();
+      final userId = authViewModel.currentUser?.id;
+      if (userId != null) {
+        profileViewModel.loadTwizzs(
+          userId: userId,
+          tabIndex: _tabController.index,
+        );
+      }
+    }
   }
 
   void _onScroll() {
@@ -54,6 +85,7 @@ class _MyProfileScreenState extends State<MyProfileScreen>
   void dispose() {
     _scrollController.removeListener(_onScroll);
     _scrollController.dispose();
+    _tabController.removeListener(_onTabChanged);
     _tabController.dispose();
     super.dispose();
   }
@@ -82,6 +114,15 @@ class _MyProfileScreenState extends State<MyProfileScreen>
         final avatar = user?.avatar;
 
         return Scaffold(
+          floatingActionButton: FloatingActionButton(
+            onPressed: () {
+              Navigator.pushNamed(
+                context,
+                RouteNames.createTwizz,
+              );
+            },
+            child: const Icon(Icons.add),
+          ),
           body: NestedScrollView(
             controller: _scrollController,
             headerSliverBuilder: (context, innerBoxIsScrolled) {
@@ -491,49 +532,471 @@ class _MyProfileScreenState extends State<MyProfileScreen>
     );
   }
 
-  // Tab Contents
+  // Tab Contents - Using TwizzList widget
   Widget _buildTwizzTab(BuildContext context) {
-    return _buildEmptyTab(
-      context,
-      icon: Icons.article_outlined,
-      title: 'Chưa có bài viết',
-      subtitle: 'Bài viết của bạn sẽ hiển thị ở đây',
+    return Consumer2<ProfileViewModel, AuthViewModel>(
+      builder: (
+        context,
+        profileViewModel,
+        authViewModel,
+        child,
+      ) {
+        final userId = authViewModel.currentUser?.id;
+        if (userId == null) {
+          return _buildEmptyTab(
+            context,
+            icon: Icons.article_outlined,
+            title: 'Chưa có bài viết',
+            subtitle: 'Bài viết của bạn sẽ hiển thị ở đây',
+          );
+        }
+
+        final twizzs = profileViewModel.getTwizzs(
+          ProfileViewModel.tabTwizz,
+        );
+        final isLoading = profileViewModel.isLoading(
+          ProfileViewModel.tabTwizz,
+        );
+        final isLoadingMore = profileViewModel.isLoadingMore(
+          ProfileViewModel.tabTwizz,
+        );
+        final hasMore = profileViewModel.hasMore(
+          ProfileViewModel.tabTwizz,
+        );
+        final error = profileViewModel.getError(
+          ProfileViewModel.tabTwizz,
+        );
+
+        if (isLoading && twizzs.isEmpty) {
+          return const Center(
+            child: CircularProgressIndicator(),
+          );
+        }
+
+        if (error != null && twizzs.isEmpty) {
+          return _buildErrorTab(context, error, () {
+            profileViewModel.loadTwizzs(
+              userId: userId,
+              tabIndex: ProfileViewModel.tabTwizz,
+              refresh: true,
+            );
+          });
+        }
+
+        return TwizzList(
+          twizzs: twizzs,
+          isLoading: isLoadingMore,
+          hasMore: hasMore,
+          onLoadMore:
+              () => profileViewModel.loadMore(
+                userId: userId,
+                tabIndex: ProfileViewModel.tabTwizz,
+              ),
+          onRefresh:
+              () => profileViewModel.refresh(
+                userId: userId,
+                tabIndex: ProfileViewModel.tabTwizz,
+              ),
+          onLike:
+              (twizz) => profileViewModel.toggleLike(
+                twizz,
+                ProfileViewModel.tabTwizz,
+              ),
+          onBookmark:
+              (twizz) => profileViewModel.toggleBookmark(
+                twizz,
+                ProfileViewModel.tabTwizz,
+              ),
+          emptyWidget: _buildEmptyTab(
+            context,
+            icon: Icons.article_outlined,
+            title: 'Chưa có bài viết',
+            subtitle: 'Bài viết của bạn sẽ hiển thị ở đây',
+          ),
+        );
+      },
     );
   }
 
   Widget _buildRetwizzTab(BuildContext context) {
-    return _buildEmptyTab(
-      context,
-      icon: Icons.repeat,
-      title: 'Chưa có đăng lại',
-      subtitle: 'Bài viết bạn đăng lại sẽ hiển thị ở đây',
+    return Consumer2<ProfileViewModel, AuthViewModel>(
+      builder: (
+        context,
+        profileViewModel,
+        authViewModel,
+        child,
+      ) {
+        final userId = authViewModel.currentUser?.id;
+        if (userId == null) {
+          return _buildEmptyTab(
+            context,
+            icon: Icons.repeat,
+            title: 'Chưa có đăng lại',
+            subtitle: 'Bài viết bạn đăng lại sẽ hiển thị ở đây',
+          );
+        }
+
+        final twizzs = profileViewModel.getTwizzs(
+          ProfileViewModel.tabRetwizz,
+        );
+        final isLoading = profileViewModel.isLoading(
+          ProfileViewModel.tabRetwizz,
+        );
+        final isLoadingMore = profileViewModel.isLoadingMore(
+          ProfileViewModel.tabRetwizz,
+        );
+        final hasMore = profileViewModel.hasMore(
+          ProfileViewModel.tabRetwizz,
+        );
+        final error = profileViewModel.getError(
+          ProfileViewModel.tabRetwizz,
+        );
+
+        if (isLoading && twizzs.isEmpty) {
+          return const Center(
+            child: CircularProgressIndicator(),
+          );
+        }
+
+        if (error != null && twizzs.isEmpty) {
+          return _buildErrorTab(context, error, () {
+            profileViewModel.loadTwizzs(
+              userId: userId,
+              tabIndex: ProfileViewModel.tabRetwizz,
+              refresh: true,
+            );
+          });
+        }
+
+        return TwizzList(
+          twizzs: twizzs,
+          isLoading: isLoadingMore,
+          hasMore: hasMore,
+          onLoadMore:
+              () => profileViewModel.loadMore(
+                userId: userId,
+                tabIndex: ProfileViewModel.tabRetwizz,
+              ),
+          onRefresh:
+              () => profileViewModel.refresh(
+                userId: userId,
+                tabIndex: ProfileViewModel.tabRetwizz,
+              ),
+          onLike:
+              (twizz) => profileViewModel.toggleLike(
+                twizz,
+                ProfileViewModel.tabRetwizz,
+              ),
+          onBookmark:
+              (twizz) => profileViewModel.toggleBookmark(
+                twizz,
+                ProfileViewModel.tabRetwizz,
+              ),
+          emptyWidget: _buildEmptyTab(
+            context,
+            icon: Icons.repeat,
+            title: 'Chưa có đăng lại',
+            subtitle: 'Bài viết bạn đăng lại sẽ hiển thị ở đây',
+          ),
+        );
+      },
     );
   }
 
   Widget _buildQuoteTwizzTab(BuildContext context) {
-    return _buildEmptyTab(
-      context,
-      icon: Icons.format_quote,
-      title: 'Chưa có trích dẫn',
-      subtitle: 'Bài viết bạn trích dẫn sẽ hiển thị ở đây',
+    return Consumer2<ProfileViewModel, AuthViewModel>(
+      builder: (
+        context,
+        profileViewModel,
+        authViewModel,
+        child,
+      ) {
+        final userId = authViewModel.currentUser?.id;
+        if (userId == null) {
+          return _buildEmptyTab(
+            context,
+            icon: Icons.format_quote,
+            title: 'Chưa có trích dẫn',
+            subtitle: 'Bài viết bạn trích dẫn sẽ hiển thị ở đây',
+          );
+        }
+
+        final twizzs = profileViewModel.getTwizzs(
+          ProfileViewModel.tabQuoteTwizz,
+        );
+        final isLoading = profileViewModel.isLoading(
+          ProfileViewModel.tabQuoteTwizz,
+        );
+        final isLoadingMore = profileViewModel.isLoadingMore(
+          ProfileViewModel.tabQuoteTwizz,
+        );
+        final hasMore = profileViewModel.hasMore(
+          ProfileViewModel.tabQuoteTwizz,
+        );
+        final error = profileViewModel.getError(
+          ProfileViewModel.tabQuoteTwizz,
+        );
+
+        if (isLoading && twizzs.isEmpty) {
+          return const Center(
+            child: CircularProgressIndicator(),
+          );
+        }
+
+        if (error != null && twizzs.isEmpty) {
+          return _buildErrorTab(context, error, () {
+            profileViewModel.loadTwizzs(
+              userId: userId,
+              tabIndex: ProfileViewModel.tabQuoteTwizz,
+              refresh: true,
+            );
+          });
+        }
+
+        return TwizzList(
+          twizzs: twizzs,
+          isLoading: isLoadingMore,
+          hasMore: hasMore,
+          onLoadMore:
+              () => profileViewModel.loadMore(
+                userId: userId,
+                tabIndex: ProfileViewModel.tabQuoteTwizz,
+              ),
+          onRefresh:
+              () => profileViewModel.refresh(
+                userId: userId,
+                tabIndex: ProfileViewModel.tabQuoteTwizz,
+              ),
+          onLike:
+              (twizz) => profileViewModel.toggleLike(
+                twizz,
+                ProfileViewModel.tabQuoteTwizz,
+              ),
+          onBookmark:
+              (twizz) => profileViewModel.toggleBookmark(
+                twizz,
+                ProfileViewModel.tabQuoteTwizz,
+              ),
+          emptyWidget: _buildEmptyTab(
+            context,
+            icon: Icons.format_quote,
+            title: 'Chưa có trích dẫn',
+            subtitle: 'Bài viết bạn trích dẫn sẽ hiển thị ở đây',
+          ),
+        );
+      },
     );
   }
 
   Widget _buildLikedTab(BuildContext context) {
-    return _buildEmptyTab(
-      context,
-      icon: Icons.favorite_outline,
-      title: 'Chưa có bài viết đã thích',
-      subtitle: 'Bài viết bạn thích sẽ hiển thị ở đây',
+    return Consumer2<ProfileViewModel, AuthViewModel>(
+      builder: (
+        context,
+        profileViewModel,
+        authViewModel,
+        child,
+      ) {
+        final userId = authViewModel.currentUser?.id;
+        if (userId == null) {
+          return _buildEmptyTab(
+            context,
+            icon: Icons.favorite_outline,
+            title: 'Chưa có bài viết đã thích',
+            subtitle: 'Bài viết bạn thích sẽ hiển thị ở đây',
+          );
+        }
+
+        final twizzs = profileViewModel.getTwizzs(
+          ProfileViewModel.tabLiked,
+        );
+        final isLoading = profileViewModel.isLoading(
+          ProfileViewModel.tabLiked,
+        );
+        final isLoadingMore = profileViewModel.isLoadingMore(
+          ProfileViewModel.tabLiked,
+        );
+        final hasMore = profileViewModel.hasMore(
+          ProfileViewModel.tabLiked,
+        );
+        final error = profileViewModel.getError(
+          ProfileViewModel.tabLiked,
+        );
+
+        if (isLoading && twizzs.isEmpty) {
+          return const Center(
+            child: CircularProgressIndicator(),
+          );
+        }
+
+        if (error != null && twizzs.isEmpty) {
+          return _buildErrorTab(context, error, () {
+            profileViewModel.loadTwizzs(
+              userId: userId,
+              tabIndex: ProfileViewModel.tabLiked,
+              refresh: true,
+            );
+          });
+        }
+
+        return TwizzList(
+          twizzs: twizzs,
+          isLoading: isLoadingMore,
+          hasMore: hasMore,
+          onLoadMore:
+              () => profileViewModel.loadMore(
+                userId: userId,
+                tabIndex: ProfileViewModel.tabLiked,
+              ),
+          onRefresh:
+              () => profileViewModel.refresh(
+                userId: userId,
+                tabIndex: ProfileViewModel.tabLiked,
+              ),
+          onLike:
+              (twizz) => profileViewModel.toggleLike(
+                twizz,
+                ProfileViewModel.tabLiked,
+              ),
+          onBookmark:
+              (twizz) => profileViewModel.toggleBookmark(
+                twizz,
+                ProfileViewModel.tabLiked,
+              ),
+          emptyWidget: _buildEmptyTab(
+            context,
+            icon: Icons.favorite_outline,
+            title: 'Chưa có bài viết đã thích',
+            subtitle: 'Bài viết bạn thích sẽ hiển thị ở đây',
+          ),
+        );
+      },
     );
   }
 
   Widget _buildBookmarksTab(BuildContext context) {
-    return _buildEmptyTab(
-      context,
-      icon: Icons.bookmark_outline,
-      title: 'Chưa có dấu trang',
-      subtitle: 'Bài viết bạn lưu sẽ hiển thị ở đây',
+    return Consumer2<ProfileViewModel, AuthViewModel>(
+      builder: (
+        context,
+        profileViewModel,
+        authViewModel,
+        child,
+      ) {
+        final userId = authViewModel.currentUser?.id;
+        if (userId == null) {
+          return _buildEmptyTab(
+            context,
+            icon: Icons.bookmark_outline,
+            title: 'Chưa có dấu trang',
+            subtitle: 'Bài viết bạn lưu sẽ hiển thị ở đây',
+          );
+        }
+
+        final twizzs = profileViewModel.getTwizzs(
+          ProfileViewModel.tabBookmarked,
+        );
+        final isLoading = profileViewModel.isLoading(
+          ProfileViewModel.tabBookmarked,
+        );
+        final isLoadingMore = profileViewModel.isLoadingMore(
+          ProfileViewModel.tabBookmarked,
+        );
+        final hasMore = profileViewModel.hasMore(
+          ProfileViewModel.tabBookmarked,
+        );
+        final error = profileViewModel.getError(
+          ProfileViewModel.tabBookmarked,
+        );
+
+        if (isLoading && twizzs.isEmpty) {
+          return const Center(
+            child: CircularProgressIndicator(),
+          );
+        }
+
+        if (error != null && twizzs.isEmpty) {
+          return _buildErrorTab(context, error, () {
+            profileViewModel.loadTwizzs(
+              userId: userId,
+              tabIndex: ProfileViewModel.tabBookmarked,
+              refresh: true,
+            );
+          });
+        }
+
+        return TwizzList(
+          twizzs: twizzs,
+          isLoading: isLoadingMore,
+          hasMore: hasMore,
+          onLoadMore:
+              () => profileViewModel.loadMore(
+                userId: userId,
+                tabIndex: ProfileViewModel.tabBookmarked,
+              ),
+          onRefresh:
+              () => profileViewModel.refresh(
+                userId: userId,
+                tabIndex: ProfileViewModel.tabBookmarked,
+              ),
+          onLike:
+              (twizz) => profileViewModel.toggleLike(
+                twizz,
+                ProfileViewModel.tabBookmarked,
+              ),
+          onBookmark:
+              (twizz) => profileViewModel.toggleBookmark(
+                twizz,
+                ProfileViewModel.tabBookmarked,
+              ),
+          emptyWidget: _buildEmptyTab(
+            context,
+            icon: Icons.bookmark_outline,
+            title: 'Chưa có dấu trang',
+            subtitle: 'Bài viết bạn lưu sẽ hiển thị ở đây',
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildErrorTab(
+    BuildContext context,
+    String error,
+    VoidCallback onRetry,
+  ) {
+    final themeData = Theme.of(context);
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.error_outline,
+            size: 64,
+            color: themeData.colorScheme.error,
+          ),
+          const SizedBox(height: 16),
+          Text(
+            'Có lỗi xảy ra',
+            style: themeData.textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            error,
+            style: themeData.textTheme.bodyMedium?.copyWith(
+              color: themeData.colorScheme.onSurface.withValues(
+                alpha: 0.6,
+              ),
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 16),
+          ElevatedButton(
+            onPressed: onRetry,
+            child: const Text('Thử lại'),
+          ),
+        ],
+      ),
     );
   }
 

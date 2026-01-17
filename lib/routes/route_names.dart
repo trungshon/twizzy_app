@@ -19,6 +19,9 @@ class RouteNames {
   // Profile Routes
   static const String myProfile = '/my-profile';
 
+  // Twizz Routes
+  static const String createTwizz = '/create-twizz';
+
   // Test Routes
   static const String videoTest = '/video-test';
 

@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../core/constants/asset_paths.dart';
 import '../../viewmodels/auth/auth_viewmodel.dart';
 import '../../widgets/common/app_drawer.dart';
 import '../../widgets/common/app_logo.dart';
+import '../../routes/route_names.dart';
 import 'for_you_tab.dart';
 import 'following_tab.dart';
 
@@ -14,12 +14,14 @@ class HomeContent extends StatefulWidget {
   const HomeContent({super.key});
 
   @override
-  State<HomeContent> createState() => _HomeContentState();
+  State<HomeContent> createState() => HomeContentState();
 }
 
-class _HomeContentState extends State<HomeContent>
+class HomeContentState extends State<HomeContent>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
+  final GlobalKey<FollowingTabState> _followingTabKey =
+      GlobalKey<FollowingTabState>();
 
   @override
   void initState() {
@@ -32,6 +34,11 @@ class _HomeContentState extends State<HomeContent>
         authViewModel.getMe();
       }
     });
+  }
+
+  /// Scroll to top of newsfeed
+  void scrollToTop() {
+    _followingTabKey.currentState?.scrollToTop();
   }
 
   @override
@@ -126,7 +133,16 @@ class _HomeContentState extends State<HomeContent>
         ),
         body: TabBarView(
           controller: _tabController,
-          children: const [ForYouTab(), FollowingTab()],
+          children: [
+            const ForYouTab(),
+            FollowingTab(key: _followingTabKey),
+          ],
+        ),
+        floatingActionButton: FloatingActionButton(
+          onPressed: () {
+            Navigator.pushNamed(context, RouteNames.createTwizz);
+          },
+          child: const Icon(Icons.add),
         ),
       ),
     );

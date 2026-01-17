@@ -1,5 +1,7 @@
 import 'dart:convert';
+import 'dart:io';
 import 'package:http/http.dart' as http;
+import 'package:http_parser/http_parser.dart' as http_parser;
 import '../../core/constants/api_constants.dart';
 import '../../models/auth/auth_models.dart';
 import '../local_storage/token_storage.dart';
@@ -215,4 +217,249 @@ class ApiClient {
       );
     }
   }
+
+  /// PUT request
+  Future<Map<String, dynamic>> put(
+    String endpoint, {
+    Map<String, dynamic>? body,
+    bool includeAuth = true,
+    bool retryOn401 = true,
+  }) async {
+    try {
+      final url = Uri.parse('${ApiConstants.baseUrl}$endpoint');
+      final headers = await _getHeaders(
+        includeAuth: includeAuth,
+      );
+
+      var response = await _client.put(
+        url,
+        headers: headers,
+        body: body != null ? json.encode(body) : null,
+      );
+
+      // Handle 401 Unauthorized - token expired
+      if (response.statusCode == 401 &&
+          includeAuth &&
+          retryOn401) {
+        try {
+          await _refreshToken();
+          final newHeaders = await _getHeaders(
+            includeAuth: includeAuth,
+          );
+          response = await _client.put(
+            url,
+            headers: newHeaders,
+            body: body != null ? json.encode(body) : null,
+          );
+        } catch (e) {
+          await _tokenStorage.clearTokens();
+          throw _handleError(response);
+        }
+      }
+
+      if (response.statusCode >= 200 &&
+          response.statusCode < 300) {
+        return json.decode(response.body)
+            as Map<String, dynamic>;
+      } else {
+        throw _handleError(response);
+      }
+    } catch (e) {
+      if (e is ApiErrorResponse) {
+        rethrow;
+      }
+      throw ApiErrorResponse(
+        message: 'Lỗi kết nối: ${e.toString()}',
+      );
+    }
+  }
+
+  /// PATCH request
+  Future<Map<String, dynamic>> patch(
+    String endpoint, {
+    Map<String, dynamic>? body,
+    bool includeAuth = true,
+    bool retryOn401 = true,
+  }) async {
+    try {
+      final url = Uri.parse('${ApiConstants.baseUrl}$endpoint');
+      final headers = await _getHeaders(
+        includeAuth: includeAuth,
+      );
+
+      var response = await _client.patch(
+        url,
+        headers: headers,
+        body: body != null ? json.encode(body) : null,
+      );
+
+      // Handle 401 Unauthorized - token expired
+      if (response.statusCode == 401 &&
+          includeAuth &&
+          retryOn401) {
+        try {
+          await _refreshToken();
+          final newHeaders = await _getHeaders(
+            includeAuth: includeAuth,
+          );
+          response = await _client.patch(
+            url,
+            headers: newHeaders,
+            body: body != null ? json.encode(body) : null,
+          );
+        } catch (e) {
+          await _tokenStorage.clearTokens();
+          throw _handleError(response);
+        }
+      }
+
+      if (response.statusCode >= 200 &&
+          response.statusCode < 300) {
+        return json.decode(response.body)
+            as Map<String, dynamic>;
+      } else {
+        throw _handleError(response);
+      }
+    } catch (e) {
+      if (e is ApiErrorResponse) {
+        rethrow;
+      }
+      throw ApiErrorResponse(
+        message: 'Lỗi kết nối: ${e.toString()}',
+      );
+    }
+  }
+
+  /// DELETE request
+  Future<Map<String, dynamic>> delete(
+    String endpoint, {
+    bool includeAuth = true,
+    bool retryOn401 = true,
+  }) async {
+    try {
+      final url = Uri.parse('${ApiConstants.baseUrl}$endpoint');
+      final headers = await _getHeaders(
+        includeAuth: includeAuth,
+      );
+
+      var response = await _client.delete(url, headers: headers);
+
+      // Handle 401 Unauthorized - token expired
+      if (response.statusCode == 401 &&
+          includeAuth &&
+          retryOn401) {
+        try {
+          await _refreshToken();
+          final newHeaders = await _getHeaders(
+            includeAuth: includeAuth,
+          );
+          response = await _client.delete(
+            url,
+            headers: newHeaders,
+          );
+        } catch (e) {
+          await _tokenStorage.clearTokens();
+          throw _handleError(response);
+        }
+      }
+
+      if (response.statusCode >= 200 &&
+          response.statusCode < 300) {
+        return json.decode(response.body)
+            as Map<String, dynamic>;
+      } else {
+        throw _handleError(response);
+      }
+    } catch (e) {
+      if (e is ApiErrorResponse) {
+        rethrow;
+      }
+      throw ApiErrorResponse(
+        message: 'Lỗi kết nối: ${e.toString()}',
+      );
+    }
+  }
+
+  /// Multipart POST request (for file uploads)
+  /// Supports refresh token retry on 401
+  Future<Map<String, dynamic>> uploadFiles(
+    String endpoint, {
+    required List<MultipartFile> files,
+    Map<String, String>? fields,
+    bool retryOn401 = true,
+  }) async {
+    Future<http.Response> sendRequest() async {
+      final accessToken = await _tokenStorage.getAccessToken();
+      final uri = Uri.parse('${ApiConstants.baseUrl}$endpoint');
+      final request = http.MultipartRequest('POST', uri);
+
+      if (accessToken != null) {
+        request.headers['Authorization'] = 'Bearer $accessToken';
+      }
+
+      // Add fields
+      if (fields != null) {
+        request.fields.addAll(fields);
+      }
+
+      // Add files
+      for (final file in files) {
+        request.files.add(
+          await http.MultipartFile.fromPath(
+            file.fieldName,
+            file.file.path,
+            contentType: http_parser.MediaType.parse(
+              file.mimeType,
+            ),
+          ),
+        );
+      }
+
+      final streamedResponse = await request.send();
+      return http.Response.fromStream(streamedResponse);
+    }
+
+    try {
+      var response = await sendRequest();
+
+      // Handle 401 Unauthorized - token expired
+      if (response.statusCode == 401 && retryOn401) {
+        try {
+          await _refreshToken();
+          response = await sendRequest();
+        } catch (e) {
+          await _tokenStorage.clearTokens();
+          throw _handleError(response);
+        }
+      }
+
+      if (response.statusCode >= 200 &&
+          response.statusCode < 300) {
+        return json.decode(response.body)
+            as Map<String, dynamic>;
+      } else {
+        throw _handleError(response);
+      }
+    } catch (e) {
+      if (e is ApiErrorResponse) {
+        rethrow;
+      }
+      throw ApiErrorResponse(
+        message: 'Lỗi upload: ${e.toString()}',
+      );
+    }
+  }
+}
+
+/// Helper class for multipart file uploads
+class MultipartFile {
+  final String fieldName;
+  final File file;
+  final String mimeType;
+
+  MultipartFile({
+    required this.fieldName,
+    required this.file,
+    required this.mimeType,
+  });
 }

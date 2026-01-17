@@ -10,6 +10,7 @@ import '../views/auth/verify_forgot_password_screen.dart';
 import '../views/auth/reset_password_screen.dart';
 import '../views/main/main_screen.dart';
 import '../views/profile/my_profile_screen.dart';
+import '../views/twizz/create_twizz_screen.dart';
 import '../views/test/video_test_screen.dart';
 
 /// App Router
@@ -114,6 +115,13 @@ class AppRouter {
       case RouteNames.myProfile:
         return MaterialPageRoute(
           builder: (_) => const MyProfileScreen(),
+        );
+
+      // Twizz Routes
+      case RouteNames.createTwizz:
+        return MaterialPageRoute(
+          builder: (_) => const CreateTwizzScreen(),
+          fullscreenDialog: true,
         );
 
       // Test Routes

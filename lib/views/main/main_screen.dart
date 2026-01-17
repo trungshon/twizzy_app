@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../../viewmodels/newsfeed/newsfeed_viewmodel.dart';
 import '../home/home_content.dart';
 import '../search/search_content.dart';
 import '../notifications/notifications_content.dart';
@@ -16,13 +18,27 @@ class MainScreen extends StatefulWidget {
 
 class _MainScreenState extends State<MainScreen> {
   int _currentIndex = 0;
+  final GlobalKey<HomeContentState> _homeContentKey =
+      GlobalKey<HomeContentState>();
 
-  final List<Widget> _screens = const [
-    HomeContent(),
-    SearchContent(),
-    NotificationsContent(),
-    MessagesContent(),
-  ];
+  final List<Widget> _screens = [];
+
+  @override
+  void initState() {
+    super.initState();
+    // Initialize screens with key for HomeContent
+    _screens.addAll([
+      HomeContent(key: _homeContentKey),
+      const SearchContent(),
+      const NotificationsContent(),
+      const MessagesContent(),
+    ]);
+    // Luôn load lại newsfeed khi vào app
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final viewModel = context.read<NewsFeedViewModel>();
+      viewModel.loadNewsFeed(refresh: true);
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -41,6 +57,10 @@ class _MainScreenState extends State<MainScreen> {
         child: BottomNavigationBar(
           currentIndex: _currentIndex,
           onTap: (index) {
+            // Nếu đang ở home và tap lại home thì scroll lên đầu
+            if (index == 0 && _currentIndex == 0) {
+              _homeContentKey.currentState?.scrollToTop();
+            }
             setState(() {
               _currentIndex = index;
             });

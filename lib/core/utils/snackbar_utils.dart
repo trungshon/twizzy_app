@@ -1,0 +1,189 @@
+import 'package:flutter/material.dart';
+import '../../models/auth/auth_models.dart';
+
+/// SnackBar Type enum
+enum SnackBarType { success, error, warning, info }
+
+/// SnackBar Utils
+///
+/// Utility class để hiển thị SnackBar trong toàn bộ app
+class SnackBarUtils {
+  /// Show a SnackBar with custom type
+  static void show(
+    BuildContext context, {
+    required String message,
+    SnackBarType type = SnackBarType.info,
+    Duration duration = const Duration(seconds: 4),
+    String? actionLabel,
+    VoidCallback? onAction,
+  }) {
+    // Clear any existing SnackBar first
+    ScaffoldMessenger.of(context).clearSnackBars();
+
+    final themeData = Theme.of(context);
+    final config = _getConfig(type, themeData);
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            Icon(
+              config.icon,
+              color: themeData.colorScheme.onPrimary,
+              size: 20,
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                message,
+                style: TextStyle(
+                  color: themeData.colorScheme.onPrimary,
+                  fontSize: 14,
+                ),
+              ),
+            ),
+          ],
+        ),
+        backgroundColor: config.backgroundColor,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(10),
+        ),
+        margin: const EdgeInsets.all(16),
+        duration: duration,
+        action: SnackBarAction(
+          label: actionLabel ?? 'Đóng',
+          textColor: themeData.colorScheme.onPrimary,
+          onPressed:
+              onAction ??
+              () {
+                ScaffoldMessenger.of(
+                  context,
+                ).hideCurrentSnackBar();
+              },
+        ),
+      ),
+    );
+  }
+
+  /// Show success SnackBar
+  static void showSuccess(
+    BuildContext context, {
+    required String message,
+    Duration duration = const Duration(seconds: 3),
+  }) {
+    show(
+      context,
+      message: message,
+      type: SnackBarType.success,
+      duration: duration,
+    );
+  }
+
+  /// Show error SnackBar
+  static void showError(
+    BuildContext context, {
+    required String message,
+    Duration duration = const Duration(seconds: 4),
+  }) {
+    show(
+      context,
+      message: message,
+      type: SnackBarType.error,
+      duration: duration,
+    );
+  }
+
+  /// Show error SnackBar from ApiErrorResponse
+  /// Automatically extracts detailed validation error message
+  static void showApiError(
+    BuildContext context, {
+    required ApiErrorResponse error,
+    Duration duration = const Duration(seconds: 4),
+  }) {
+    String message;
+
+    if (error.hasValidationErrors()) {
+      // Get first validation error message
+      final firstError = error.errors!.values.first;
+      message = firstError.msg;
+    } else {
+      message = error.message;
+    }
+
+    showError(context, message: message, duration: duration);
+  }
+
+  /// Show warning SnackBar
+  static void showWarning(
+    BuildContext context, {
+    required String message,
+    Duration duration = const Duration(seconds: 4),
+  }) {
+    show(
+      context,
+      message: message,
+      type: SnackBarType.warning,
+      duration: duration,
+    );
+  }
+
+  /// Show info SnackBar
+  static void showInfo(
+    BuildContext context, {
+    required String message,
+    Duration duration = const Duration(seconds: 3),
+  }) {
+    show(
+      context,
+      message: message,
+      type: SnackBarType.info,
+      duration: duration,
+    );
+  }
+
+  /// Clear all SnackBars
+  static void clear(BuildContext context) {
+    ScaffoldMessenger.of(context).clearSnackBars();
+  }
+
+  /// Get config based on type
+  static _SnackBarConfig _getConfig(
+    SnackBarType type,
+    ThemeData themeData,
+  ) {
+    switch (type) {
+      case SnackBarType.success:
+        return _SnackBarConfig(
+          icon: Icons.check_circle_outline,
+          backgroundColor: themeData.colorScheme.primary,
+        );
+      case SnackBarType.error:
+        return _SnackBarConfig(
+          icon: Icons.error_outline,
+          backgroundColor: themeData.colorScheme.error,
+        );
+      case SnackBarType.warning:
+        return _SnackBarConfig(
+          icon: Icons.warning_amber_outlined,
+          backgroundColor: Colors.orange.shade700,
+        );
+      case SnackBarType.info:
+        return _SnackBarConfig(
+          icon: Icons.info_outline,
+          backgroundColor: const Color(0xFF1DA1F2),
+        );
+    }
+  }
+}
+
+/// Internal config class
+class _SnackBarConfig {
+  final IconData icon;
+  final Color backgroundColor;
+
+  _SnackBarConfig({
+    required this.icon,
+    required this.backgroundColor,
+  });
+}

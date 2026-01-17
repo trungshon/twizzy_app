@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:twizzy_app/viewmodels/newsfeed/newsfeed_viewmodel.dart';
 import '../../viewmodels/auth/auth_viewmodel.dart';
 import '../../routes/route_names.dart';
 import '../../core/utils/number_formatter.dart';
@@ -294,12 +295,20 @@ class AppDrawer extends StatelessWidget {
                             isLoading
                                 ? null
                                 : () async {
+                                  // Clear NewsFeedViewModel before logout
+                                  final newsFeedViewModel =
+                                      context
+                                          .read<
+                                            NewsFeedViewModel
+                                          >();
+                                  newsFeedViewModel.clear();
+                                  // Logout
                                   await authViewModel.logout();
                                   if (context.mounted) {
                                     Navigator.of(
                                       context,
                                     ).pushNamedAndRemoveUntil(
-                                      RouteNames.register,
+                                      RouteNames.login,
                                       (route) => false,
                                     );
                                   }

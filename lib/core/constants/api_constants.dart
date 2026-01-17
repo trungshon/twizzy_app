@@ -58,6 +58,33 @@ class ApiConstants {
   static const String googleOAuthMobile =
       '/users/oauth/google/mobile';
 
+  // Twizz
+  static const String createTwizz = '/twizzs';
+  static const String getNewFeeds = '/twizzs';
+  static String getUserTwizzs(String userId) =>
+      '/twizzs/users/$userId/twizzs';
+
+  // Media Upload
+  static const String uploadImage = '/medias/upload-image';
+  static const String uploadVideo = '/medias/upload-video';
+
+  // Search
+  static const String search = '/search';
+
+  // Likes
+  static const String likeTwizz = '/likes';
+  static String unlikeTwizz(String twizzId) =>
+      '/likes/twizzs/$twizzId';
+  static String getUserLikedTwizzs(String userId) =>
+      '/likes/users/$userId/liked-twizzs';
+
+  // Bookmarks
+  static const String bookmarkTwizz = '/bookmarks';
+  static String unbookmarkTwizz(String twizzId) =>
+      '/bookmarks/twizzs/$twizzId';
+  static String getUserBookmarkedTwizzs(String userId) =>
+      '/bookmarks/users/$userId/bookmarked-twizzs';
+
   // Static files (images, videos)
   static String videoStream(String name) =>
       '/static/video-stream/$name';
