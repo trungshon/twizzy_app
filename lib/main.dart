@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:twizzy_app/viewmodels/auth/change_password_viewmodel.dart';
 import 'core/theme/app_theme.dart';
 import 'routes/app_router.dart';
 import 'routes/route_names.dart';
@@ -14,10 +15,12 @@ import 'services/twizz_service/twizz_service.dart';
 import 'services/search_service/search_service.dart';
 import 'services/like_service/like_service.dart';
 import 'services/bookmark_service/bookmark_service.dart';
+import 'services/twizz_service/twizz_sync_service.dart';
 import 'viewmodels/auth/auth_viewmodel.dart';
 import 'viewmodels/twizz/create_twizz_viewmodel.dart';
 import 'viewmodels/newsfeed/newsfeed_viewmodel.dart';
 import 'viewmodels/profile/profile_viewmodel.dart';
+import 'viewmodels/profile/edit_profile_viewmodel.dart';
 
 void main() async {
   // Load environment variables
@@ -32,22 +35,33 @@ void main() async {
   final searchService = SearchService(apiClient);
   final likeService = LikeService(apiClient);
   final bookmarkService = BookmarkService(apiClient);
+  final twizzSyncService = TwizzSyncService();
 
   // Initialize view models
   final authViewModel = AuthViewModel(authService);
   final createTwizzViewModel = CreateTwizzViewModel(
     twizzService,
     searchService,
+    twizzSyncService,
   );
   final newsFeedViewModel = NewsFeedViewModel(
     twizzService,
     likeService,
     bookmarkService,
+    twizzSyncService,
   );
   final profileViewModel = ProfileViewModel(
     twizzService,
     likeService,
     bookmarkService,
+    twizzSyncService,
+  );
+  final editProfileViewModel = EditProfileViewModel(
+    authService,
+    twizzService,
+  );
+  final changePasswordViewModel = ChangePasswordViewModel(
+    authService,
   );
 
   // Initialize Google Auth Service
@@ -59,12 +73,24 @@ void main() async {
     MultiProvider(
       providers: [
         Provider.value(value: tokenStorage),
+        Provider.value(value: authService),
+        Provider.value(value: twizzService),
+        Provider.value(value: searchService),
+        Provider.value(value: likeService),
+        Provider.value(value: bookmarkService),
+        Provider.value(value: twizzSyncService),
         ChangeNotifierProvider.value(value: authViewModel),
         ChangeNotifierProvider.value(
           value: createTwizzViewModel,
         ),
         ChangeNotifierProvider.value(value: newsFeedViewModel),
         ChangeNotifierProvider.value(value: profileViewModel),
+        ChangeNotifierProvider.value(
+          value: editProfileViewModel,
+        ),
+        ChangeNotifierProvider.value(
+          value: changePasswordViewModel,
+        ),
       ],
       child: const MyApp(),
     ),

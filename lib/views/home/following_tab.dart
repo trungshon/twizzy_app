@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:twizzy_app/widgets/twizz/twizz_list.dart';
 import '../../viewmodels/newsfeed/newsfeed_viewmodel.dart';
+import '../../viewmodels/auth/auth_viewmodel.dart';
+import '../../models/twizz/twizz_models.dart';
+import '../../routes/route_names.dart';
 
 /// Following Tab Content
 ///
@@ -68,6 +71,9 @@ class FollowingTabState extends State<FollowingTab> {
           return _buildErrorState(context, viewModel);
         }
 
+        final authViewModel = context.watch<AuthViewModel>();
+        final currentUserId = authViewModel.currentUser?.id;
+
         // Twizz list
         return TwizzList(
           twizzs: viewModel.twizzs,
@@ -76,11 +82,30 @@ class FollowingTabState extends State<FollowingTab> {
           onLoadMore: viewModel.loadMore,
           onRefresh: viewModel.refresh,
           scrollController: _scrollController,
+          currentUserId: currentUserId,
           onTwizzTap: (twizz) {
             // TODO: Navigate to twizz detail
           },
           onUserTap: (twizz) {
-            // TODO: Navigate to user profile
+            // Navigate to user profile or my profile
+            final displayTwizz =
+                (twizz.type == TwizzType.retwizz &&
+                        twizz.parentTwizz != null)
+                    ? twizz.parentTwizz!
+                    : twizz;
+            final user = displayTwizz.user;
+            if (user == null) return;
+
+            if (user.id == currentUserId) {
+              Navigator.pushNamed(context, RouteNames.myProfile);
+            } else if (user.username != null &&
+                user.username!.isNotEmpty) {
+              Navigator.pushNamed(
+                context,
+                RouteNames.userProfile,
+                arguments: user.username,
+              );
+            }
           },
           onLike: (twizz) {
             viewModel.toggleLike(twizz);
@@ -89,15 +114,59 @@ class FollowingTabState extends State<FollowingTab> {
             // TODO: Comment on twizz
           },
           onRetwizz: (twizz) {
-            // TODO: Retwizz
+            _handleRetwizz(context, viewModel, twizz);
           },
           onBookmark: (twizz) {
             viewModel.toggleBookmark(twizz);
+          },
+          onDelete: (twizz) {
+            viewModel.deleteTwizz(twizz);
           },
           emptyWidget: _buildEmptyState(context),
         );
       },
     );
+  }
+
+  /// Handle retwizz/unretwizz
+  void _handleRetwizz(
+    BuildContext context,
+    NewsFeedViewModel viewModel,
+    Twizz twizz,
+  ) async {
+    if (twizz.isRetwizzed) {
+      // Show confirmation dialog for unretwizz
+      final confirm = await showDialog<bool>(
+        context: context,
+        builder:
+            (context) => AlertDialog(
+              title: const Text('Hủy đăng lại?'),
+              content: const Text(
+                'Bạn có chắc chắn muốn hủy đăng lại bài viết này?',
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context, false),
+                  child: const Text('Hủy'),
+                ),
+                TextButton(
+                  onPressed: () => Navigator.pop(context, true),
+                  style: TextButton.styleFrom(
+                    foregroundColor:
+                        Theme.of(context).colorScheme.error,
+                  ),
+                  child: const Text('Hủy đăng lại'),
+                ),
+              ],
+            ),
+      );
+
+      if (confirm == true) {
+        await viewModel.unretwizz(twizz);
+      }
+    } else {
+      await viewModel.retwizz(twizz);
+    }
   }
 
   Widget _buildEmptyState(BuildContext context) {

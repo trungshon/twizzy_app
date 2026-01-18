@@ -17,19 +17,25 @@ class SnackBarUtils {
     String? actionLabel,
     VoidCallback? onAction,
   }) {
+    // Capture the ScaffoldMessengerState before showing
+    final scaffoldMessenger = ScaffoldMessenger.of(context);
+
     // Clear any existing SnackBar first
-    ScaffoldMessenger.of(context).clearSnackBars();
+    scaffoldMessenger.clearSnackBars();
 
     final themeData = Theme.of(context);
     final config = _getConfig(type, themeData);
 
-    ScaffoldMessenger.of(context).showSnackBar(
+    scaffoldMessenger.showSnackBar(
       SnackBar(
         content: Row(
           children: [
             Icon(
               config.icon,
-              color: themeData.colorScheme.onPrimary,
+              color:
+                  type == SnackBarType.error
+                      ? Colors.white
+                      : themeData.colorScheme.onPrimary,
               size: 20,
             ),
             const SizedBox(width: 12),
@@ -37,7 +43,10 @@ class SnackBarUtils {
               child: Text(
                 message,
                 style: TextStyle(
-                  color: themeData.colorScheme.onPrimary,
+                  color:
+                      type == SnackBarType.error
+                          ? Colors.white
+                          : themeData.colorScheme.onPrimary,
                   fontSize: 14,
                 ),
               ),
@@ -53,13 +62,14 @@ class SnackBarUtils {
         duration: duration,
         action: SnackBarAction(
           label: actionLabel ?? 'Đóng',
-          textColor: themeData.colorScheme.onPrimary,
+          textColor:
+              type == SnackBarType.error
+                  ? Colors.white
+                  : themeData.colorScheme.onPrimary,
           onPressed:
               onAction ??
               () {
-                ScaffoldMessenger.of(
-                  context,
-                ).hideCurrentSnackBar();
+                scaffoldMessenger.hideCurrentSnackBar();
               },
         ),
       ),

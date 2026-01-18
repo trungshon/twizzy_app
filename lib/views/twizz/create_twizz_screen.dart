@@ -7,7 +7,6 @@ import '../../core/utils/snackbar_utils.dart';
 import '../../models/twizz/twizz_models.dart';
 import '../../viewmodels/auth/auth_viewmodel.dart';
 import '../../viewmodels/twizz/create_twizz_viewmodel.dart';
-import '../../viewmodels/newsfeed/newsfeed_viewmodel.dart';
 
 /// Create Twizz Screen
 ///
@@ -319,8 +318,7 @@ class _CreateTwizzScreenState extends State<CreateTwizzScreen> {
   ) async {
     final result = await viewModel.createTwizz();
     if (result != null && mounted) {
-      // Add new twizz to newsfeed
-      context.read<NewsFeedViewModel>().addTwizz(result);
+      // Logic addTwizz removed as it is now handled by TwizzSyncService
 
       SnackBarUtils.showSuccess(
         context,

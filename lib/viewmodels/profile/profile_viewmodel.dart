@@ -4,6 +4,7 @@ import '../../models/twizz/twizz_models.dart';
 import '../../services/twizz_service/twizz_service.dart';
 import '../../services/like_service/like_service.dart';
 import '../../services/bookmark_service/bookmark_service.dart';
+import '../../services/twizz_service/twizz_sync_service.dart';
 
 /// Profile ViewModel
 ///
@@ -12,12 +13,65 @@ class ProfileViewModel extends ChangeNotifier {
   final TwizzService _twizzService;
   final LikeService _likeService;
   final BookmarkService _bookmarkService;
+  final TwizzSyncService _syncService;
 
   ProfileViewModel(
     this._twizzService,
     this._likeService,
     this._bookmarkService,
-  );
+    this._syncService,
+  ) {
+    // Listen for sync events
+    _syncService.eventStream.listen(_handleSyncEvent);
+  }
+
+  void _handleSyncEvent(TwizzSyncEvent event) {
+    if (event.type == TwizzSyncEventType.update &&
+        event.twizz != null) {
+      final updatedTwizz = event.twizz!;
+      _updateTwizzInAllTabs(
+        updatedTwizz.id,
+        updatedTwizz,
+        broadcast: false, // Don't broadcast back
+      );
+    } else if (event.type == TwizzSyncEventType.create &&
+        event.twizz != null) {
+      final twizz = event.twizz!;
+
+      // Handle regular Twizz
+      if (twizz.type == TwizzType.twizz) {
+        final twizzs = _twizzsByTab[tabTwizz] ?? [];
+        if (!twizzs.any((t) => t.id == twizz.id)) {
+          twizzs.insert(0, twizz);
+          _twizzsByTab[tabTwizz] = twizzs;
+          notifyListeners();
+        }
+      }
+      // Handle Retwizz
+      else if (twizz.type == TwizzType.retwizz) {
+        final twizzs = _twizzsByTab[tabRetwizz] ?? [];
+        if (!twizzs.any((t) => t.id == twizz.id)) {
+          twizzs.insert(0, twizz);
+          _twizzsByTab[tabRetwizz] = twizzs;
+          notifyListeners();
+        }
+      }
+    } else if (event.type == TwizzSyncEventType.delete &&
+        event.twizzId != null) {
+      for (final entry in _twizzsByTab.entries) {
+        final tabIndex = entry.key;
+        final list = entry.value;
+        // Remove the deleted post and any retwizzs of it
+        list.removeWhere(
+          (t) =>
+              t.id == event.twizzId ||
+              t.parentTwizz?.id == event.twizzId,
+        );
+        _twizzsByTab[tabIndex] = list;
+      }
+      notifyListeners();
+    }
+  }
 
   // State for each tab
   final Map<int, List<Twizz>> _twizzsByTab = {};
@@ -229,21 +283,33 @@ class ProfileViewModel extends ChangeNotifier {
 
   /// Toggle like for a twizz
   Future<void> toggleLike(Twizz twizz, int tabIndex) async {
-    final twizzs = _twizzsByTab[tabIndex] ?? [];
-    final index = twizzs.indexWhere((t) => t.id == twizz.id);
-    if (index == -1) return;
-
-    final currentTwizz = twizzs[index];
-    final isCurrentlyLiked = currentTwizz.isLiked;
+    final isCurrentlyLiked = twizz.isLiked;
     final newLikeCount =
-        (currentTwizz.likes ?? 0) + (isCurrentlyLiked ? -1 : 1);
+        (twizz.likes ?? 0) + (isCurrentlyLiked ? -1 : 1);
 
-    // Optimistic update
-    twizzs[index] = currentTwizz.copyWith(
+    // Create updated twizz
+    final updatedTwizz = twizz.copyWith(
       isLiked: !isCurrentlyLiked,
       likes: newLikeCount,
     );
-    _twizzsByTab[tabIndex] = twizzs;
+
+    // Update twizz in all tabs (top-level or nested)
+    _updateTwizzInAllTabs(twizz.id, updatedTwizz);
+
+    // Handle Liked tab specifically
+    final likedTwizzs = _twizzsByTab[tabLiked] ?? [];
+    if (isCurrentlyLiked) {
+      // Unlike: remove from liked tab
+      likedTwizzs.removeWhere((t) => t.id == twizz.id);
+      _twizzsByTab[tabLiked] = likedTwizzs;
+    } else {
+      // Like: add to liked tab
+      if (!likedTwizzs.any((t) => t.id == twizz.id)) {
+        likedTwizzs.insert(0, updatedTwizz);
+        _twizzsByTab[tabLiked] = likedTwizzs;
+      }
+    }
+
     notifyListeners();
 
     try {
@@ -253,9 +319,21 @@ class ProfileViewModel extends ChangeNotifier {
         await _likeService.likeTwizz(twizz.id);
       }
     } catch (e) {
-      // Revert optimistic update on error
-      twizzs[index] = currentTwizz;
-      _twizzsByTab[tabIndex] = twizzs;
+      // Revert in all tabs
+      _updateTwizzInAllTabs(twizz.id, twizz);
+
+      // Revert liked tab
+      final currentLikedTwizzs = _twizzsByTab[tabLiked] ?? [];
+      if (isCurrentlyLiked) {
+        if (!currentLikedTwizzs.any((t) => t.id == twizz.id)) {
+          currentLikedTwizzs.insert(0, twizz);
+          _twizzsByTab[tabLiked] = currentLikedTwizzs;
+        }
+      } else {
+        currentLikedTwizzs.removeWhere((t) => t.id == twizz.id);
+        _twizzsByTab[tabLiked] = currentLikedTwizzs;
+      }
+
       notifyListeners();
       debugPrint('Error toggling like: $e');
     }
@@ -263,36 +341,216 @@ class ProfileViewModel extends ChangeNotifier {
 
   /// Toggle bookmark for a twizz
   Future<void> toggleBookmark(Twizz twizz, int tabIndex) async {
-    final twizzs = _twizzsByTab[tabIndex] ?? [];
-    final index = twizzs.indexWhere((t) => t.id == twizz.id);
-    if (index == -1) return;
+    final isBookmarked = twizz.isBookmarked;
 
-    final currentTwizz = twizzs[index];
-    final isCurrentlyBookmarked = currentTwizz.isBookmarked;
     final newBookmarkCount =
-        (currentTwizz.bookmarks ?? 0) +
-        (isCurrentlyBookmarked ? -1 : 1);
+        (twizz.bookmarks ?? 0) + (isBookmarked ? -1 : 1);
 
-    // Optimistic update
-    twizzs[index] = currentTwizz.copyWith(
-      isBookmarked: !isCurrentlyBookmarked,
+    // Create updated twizz
+    final updatedTwizz = twizz.copyWith(
+      isBookmarked: !isBookmarked,
       bookmarks: newBookmarkCount,
     );
-    _twizzsByTab[tabIndex] = twizzs;
+
+    // Update globally
+    _updateTwizzInAllTabs(twizz.id, updatedTwizz);
+
+    // Handle bookmarked tab
+    final bookmarkedTwizzs = _twizzsByTab[tabBookmarked] ?? [];
+    if (isBookmarked) {
+      bookmarkedTwizzs.removeWhere((t) => t.id == twizz.id);
+      _twizzsByTab[tabBookmarked] = bookmarkedTwizzs;
+    } else {
+      if (!bookmarkedTwizzs.any((t) => t.id == twizz.id)) {
+        bookmarkedTwizzs.insert(0, updatedTwizz);
+        _twizzsByTab[tabBookmarked] = bookmarkedTwizzs;
+      }
+    }
+
     notifyListeners();
 
     try {
-      if (isCurrentlyBookmarked) {
+      if (isBookmarked) {
         await _bookmarkService.unbookmarkTwizz(twizz.id);
       } else {
         await _bookmarkService.bookmarkTwizz(twizz.id);
       }
     } catch (e) {
-      // Revert optimistic update on error
-      twizzs[index] = currentTwizz;
-      _twizzsByTab[tabIndex] = twizzs;
+      // Revert globally
+      _updateTwizzInAllTabs(twizz.id, twizz);
+
+      // Revert bookmarked tab
+      final currentBookmarkedTwizzs =
+          _twizzsByTab[tabBookmarked] ?? [];
+      if (isBookmarked) {
+        if (!currentBookmarkedTwizzs.any(
+          (t) => t.id == twizz.id,
+        )) {
+          currentBookmarkedTwizzs.insert(0, twizz);
+          _twizzsByTab[tabBookmarked] = currentBookmarkedTwizzs;
+        }
+      } else {
+        currentBookmarkedTwizzs.removeWhere(
+          (t) => t.id == twizz.id,
+        );
+        _twizzsByTab[tabBookmarked] = currentBookmarkedTwizzs;
+      }
+
       notifyListeners();
       debugPrint('Error toggling bookmark: $e');
+    }
+  }
+
+  /// Create a retwizz
+  Future<bool> retwizz(Twizz twizz, int tabIndex) async {
+    try {
+      final response = await _twizzService.createRetwizz(
+        twizz.id,
+      );
+      final newRetwizzResult = response.result;
+
+      // Update the original twizz state across all tabs
+      final updatedTwizz = twizz.copyWith(
+        isRetwizzed: true,
+        userRetwizzId: newRetwizzResult.id,
+        retwizzCount: (twizz.retwizzCount ?? 0) + 1,
+      );
+      _updateTwizzInAllTabs(twizz.id, updatedTwizz);
+
+      // Add the new retwizz to the Retwizz tab if it exists
+      final newRetwizz = newRetwizzResult.copyWith(
+        parentTwizz: twizz,
+      );
+      if (_twizzsByTab.containsKey(tabRetwizz)) {
+        _twizzsByTab[tabRetwizz]!.insert(0, newRetwizz);
+      }
+
+      // Broadcast new retwizz
+      _syncService.emitCreate(newRetwizz);
+
+      notifyListeners();
+      return true;
+    } catch (e) {
+      debugPrint('Error creating retwizz: $e');
+      return false;
+    }
+  }
+
+  /// Delete a twizz
+  Future<bool> deleteTwizz(Twizz twizz) async {
+    try {
+      await _twizzService.deleteTwizz(twizz.id);
+
+      // Remove from all tabs
+      for (final entry in _twizzsByTab.entries) {
+        final tabIndex = entry.key;
+        final list = entry.value;
+        list.removeWhere((t) => t.id == twizz.id);
+        _twizzsByTab[tabIndex] = list;
+      }
+
+      // Broadcast delete
+      _syncService.emitDelete(twizz.id);
+
+      notifyListeners();
+      return true;
+    } catch (e) {
+      debugPrint('Delete error: $e');
+      return false;
+    }
+  }
+
+  /// Unretwizz (delete the retwizz post)
+  Future<bool> unretwizz(Twizz twizz, int tabIndex) async {
+    final retwizzId = twizz.userRetwizzId;
+    if (retwizzId == null) return false;
+
+    try {
+      await _twizzService.deleteTwizz(retwizzId);
+
+      // Update original twizz state across all tabs
+      _updateTwizzInAllTabs(
+        twizz.id,
+        twizz.copyWith(
+          isRetwizzed: false,
+          userRetwizzId: null,
+          retwizzCount: (twizz.retwizzCount ?? 1) - 1,
+        ),
+      );
+
+      // Remove the retwizz post itself from all tabs
+      for (final entry in _twizzsByTab.entries) {
+        final tabIndex = entry.key;
+        final list = entry.value;
+        list.removeWhere((t) => t.id == retwizzId);
+        _twizzsByTab[tabIndex] = list;
+      }
+
+      // Broadcast deletion
+      _syncService.emitDelete(retwizzId);
+
+      notifyListeners();
+      return true;
+    } catch (e) {
+      debugPrint('Error unretwizzing: $e');
+      return false;
+    }
+  }
+
+  void _updateTwizzInAllTabs(
+    String twizzId,
+    Twizz updatedTwizz, {
+    bool broadcast = true,
+  }) {
+    bool modified = false;
+    for (final entry in _twizzsByTab.entries) {
+      final tabIndex = entry.key;
+      final twizzs = entry.value;
+      for (int i = 0; i < twizzs.length; i++) {
+        // Update top-level
+        if (twizzs[i].id == twizzId) {
+          twizzs[i] = updatedTwizz;
+          modified = true;
+
+          if (broadcast) {
+            _syncService.emitUpdate(twizzs[i]);
+          }
+        }
+        // Update nested parentTwizz
+        if (twizzs[i].parentTwizz?.id == twizzId) {
+          twizzs[i] = twizzs[i].copyWith(
+            parentTwizz: updatedTwizz,
+          );
+          modified = true;
+
+          if (broadcast) {
+            _syncService.emitUpdate(twizzs[i].parentTwizz!);
+          }
+        }
+      }
+      _twizzsByTab[tabIndex] = twizzs;
+    }
+
+    if (modified) {
+      notifyListeners();
+    }
+  }
+
+  /// Add a new twizz to the profile
+  void addTwizz(Twizz twizz) {
+    final twizzs = _twizzsByTab[tabTwizz] ?? [];
+    if (!twizzs.any((t) => t.id == twizz.id)) {
+      twizzs.insert(0, twizz);
+      _twizzsByTab[tabTwizz] = twizzs;
+
+      _totalPageByTab[tabTwizz] = 1;
+      _currentPageByTab[tabTwizz] = 1;
+      _isLoadingByTab[tabTwizz] = false;
+      _isLoadingMoreByTab[tabTwizz] = false;
+      _errorByTab[tabTwizz] = null;
+
+      _syncService.emitCreate(twizz);
+      notifyListeners();
     }
   }
 

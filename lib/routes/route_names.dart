@@ -18,6 +18,10 @@ class RouteNames {
 
   // Profile Routes
   static const String myProfile = '/my-profile';
+  static const String editProfile = '/edit-profile';
+  static const String changePassword = '/change-password';
+  static const String userProfile = '/user-profile';
+  static const String followerList = '/follower-list';
 
   // Twizz Routes
   static const String createTwizz = '/create-twizz';

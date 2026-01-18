@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:twizzy_app/viewmodels/newsfeed/newsfeed_viewmodel.dart';
+import 'package:twizzy_app/viewmodels/profile/profile_viewmodel.dart';
+import 'package:twizzy_app/views/profile/follower_list_screen.dart';
 import '../../viewmodels/auth/auth_viewmodel.dart';
 import '../../routes/route_names.dart';
 import '../../core/utils/number_formatter.dart';
@@ -147,22 +149,44 @@ class AppDrawer extends StatelessWidget {
                                       ),
                                 ),
                                 const SizedBox(width: 4),
-                                Text(
-                                  'Đang theo dõi',
-                                  style: themeData
-                                      .textTheme
-                                      .titleSmall
-                                      ?.copyWith(
-                                        fontSize: 13,
-                                        fontWeight:
-                                            FontWeight.normal,
-                                        color: themeData
-                                            .colorScheme
-                                            .onSurface
-                                            .withValues(
-                                              alpha: 0.6,
+                                InkWell(
+                                  onTap:
+                                      () => Navigator.pushNamed(
+                                        context,
+                                        RouteNames.followerList,
+                                        arguments:
+                                            FollowerListScreenArgs(
+                                              userId: user!.id,
+                                              username:
+                                                  user.name,
+                                              initialTab: 1,
                                             ),
-                                      ),
+                                      ).then((_) {
+                                        if (context.mounted) {
+                                          context
+                                              .read<
+                                                AuthViewModel
+                                              >()
+                                              .getMe();
+                                        }
+                                      }),
+                                  child: Text(
+                                    'Đang theo dõi',
+                                    style: themeData
+                                        .textTheme
+                                        .titleSmall
+                                        ?.copyWith(
+                                          fontSize: 13,
+                                          fontWeight:
+                                              FontWeight.normal,
+                                          color: themeData
+                                              .colorScheme
+                                              .onSurface
+                                              .withValues(
+                                                alpha: 0.6,
+                                              ),
+                                        ),
+                                  ),
                                 ),
                               ],
                             ),
@@ -185,22 +209,44 @@ class AppDrawer extends StatelessWidget {
                                       ),
                                 ),
                                 const SizedBox(width: 4),
-                                Text(
-                                  'Người theo dõi',
-                                  style: themeData
-                                      .textTheme
-                                      .titleSmall
-                                      ?.copyWith(
-                                        fontSize: 13,
-                                        fontWeight:
-                                            FontWeight.normal,
-                                        color: themeData
-                                            .colorScheme
-                                            .onSurface
-                                            .withValues(
-                                              alpha: 0.6,
+                                InkWell(
+                                  onTap:
+                                      () => Navigator.pushNamed(
+                                        context,
+                                        RouteNames.followerList,
+                                        arguments:
+                                            FollowerListScreenArgs(
+                                              userId: user!.id,
+                                              username:
+                                                  user.name,
+                                              initialTab: 0,
                                             ),
-                                      ),
+                                      ).then((_) {
+                                        if (context.mounted) {
+                                          context
+                                              .read<
+                                                AuthViewModel
+                                              >()
+                                              .getMe();
+                                        }
+                                      }),
+                                  child: Text(
+                                    'Người theo dõi',
+                                    style: themeData
+                                        .textTheme
+                                        .titleSmall
+                                        ?.copyWith(
+                                          fontSize: 13,
+                                          fontWeight:
+                                              FontWeight.normal,
+                                          color: themeData
+                                              .colorScheme
+                                              .onSurface
+                                              .withValues(
+                                                alpha: 0.6,
+                                              ),
+                                        ),
+                                  ),
                                 ),
                               ],
                             ),
@@ -232,20 +278,13 @@ class AppDrawer extends StatelessWidget {
                   ),
                   _buildMenuItem(
                     context,
-                    icon: Icons.favorite,
-                    title: 'Đã thích',
+                    icon: Icons.lock,
+                    title: 'Đổi mật khẩu',
                     onTap: () {
                       Navigator.pop(context);
-                      // TODO: Navigate to liked posts screen
-                    },
-                  ),
-                  _buildMenuItem(
-                    context,
-                    icon: Icons.bookmark,
-                    title: 'Dấu trang',
-                    onTap: () {
-                      Navigator.pop(context);
-                      // TODO: Navigate to bookmarks screen
+                      Navigator.of(
+                        context,
+                      ).pushNamed(RouteNames.changePassword);
                     },
                   ),
 
@@ -302,6 +341,12 @@ class AppDrawer extends StatelessWidget {
                                             NewsFeedViewModel
                                           >();
                                   newsFeedViewModel.clear();
+                                  final profileViewModel =
+                                      context
+                                          .read<
+                                            ProfileViewModel
+                                          >();
+                                  profileViewModel.clear();
                                   // Logout
                                   await authViewModel.logout();
                                   if (context.mounted) {

@@ -11,15 +11,18 @@ class TwizzList extends StatelessWidget {
   final bool hasMore;
   final VoidCallback? onLoadMore;
   final Future<void> Function()? onRefresh;
-  final Function(Twizz)? onTwizzTap;
-  final Function(Twizz)? onUserTap;
-  final Function(Twizz)? onLike;
-  final Function(Twizz)? onComment;
-  final Function(Twizz)? onRetwizz;
-  final Function(Twizz)? onBookmark;
+  final void Function(Twizz)? onTwizzTap;
+  final void Function(Twizz)? onUserTap;
+  final void Function(Twizz)? onLike;
+  final void Function(Twizz)? onComment;
+  final void Function(Twizz)? onRetwizz;
+  final void Function(Twizz)? onQuote;
+  final void Function(Twizz)? onBookmark;
+  final void Function(Twizz)? onDelete;
   final Widget? emptyWidget;
   final ScrollController? scrollController;
   final EdgeInsetsGeometry? padding;
+  final String? currentUserId; // For retwizz display
 
   const TwizzList({
     super.key,
@@ -33,25 +36,40 @@ class TwizzList extends StatelessWidget {
     this.onLike,
     this.onComment,
     this.onRetwizz,
+    this.onQuote,
     this.onBookmark,
+    this.onDelete,
     this.emptyWidget,
     this.scrollController,
     this.padding,
+    this.currentUserId,
   });
 
   @override
   Widget build(BuildContext context) {
-    // Empty state
-    if (twizzs.isEmpty && !isLoading) {
-      return emptyWidget ?? _buildDefaultEmpty(context);
-    }
-
     // List with refresh
     if (onRefresh != null) {
       return RefreshIndicator(
         onRefresh: onRefresh!,
-        child: _buildList(context),
+        child:
+            twizzs.isEmpty && !isLoading
+                ? SingleChildScrollView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  child: SizedBox(
+                    height:
+                        MediaQuery.of(context).size.height * 0.7,
+                    child:
+                        emptyWidget ??
+                        _buildDefaultEmpty(context),
+                  ),
+                )
+                : _buildList(context),
       );
+    }
+
+    // Empty state without refresh
+    if (twizzs.isEmpty && !isLoading) {
+      return emptyWidget ?? _buildDefaultEmpty(context);
     }
 
     return _buildList(context);
@@ -71,6 +89,7 @@ class TwizzList extends StatelessWidget {
       },
       child: ListView.builder(
         controller: scrollController,
+        physics: const AlwaysScrollableScrollPhysics(),
         padding: padding,
         itemCount:
             twizzs.length + (isLoading || hasMore ? 1 : 0),
@@ -83,6 +102,7 @@ class TwizzList extends StatelessWidget {
           final twizz = twizzs[index];
           return TwizzItem(
             twizz: twizz,
+            currentUserId: currentUserId,
             onTap:
                 onTwizzTap != null
                     ? () => onTwizzTap!(twizz)
@@ -91,19 +111,12 @@ class TwizzList extends StatelessWidget {
                 onUserTap != null
                     ? () => onUserTap!(twizz)
                     : null,
-            onLike: onLike != null ? () => onLike!(twizz) : null,
-            onComment:
-                onComment != null
-                    ? () => onComment!(twizz)
-                    : null,
-            onRetwizz:
-                onRetwizz != null
-                    ? () => onRetwizz!(twizz)
-                    : null,
-            onBookmark:
-                onBookmark != null
-                    ? () => onBookmark!(twizz)
-                    : null,
+            onLike: onLike,
+            onComment: onComment,
+            onRetwizz: onRetwizz,
+            onQuote: onQuote,
+            onBookmark: onBookmark,
+            onDelete: onDelete,
           );
         },
       ),
@@ -170,13 +183,16 @@ class SliverTwizzList extends StatelessWidget {
   final bool isLoading;
   final bool hasMore;
   final VoidCallback? onLoadMore;
-  final Function(Twizz)? onTwizzTap;
-  final Function(Twizz)? onUserTap;
-  final Function(Twizz)? onLike;
-  final Function(Twizz)? onComment;
-  final Function(Twizz)? onRetwizz;
-  final Function(Twizz)? onBookmark;
+  final void Function(Twizz)? onTwizzTap;
+  final void Function(Twizz)? onUserTap;
+  final void Function(Twizz)? onLike;
+  final void Function(Twizz)? onComment;
+  final void Function(Twizz)? onRetwizz;
+  final void Function(Twizz)? onQuote;
+  final void Function(Twizz)? onBookmark;
+  final void Function(Twizz)? onDelete;
   final Widget? emptyWidget;
+  final String? currentUserId; // For retwizz display
 
   const SliverTwizzList({
     super.key,
@@ -189,8 +205,11 @@ class SliverTwizzList extends StatelessWidget {
     this.onLike,
     this.onComment,
     this.onRetwizz,
+    this.onQuote,
     this.onBookmark,
+    this.onDelete,
     this.emptyWidget,
+    this.currentUserId,
   });
 
   @override
@@ -214,6 +233,7 @@ class SliverTwizzList extends StatelessWidget {
           final twizz = twizzs[index];
           return TwizzItem(
             twizz: twizz,
+            currentUserId: currentUserId,
             onTap:
                 onTwizzTap != null
                     ? () => onTwizzTap!(twizz)
@@ -222,19 +242,12 @@ class SliverTwizzList extends StatelessWidget {
                 onUserTap != null
                     ? () => onUserTap!(twizz)
                     : null,
-            onLike: onLike != null ? () => onLike!(twizz) : null,
-            onComment:
-                onComment != null
-                    ? () => onComment!(twizz)
-                    : null,
-            onRetwizz:
-                onRetwizz != null
-                    ? () => onRetwizz!(twizz)
-                    : null,
-            onBookmark:
-                onBookmark != null
-                    ? () => onBookmark!(twizz)
-                    : null,
+            onLike: onLike,
+            onComment: onComment,
+            onRetwizz: onRetwizz,
+            onQuote: onQuote,
+            onBookmark: onBookmark,
+            onDelete: onDelete,
           );
         },
         childCount:

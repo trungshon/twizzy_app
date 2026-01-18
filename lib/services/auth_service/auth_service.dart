@@ -195,6 +195,28 @@ class AuthService {
     }
   }
 
+  /// Update current user profile
+  Future<UpdateMeResponse> updateMe(
+    UpdateProfileRequest request,
+  ) async {
+    try {
+      final response = await _apiClient.patch(
+        ApiConstants.updateMe,
+        body: request.toJson(),
+        includeAuth: true,
+      );
+
+      return UpdateMeResponse.fromJson(response);
+    } catch (e) {
+      if (e is ApiErrorResponse) {
+        rethrow;
+      }
+      throw ApiErrorResponse(
+        message: 'Lỗi cập nhật thông tin: ${e.toString()}',
+      );
+    }
+  }
+
   /// Forgot password - send OTP to email
   Future<ForgotPasswordResponse> forgotPassword(
     String email,
@@ -327,6 +349,131 @@ class AuthService {
       }
       throw ApiErrorResponse(
         message: 'Lỗi đăng nhập bằng Google: ${e.toString()}',
+      );
+    }
+  }
+
+  /// Change Password
+  Future<void> changePassword(
+    ChangePasswordRequest request,
+  ) async {
+    try {
+      await _apiClient.put(
+        ApiConstants.changePassword,
+        body: request.toJson(),
+        includeAuth: true,
+      );
+    } catch (e) {
+      if (e is ApiErrorResponse) {
+        rethrow;
+      }
+      throw ApiErrorResponse(
+        message: 'Lỗi đổi mật khẩu: ${e.toString()}',
+      );
+    }
+  }
+
+  /// Get user profile by username
+  Future<User> getUserProfile(String username) async {
+    try {
+      final response = await _apiClient.get(
+        ApiConstants.getUserProfile(username),
+        includeAuth: true,
+      );
+
+      final result = response['result'] as Map<String, dynamic>;
+      return User.fromJson(result);
+    } catch (e) {
+      if (e is ApiErrorResponse) {
+        rethrow;
+      }
+      throw ApiErrorResponse(
+        message: 'Lỗi lấy thông tin người dùng: ${e.toString()}',
+      );
+    }
+  }
+
+  /// Follow a user
+  Future<void> followUser(String userId) async {
+    try {
+      await _apiClient.post(
+        ApiConstants.followUser,
+        body: {'followed_user_id': userId},
+        includeAuth: true,
+      );
+    } catch (e) {
+      if (e is ApiErrorResponse) {
+        rethrow;
+      }
+      throw ApiErrorResponse(
+        message: 'Lỗi theo dõi người dùng: ${e.toString()}',
+      );
+    }
+  }
+
+  /// Unfollow a user
+  Future<void> unfollowUser(String userId) async {
+    try {
+      await _apiClient.delete(
+        ApiConstants.unfollowUser(userId),
+        includeAuth: true,
+      );
+    } catch (e) {
+      if (e is ApiErrorResponse) {
+        rethrow;
+      }
+      throw ApiErrorResponse(
+        message: 'Lỗi bỏ theo dõi người dùng: ${e.toString()}',
+      );
+    }
+  }
+
+  /// Get followers list
+  Future<List<User>> getFollowers(
+    String userId, {
+    int page = 1,
+    int limit = 10,
+  }) async {
+    try {
+      final response = await _apiClient.get(
+        '${ApiConstants.getFollowers(userId)}?page=$page&limit=$limit',
+        includeAuth: true,
+      );
+
+      final result = response['result'] as List;
+      return result.map((e) => User.fromJson(e)).toList();
+    } catch (e) {
+      if (e is ApiErrorResponse) {
+        rethrow;
+      }
+      throw ApiErrorResponse(
+        message:
+            'Lỗi lấy danh sách người theo dõi: ${e.toString()}',
+      );
+    }
+  }
+
+  /// Get following list
+  Future<List<User>> getFollowing(
+    String userId, {
+    int page = 1,
+    int limit = 10,
+  }) async {
+    try {
+      final response = await _apiClient.get(
+        '${ApiConstants.getFollowing(userId)}?page=$page&limit=$limit',
+        includeAuth: true,
+      );
+
+      final result = response['result'] as List;
+      return result.map((e) => User.fromJson(e)).toList();
+    } catch (e) {
+      if (e is ApiErrorResponse) {
+        rethrow;
+      }
+      throw ApiErrorResponse(
+        message:
+            'Lỗi lấy danh sách đang theo dõi: ${e.toString()}',
       );
     }
   }

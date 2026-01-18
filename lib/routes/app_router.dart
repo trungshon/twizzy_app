@@ -8,8 +8,12 @@ import '../views/auth/verify_email_screen.dart';
 import '../views/auth/forgot_password_screen.dart';
 import '../views/auth/verify_forgot_password_screen.dart';
 import '../views/auth/reset_password_screen.dart';
+import '../views/auth/change_password_screen.dart';
 import '../views/main/main_screen.dart';
 import '../views/profile/my_profile_screen.dart';
+import '../views/profile/edit_profile_screen.dart';
+import '../views/profile/user_profile_screen.dart';
+import '../views/profile/follower_list_screen.dart';
 import '../views/twizz/create_twizz_screen.dart';
 import '../views/test/video_test_screen.dart';
 
@@ -105,6 +109,11 @@ class AppRouter {
           'Email and OTP are required for ResetPasswordScreen',
         );
 
+      case RouteNames.changePassword:
+        return MaterialPageRoute(
+          builder: (_) => const ChangePasswordScreen(),
+        );
+
       // Main Routes
       case RouteNames.home:
         return MaterialPageRoute(
@@ -115,6 +124,39 @@ class AppRouter {
       case RouteNames.myProfile:
         return MaterialPageRoute(
           builder: (_) => const MyProfileScreen(),
+        );
+
+      case RouteNames.editProfile:
+        return MaterialPageRoute(
+          builder: (_) => const EditProfileScreen(),
+        );
+
+      case RouteNames.userProfile:
+        if (args is String) {
+          return MaterialPageRoute(
+            builder: (_) => UserProfileScreen(username: args),
+          );
+        } else if (args is Map<String, dynamic> &&
+            args.containsKey('username')) {
+          return MaterialPageRoute(
+            builder:
+                (_) => UserProfileScreen(
+                  username: args['username'] as String,
+                ),
+          );
+        }
+        return _errorRoute(
+          'Username is required for UserProfileScreen',
+        );
+
+      case RouteNames.followerList:
+        if (args is FollowerListScreenArgs) {
+          return MaterialPageRoute(
+            builder: (_) => FollowerListScreen(args: args),
+          );
+        }
+        return _errorRoute(
+          'Invalid args for FollowerListScreen',
         );
 
       // Twizz Routes
