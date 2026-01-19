@@ -4,6 +4,7 @@ import '../../models/auth/auth_models.dart';
 import '../../models/twizz/twizz_models.dart';
 import '../../services/twizz_service/twizz_service.dart';
 import '../../services/search_service/search_service.dart';
+import '../../services/twizz_service/twizz_sync_service.dart';
 
 /// Create Twizz ViewModel
 ///
@@ -11,8 +12,13 @@ import '../../services/search_service/search_service.dart';
 class CreateTwizzViewModel extends ChangeNotifier {
   final TwizzService _twizzService;
   final SearchService _searchService;
+  final TwizzSyncService _syncService;
 
-  CreateTwizzViewModel(this._twizzService, this._searchService);
+  CreateTwizzViewModel(
+    this._twizzService,
+    this._searchService,
+    this._syncService,
+  );
 
   // Media limits (từ backend)
   static const int maxImages = 4;
@@ -349,6 +355,9 @@ class CreateTwizzViewModel extends ChangeNotifier {
 
       // Reset state
       _reset();
+
+      // Emit sync event
+      _syncService.emitCreate(response.result);
 
       return response.result;
     } catch (e) {

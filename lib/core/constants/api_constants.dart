@@ -53,6 +53,17 @@ class ApiConstants {
       '/users/verify-forgot-password';
   static const String resetPassword = '/users/reset-password';
   static const String getMe = '/users/me';
+  static const String updateMe = '/users/me';
+  static const String changePassword = '/users/change-password';
+  static String getUserProfile(String username) =>
+      '/users/$username';
+  static const String followUser = '/users/follow';
+  static String unfollowUser(String userId) =>
+      '/users/follow/$userId';
+  static String getFollowers(String userId) =>
+      '/users/$userId/followers';
+  static String getFollowing(String userId) =>
+      '/users/$userId/following';
 
   // Google OAuth
   static const String googleOAuthMobile =
@@ -61,6 +72,7 @@ class ApiConstants {
   // Twizz
   static const String createTwizz = '/twizzs';
   static const String getNewFeeds = '/twizzs';
+  static const String deleteTwizz = '/twizzs';
   static String getUserTwizzs(String userId) =>
       '/twizzs/users/$userId/twizzs';
 

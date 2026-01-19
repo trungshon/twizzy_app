@@ -101,6 +101,10 @@ class Twizz {
   final int? quoteCount;
   final bool isLiked;
   final bool isBookmarked;
+  final bool isRetwizzed;
+  final String? userRetwizzId;
+  final Twizz?
+  parentTwizz; // Parent twizz for retwizz/quote/comment
 
   Twizz({
     required this.id,
@@ -124,6 +128,9 @@ class Twizz {
     this.quoteCount,
     this.isLiked = false,
     this.isBookmarked = false,
+    this.isRetwizzed = false,
+    this.userRetwizzId,
+    this.parentTwizz,
   });
 
   factory Twizz.fromJson(Map<String, dynamic> json) {
@@ -160,6 +167,14 @@ class Twizz {
       quoteCount: json['quote_count'] as int?,
       isLiked: json['is_liked'] as bool? ?? false,
       isBookmarked: json['is_bookmarked'] as bool? ?? false,
+      isRetwizzed: json['is_retwizzed'] as bool? ?? false,
+      userRetwizzId: json['user_retwizz_id'] as String?,
+      parentTwizz:
+          json['parent_twizz'] != null
+              ? Twizz.fromJson(
+                json['parent_twizz'] as Map<String, dynamic>,
+              )
+              : null,
     );
   }
 
@@ -169,6 +184,14 @@ class Twizz {
     bool? isBookmarked,
     int? likes,
     int? bookmarks,
+    int? retwizzCount,
+    int? commentCount,
+    int? quoteCount,
+    bool? isRetwizzed,
+    String? userRetwizzId,
+    Twizz? parentTwizz,
+    int? userViews,
+    int? guestViews,
   }) {
     return Twizz(
       id: id,
@@ -180,18 +203,21 @@ class Twizz {
       hashtags: hashtags,
       mentions: mentions,
       medias: medias,
-      guestViews: guestViews,
-      userViews: userViews,
+      guestViews: guestViews ?? this.guestViews,
+      userViews: userViews ?? this.userViews,
       createdAt: createdAt,
       updatedAt: updatedAt,
       user: user,
       bookmarks: bookmarks ?? this.bookmarks,
       likes: likes ?? this.likes,
-      retwizzCount: retwizzCount,
-      commentCount: commentCount,
-      quoteCount: quoteCount,
+      retwizzCount: retwizzCount ?? this.retwizzCount,
+      commentCount: commentCount ?? this.commentCount,
+      quoteCount: quoteCount ?? this.quoteCount,
       isLiked: isLiked ?? this.isLiked,
       isBookmarked: isBookmarked ?? this.isBookmarked,
+      isRetwizzed: isRetwizzed ?? this.isRetwizzed,
+      userRetwizzId: userRetwizzId ?? this.userRetwizzId,
+      parentTwizz: parentTwizz ?? this.parentTwizz,
     );
   }
 }

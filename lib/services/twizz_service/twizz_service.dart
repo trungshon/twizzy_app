@@ -83,6 +83,19 @@ class TwizzService {
     }
   }
 
+  /// Create a retwizz (repost)
+  Future<CreateTwizzResponse> createRetwizz(
+    String parentTwizzId,
+  ) async {
+    final request = CreateTwizzRequest(
+      type: TwizzType.retwizz,
+      audience: TwizzAudience.everyone,
+      content: '',
+      parentId: parentTwizzId,
+    );
+    return createTwizz(request);
+  }
+
   /// Upload images (with auto refresh token)
   Future<List<Media>> uploadImages(List<File> files) async {
     try {
@@ -141,6 +154,22 @@ class TwizzService {
       }
       throw ApiErrorResponse(
         message: 'Lỗi tải video: ${e.toString()}',
+      );
+    }
+  }
+
+  /// Delete a twizz
+  Future<void> deleteTwizz(String twizzId) async {
+    try {
+      await _apiClient.delete(
+        '${ApiConstants.deleteTwizz}/$twizzId',
+      );
+    } catch (e) {
+      if (e is ApiErrorResponse) {
+        rethrow;
+      }
+      throw ApiErrorResponse(
+        message: 'Lỗi xóa bài: ${e.toString()}',
       );
     }
   }

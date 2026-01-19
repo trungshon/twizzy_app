@@ -310,6 +310,7 @@ class User {
   final String? coverPhoto;
   final int? followersCount;
   final int? followingCount;
+  final bool? isFollowing;
 
   User({
     required this.id,
@@ -327,6 +328,7 @@ class User {
     this.coverPhoto,
     this.followersCount,
     this.followingCount,
+    this.isFollowing,
   });
 
   factory User.fromJson(Map<String, dynamic> json) {
@@ -430,6 +432,7 @@ class User {
       coverPhoto: safeString(json['cover_photo']),
       followersCount: json['followers_count'] as int?,
       followingCount: json['following_count'] as int?,
+      isFollowing: json['is_following'] as bool?,
     );
   }
 }
@@ -541,4 +544,79 @@ class ResetPasswordResponse {
       message: json['message'] as String,
     );
   }
+}
+
+/// Update Profile Request Model
+class UpdateProfileRequest {
+  final String? name;
+  final String? dateOfBirth; // ISO 8601 format: YYYY-MM-DD
+  final String? bio;
+  final String? location;
+  final String? website;
+  final String? username;
+  final String? avatar;
+  final String? coverPhoto;
+
+  UpdateProfileRequest({
+    this.name,
+    this.dateOfBirth,
+    this.bio,
+    this.location,
+    this.website,
+    this.username,
+    this.avatar,
+    this.coverPhoto,
+  });
+
+  Map<String, dynamic> toJson() {
+    final Map<String, dynamic> json = {};
+    if (name != null) json['name'] = name;
+    if (dateOfBirth != null) json['date_of_birth'] = dateOfBirth;
+    if (bio != null) json['bio'] = bio;
+    if (location != null) json['location'] = location;
+    if (website != null) json['website'] = website;
+    if (username != null) json['username'] = username;
+    if (avatar != null) json['avatar'] = avatar;
+    if (coverPhoto != null) json['cover_photo'] = coverPhoto;
+    return json;
+  }
+}
+
+/// Update Me Response Model
+class UpdateMeResponse {
+  final String message;
+  final User result;
+
+  UpdateMeResponse({
+    required this.message,
+    required this.result,
+  });
+
+  factory UpdateMeResponse.fromJson(Map<String, dynamic> json) {
+    return UpdateMeResponse(
+      message: json['message'] as String,
+      result: User.fromJson(
+        json['result'] as Map<String, dynamic>,
+      ),
+    );
+  }
+}
+
+/// Change Password Request Model
+class ChangePasswordRequest {
+  final String oldPassword;
+  final String password;
+  final String confirmPassword;
+
+  ChangePasswordRequest({
+    required this.oldPassword,
+    required this.password,
+    required this.confirmPassword,
+  });
+
+  Map<String, dynamic> toJson() => {
+    'old_password': oldPassword,
+    'password': password,
+    'confirm_password': confirmPassword,
+  };
 }

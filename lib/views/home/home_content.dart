@@ -89,7 +89,7 @@ class HomeContentState extends State<HomeContent>
                                   backgroundColor:
                                       themeData
                                           .colorScheme
-                                          .secondary,
+                                          .primary,
                                   child: Text(
                                     name.isNotEmpty
                                         ? name[0].toUpperCase()
@@ -101,7 +101,7 @@ class HomeContentState extends State<HomeContent>
                                       color:
                                           themeData
                                               .colorScheme
-                                              .onSecondary,
+                                              .onPrimary,
                                     ),
                                   ),
                                 ),
@@ -123,6 +123,9 @@ class HomeContentState extends State<HomeContent>
               Tab(text: 'Đề xuất'),
               Tab(text: 'Đang theo dõi'),
             ],
+            labelStyle: themeData.textTheme.titleSmall?.copyWith(
+              fontWeight: FontWeight.bold,
+            ),
             indicatorColor: themeData.colorScheme.primary,
             labelColor: themeData.colorScheme.onSurface,
             unselectedLabelColor: themeData.colorScheme.onSurface

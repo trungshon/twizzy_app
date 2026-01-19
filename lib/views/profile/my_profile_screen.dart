@@ -5,6 +5,8 @@ import '../../viewmodels/auth/auth_viewmodel.dart';
 import '../../viewmodels/profile/profile_viewmodel.dart';
 import '../../core/utils/number_formatter.dart';
 import '../../routes/route_names.dart';
+import '../../models/twizz/twizz_models.dart';
+import 'follower_list_screen.dart';
 
 /// My Profile Screen
 ///
@@ -51,6 +53,7 @@ class _MyProfileScreenState extends State<MyProfileScreen>
         profileViewModel.loadTwizzs(
           userId: userId,
           tabIndex: ProfileViewModel.tabTwizz,
+          refresh: true,
         );
       }
     });
@@ -65,6 +68,7 @@ class _MyProfileScreenState extends State<MyProfileScreen>
         profileViewModel.loadTwizzs(
           userId: userId,
           tabIndex: _tabController.index,
+          refresh: true,
         );
       }
     }
@@ -112,6 +116,8 @@ class _MyProfileScreenState extends State<MyProfileScreen>
         final joinDate = user?.createdAt;
         final coverPhoto = user?.coverPhoto;
         final avatar = user?.avatar;
+        final location = user?.location;
+        final website = user?.website;
 
         return Scaffold(
           floatingActionButton: FloatingActionButton(
@@ -184,7 +190,33 @@ class _MyProfileScreenState extends State<MyProfileScreen>
                         ),
                       ),
                       onPressed: () {
-                        // TODO: Navigate to edit profile
+                        Navigator.pushNamed(
+                          context,
+                          RouteNames.editProfile,
+                        ).then((updated) {
+                          if (updated == true && mounted) {
+                            // Refresh profile data
+                            final authViewModel =
+                                this.context
+                                    .read<AuthViewModel>();
+                            final profileViewModel =
+                                this.context
+                                    .read<ProfileViewModel>();
+                            final userId =
+                                authViewModel.currentUser?.id;
+
+                            authViewModel.getMe();
+
+                            // Reload current tab twizzs
+                            if (userId != null) {
+                              profileViewModel.loadTwizzs(
+                                userId: userId,
+                                tabIndex: _tabController.index,
+                                refresh: true,
+                              );
+                            }
+                          }
+                        });
                       },
                     ),
                   ],
@@ -364,6 +396,9 @@ class _MyProfileScreenState extends State<MyProfileScreen>
                                   const SizedBox(height: 4),
                                   // Username
                                   Text(
+                                    maxLines: 1,
+                                    overflow:
+                                        TextOverflow.ellipsis,
                                     username.isNotEmpty
                                         ? '@$username'
                                         : email,
@@ -389,12 +424,78 @@ class _MyProfileScreenState extends State<MyProfileScreen>
                         if (bio.isNotEmpty) ...[
                           const SizedBox(height: 12),
                           Text(
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                             bio,
                             style:
                                 themeData.textTheme.bodyMedium,
                           ),
                         ],
                         const SizedBox(height: 12),
+                        // Location and Website
+                        Wrap(
+                          spacing: 16,
+                          runSpacing: 8,
+                          children: [
+                            // Location
+                            if (location != null &&
+                                location.isNotEmpty)
+                              Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    Icons.location_on_outlined,
+                                    size: 16,
+                                    color: themeData
+                                        .colorScheme
+                                        .onSurface
+                                        .withValues(alpha: 0.6),
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    location,
+                                    style: themeData
+                                        .textTheme
+                                        .bodyMedium
+                                        ?.copyWith(
+                                          color: themeData
+                                              .colorScheme
+                                              .onSurface
+                                              .withValues(
+                                                alpha: 0.6,
+                                              ),
+                                        ),
+                                  ),
+                                ],
+                              ),
+                            // Website
+                            if (website != null &&
+                                website.isNotEmpty)
+                              Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const Icon(
+                                    Icons.link,
+                                    size: 16,
+                                    color: Color(0xFF1DA1F2),
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    website,
+                                    style: themeData
+                                        .textTheme
+                                        .bodyMedium
+                                        ?.copyWith(
+                                          color: const Color(
+                                            0xFF1DA1F2,
+                                          ),
+                                        ),
+                                  ),
+                                ],
+                              ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
                         // Join Date
                         Row(
                           children: [
@@ -419,15 +520,6 @@ class _MyProfileScreenState extends State<MyProfileScreen>
                                         .withValues(alpha: 0.6),
                                   ),
                             ),
-                            const SizedBox(width: 4),
-                            Icon(
-                              Icons.chevron_right,
-                              size: 16,
-                              color: themeData
-                                  .colorScheme
-                                  .onSurface
-                                  .withValues(alpha: 0.6),
-                            ),
                           ],
                         ),
                         const SizedBox(height: 12),
@@ -438,12 +530,42 @@ class _MyProfileScreenState extends State<MyProfileScreen>
                               context,
                               count: followingCount,
                               label: 'Đang theo dõi',
+                              onTap:
+                                  () => Navigator.pushNamed(
+                                    context,
+                                    RouteNames.followerList,
+                                    arguments:
+                                        FollowerListScreenArgs(
+                                          userId: user!.id,
+                                          username: user.name,
+                                          initialTab: 1,
+                                        ),
+                                  ).then((_) {
+                                    if (context.mounted) {
+                                      context.read<AuthViewModel>().getMe();
+                                    }
+                                  }),
                             ),
                             const SizedBox(width: 16),
                             _buildStatItem(
                               context,
                               count: followersCount,
                               label: 'Người theo dõi',
+                              onTap:
+                                  () => Navigator.pushNamed(
+                                    context,
+                                    RouteNames.followerList,
+                                    arguments:
+                                        FollowerListScreenArgs(
+                                          userId: user!.id,
+                                          username: user.name,
+                                          initialTab: 0,
+                                        ),
+                                  ).then((_) {
+                                    if (context.mounted) {
+                                      context.read<AuthViewModel>().getMe();
+                                    }
+                                  }),
                             ),
                           ],
                         ),
@@ -509,26 +631,30 @@ class _MyProfileScreenState extends State<MyProfileScreen>
     BuildContext context, {
     required int count,
     required String label,
+    VoidCallback? onTap,
   }) {
     final themeData = Theme.of(context);
-    return Row(
-      children: [
-        Text(
-          NumberFormatter.formatCount(count),
-          style: themeData.textTheme.bodyMedium?.copyWith(
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        const SizedBox(width: 4),
-        Text(
-          label,
-          style: themeData.textTheme.bodyMedium?.copyWith(
-            color: themeData.colorScheme.onSurface.withValues(
-              alpha: 0.6,
+    return InkWell(
+      onTap: onTap,
+      child: Row(
+        children: [
+          Text(
+            NumberFormatter.formatCount(count),
+            style: themeData.textTheme.bodyMedium?.copyWith(
+              fontWeight: FontWeight.bold,
             ),
           ),
-        ),
-      ],
+          const SizedBox(width: 4),
+          Text(
+            label,
+            style: themeData.textTheme.bodyMedium?.copyWith(
+              color: themeData.colorScheme.onSurface.withValues(
+                alpha: 0.6,
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -587,6 +713,7 @@ class _MyProfileScreenState extends State<MyProfileScreen>
           twizzs: twizzs,
           isLoading: isLoadingMore,
           hasMore: hasMore,
+          currentUserId: userId,
           onLoadMore:
               () => profileViewModel.loadMore(
                 userId: userId,
@@ -607,6 +734,16 @@ class _MyProfileScreenState extends State<MyProfileScreen>
                 twizz,
                 ProfileViewModel.tabTwizz,
               ),
+          onRetwizz: (twizz) {
+            _handleRetwizz(
+              context,
+              profileViewModel,
+              twizz,
+              ProfileViewModel.tabTwizz,
+            );
+          },
+          onDelete:
+              (twizz) => profileViewModel.deleteTwizz(twizz),
           emptyWidget: _buildEmptyTab(
             context,
             icon: Icons.article_outlined,
@@ -672,6 +809,7 @@ class _MyProfileScreenState extends State<MyProfileScreen>
           twizzs: twizzs,
           isLoading: isLoadingMore,
           hasMore: hasMore,
+          currentUserId: userId,
           onLoadMore:
               () => profileViewModel.loadMore(
                 userId: userId,
@@ -692,6 +830,16 @@ class _MyProfileScreenState extends State<MyProfileScreen>
                 twizz,
                 ProfileViewModel.tabRetwizz,
               ),
+          onRetwizz: (twizz) {
+            _handleRetwizz(
+              context,
+              profileViewModel,
+              twizz,
+              ProfileViewModel.tabRetwizz,
+            );
+          },
+          onDelete:
+              (twizz) => profileViewModel.deleteTwizz(twizz),
           emptyWidget: _buildEmptyTab(
             context,
             icon: Icons.repeat,
@@ -757,6 +905,7 @@ class _MyProfileScreenState extends State<MyProfileScreen>
           twizzs: twizzs,
           isLoading: isLoadingMore,
           hasMore: hasMore,
+          currentUserId: userId,
           onLoadMore:
               () => profileViewModel.loadMore(
                 userId: userId,
@@ -777,6 +926,16 @@ class _MyProfileScreenState extends State<MyProfileScreen>
                 twizz,
                 ProfileViewModel.tabQuoteTwizz,
               ),
+          onRetwizz: (twizz) {
+            _handleRetwizz(
+              context,
+              profileViewModel,
+              twizz,
+              ProfileViewModel.tabQuoteTwizz,
+            );
+          },
+          onDelete:
+              (twizz) => profileViewModel.deleteTwizz(twizz),
           emptyWidget: _buildEmptyTab(
             context,
             icon: Icons.format_quote,
@@ -842,6 +1001,7 @@ class _MyProfileScreenState extends State<MyProfileScreen>
           twizzs: twizzs,
           isLoading: isLoadingMore,
           hasMore: hasMore,
+          currentUserId: userId,
           onLoadMore:
               () => profileViewModel.loadMore(
                 userId: userId,
@@ -862,6 +1022,16 @@ class _MyProfileScreenState extends State<MyProfileScreen>
                 twizz,
                 ProfileViewModel.tabLiked,
               ),
+          onRetwizz: (twizz) {
+            _handleRetwizz(
+              context,
+              profileViewModel,
+              twizz,
+              ProfileViewModel.tabLiked,
+            );
+          },
+          onDelete:
+              (twizz) => profileViewModel.deleteTwizz(twizz),
           emptyWidget: _buildEmptyTab(
             context,
             icon: Icons.favorite_outline,
@@ -927,6 +1097,7 @@ class _MyProfileScreenState extends State<MyProfileScreen>
           twizzs: twizzs,
           isLoading: isLoadingMore,
           hasMore: hasMore,
+          currentUserId: userId,
           onLoadMore:
               () => profileViewModel.loadMore(
                 userId: userId,
@@ -947,6 +1118,16 @@ class _MyProfileScreenState extends State<MyProfileScreen>
                 twizz,
                 ProfileViewModel.tabBookmarked,
               ),
+          onRetwizz: (twizz) {
+            _handleRetwizz(
+              context,
+              profileViewModel,
+              twizz,
+              ProfileViewModel.tabBookmarked,
+            );
+          },
+          onDelete:
+              (twizz) => profileViewModel.deleteTwizz(twizz),
           emptyWidget: _buildEmptyTab(
             context,
             icon: Icons.bookmark_outline,
@@ -998,6 +1179,48 @@ class _MyProfileScreenState extends State<MyProfileScreen>
         ],
       ),
     );
+  }
+
+  /// Handle retwizz/unretwizz
+  void _handleRetwizz(
+    BuildContext context,
+    ProfileViewModel viewModel,
+    Twizz twizz,
+    int tabIndex,
+  ) async {
+    if (twizz.isRetwizzed) {
+      // Show confirmation dialog for unretwizz
+      final confirm = await showDialog<bool>(
+        context: context,
+        builder:
+            (context) => AlertDialog(
+              title: const Text('Hủy đăng lại?'),
+              content: const Text(
+                'Bạn có chắc chắn muốn hủy đăng lại bài viết này?',
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context, false),
+                  child: const Text('Hủy'),
+                ),
+                TextButton(
+                  onPressed: () => Navigator.pop(context, true),
+                  style: TextButton.styleFrom(
+                    foregroundColor:
+                        Theme.of(context).colorScheme.error,
+                  ),
+                  child: const Text('Hủy đăng lại'),
+                ),
+              ],
+            ),
+      );
+
+      if (confirm == true) {
+        await viewModel.unretwizz(twizz, tabIndex);
+      }
+    } else {
+      await viewModel.retwizz(twizz, tabIndex);
+    }
   }
 
   Widget _buildEmptyTab(
