@@ -49,7 +49,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         _bioController.text = user.bio ?? '';
         _locationController.text = user.location ?? '';
         _websiteController.text = user.website ?? '';
-        _usernameController.text = user.username ?? '';
+        _usernameController.text = '@${user.username}';
       }
     });
   }
@@ -129,11 +129,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           ? null
           : _websiteController.text.trim(),
     );
-    editProfileViewModel.updateUsername(
-      _usernameController.text.trim().isEmpty
-          ? null
-          : _usernameController.text.trim(),
-    );
 
     final updatedUser = await editProfileViewModel.updateProfile(
       user,
@@ -200,7 +195,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             actions: [
               TextButton(
                 onPressed:
-                    editProfileViewModel.isLoading
+                    editProfileViewModel.isLoading || !hasChanges
                         ? null
                         : _handleSave,
                 child:
@@ -356,6 +351,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                           controller: _usernameController,
                           label: 'Username',
                           hintText: 'Thêm username của bạn',
+                          enabled: false,
                           onChanged: (value) {
                             editProfileViewModel.updateUsername(
                               value,
@@ -480,6 +476,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     int maxLines = 1,
     TextInputType? keyboardType,
     ValueChanged<String>? onChanged,
+    bool enabled = true,
   }) {
     final themeData = Theme.of(context);
     return Column(
@@ -493,14 +490,31 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         ),
         const SizedBox(height: 8),
         TextField(
+          style:
+              !enabled
+                  ? themeData.textTheme.bodyMedium?.copyWith(
+                    color: Colors.blue,
+                    fontWeight: FontWeight.bold,
+                  )
+                  : null,
           controller: controller,
+          enabled: enabled,
           decoration: InputDecoration(
+            hintStyle: themeData.textTheme.bodyMedium?.copyWith(
+              color: themeData.disabledColor,
+            ),
+
             hintText: hintText,
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
             ),
             filled: true,
-            fillColor: themeData.colorScheme.surface,
+            fillColor:
+                enabled
+                    ? themeData.colorScheme.surface
+                    : themeData.disabledColor.withValues(
+                      alpha: 0.07,
+                    ),
           ),
           maxLines: maxLines,
           keyboardType: keyboardType,

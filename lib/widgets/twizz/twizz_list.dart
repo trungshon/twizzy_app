@@ -15,14 +15,13 @@ class TwizzList extends StatelessWidget {
   final void Function(Twizz)? onUserTap;
   final void Function(Twizz)? onLike;
   final void Function(Twizz)? onComment;
-  final void Function(Twizz)? onRetwizz;
   final void Function(Twizz)? onQuote;
   final void Function(Twizz)? onBookmark;
   final void Function(Twizz)? onDelete;
   final Widget? emptyWidget;
   final ScrollController? scrollController;
   final EdgeInsetsGeometry? padding;
-  final String? currentUserId; // For retwizz display
+  final String? currentUserId;
 
   const TwizzList({
     super.key,
@@ -35,7 +34,6 @@ class TwizzList extends StatelessWidget {
     this.onUserTap,
     this.onLike,
     this.onComment,
-    this.onRetwizz,
     this.onQuote,
     this.onBookmark,
     this.onDelete,
@@ -83,14 +81,16 @@ class TwizzList extends StatelessWidget {
             hasMore &&
             !isLoading &&
             onLoadMore != null) {
-          onLoadMore!();
+          Future.microtask(() => onLoadMore!());
         }
         return false;
       },
       child: ListView.builder(
         controller: scrollController,
         physics: const AlwaysScrollableScrollPhysics(),
-        padding: padding,
+        padding: (padding ?? EdgeInsets.zero).add(
+          const EdgeInsets.only(bottom: 80),
+        ),
         itemCount:
             twizzs.length + (isLoading || hasMore ? 1 : 0),
         itemBuilder: (context, index) {
@@ -113,7 +113,6 @@ class TwizzList extends StatelessWidget {
                     : null,
             onLike: onLike,
             onComment: onComment,
-            onRetwizz: onRetwizz,
             onQuote: onQuote,
             onBookmark: onBookmark,
             onDelete: onDelete,
@@ -187,12 +186,11 @@ class SliverTwizzList extends StatelessWidget {
   final void Function(Twizz)? onUserTap;
   final void Function(Twizz)? onLike;
   final void Function(Twizz)? onComment;
-  final void Function(Twizz)? onRetwizz;
   final void Function(Twizz)? onQuote;
   final void Function(Twizz)? onBookmark;
   final void Function(Twizz)? onDelete;
   final Widget? emptyWidget;
-  final String? currentUserId; // For retwizz display
+  final String? currentUserId;
 
   const SliverTwizzList({
     super.key,
@@ -204,7 +202,6 @@ class SliverTwizzList extends StatelessWidget {
     this.onUserTap,
     this.onLike,
     this.onComment,
-    this.onRetwizz,
     this.onQuote,
     this.onBookmark,
     this.onDelete,
@@ -222,36 +219,38 @@ class SliverTwizzList extends StatelessWidget {
       );
     }
 
-    return SliverList(
-      delegate: SliverChildBuilderDelegate(
-        (context, index) {
-          // Loading indicator at bottom
-          if (index == twizzs.length) {
-            return _buildLoadingIndicator(context);
-          }
+    return SliverPadding(
+      padding: const EdgeInsets.only(bottom: 80),
+      sliver: SliverList(
+        delegate: SliverChildBuilderDelegate(
+          (context, index) {
+            // Loading indicator at bottom
+            if (index == twizzs.length) {
+              return _buildLoadingIndicator(context);
+            }
 
-          final twizz = twizzs[index];
-          return TwizzItem(
-            twizz: twizz,
-            currentUserId: currentUserId,
-            onTap:
-                onTwizzTap != null
-                    ? () => onTwizzTap!(twizz)
-                    : null,
-            onUserTap:
-                onUserTap != null
-                    ? () => onUserTap!(twizz)
-                    : null,
-            onLike: onLike,
-            onComment: onComment,
-            onRetwizz: onRetwizz,
-            onQuote: onQuote,
-            onBookmark: onBookmark,
-            onDelete: onDelete,
-          );
-        },
-        childCount:
-            twizzs.length + (isLoading || hasMore ? 1 : 0),
+            final twizz = twizzs[index];
+            return TwizzItem(
+              twizz: twizz,
+              currentUserId: currentUserId,
+              onTap:
+                  onTwizzTap != null
+                      ? () => onTwizzTap!(twizz)
+                      : null,
+              onUserTap:
+                  onUserTap != null
+                      ? () => onUserTap!(twizz)
+                      : null,
+              onLike: onLike,
+              onComment: onComment,
+              onQuote: onQuote,
+              onBookmark: onBookmark,
+              onDelete: onDelete,
+            );
+          },
+          childCount:
+              twizzs.length + (isLoading || hasMore ? 1 : 0),
+        ),
       ),
     );
   }

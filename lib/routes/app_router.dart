@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../models/twizz/twizz_models.dart';
 import 'route_names.dart';
 import '../views/auth/auth_check_screen.dart';
 import '../views/auth/register_screen.dart';
@@ -9,12 +10,15 @@ import '../views/auth/forgot_password_screen.dart';
 import '../views/auth/verify_forgot_password_screen.dart';
 import '../views/auth/reset_password_screen.dart';
 import '../views/auth/change_password_screen.dart';
+import '../views/auth/set_username_screen.dart';
 import '../views/main/main_screen.dart';
 import '../views/profile/my_profile_screen.dart';
 import '../views/profile/edit_profile_screen.dart';
 import '../views/profile/user_profile_screen.dart';
 import '../views/profile/follower_list_screen.dart';
 import '../views/twizz/create_twizz_screen.dart';
+import '../views/twizz/twizz_interaction_screen.dart';
+import '../views/twizz/twizz_detail_screen.dart';
 import '../views/test/video_test_screen.dart';
 
 /// App Router
@@ -114,6 +118,11 @@ class AppRouter {
           builder: (_) => const ChangePasswordScreen(),
         );
 
+      case RouteNames.setUsername:
+        return MaterialPageRoute(
+          builder: (_) => const SetUsernameScreen(),
+        );
+
       // Main Routes
       case RouteNames.home:
         return MaterialPageRoute(
@@ -161,10 +170,31 @@ class AppRouter {
 
       // Twizz Routes
       case RouteNames.createTwizz:
+        // Accept optional Twizz for quote mode
+        final parentTwizz = args is Twizz ? args : null;
         return MaterialPageRoute(
-          builder: (_) => const CreateTwizzScreen(),
+          builder:
+              (_) => CreateTwizzScreen(parentTwizz: parentTwizz),
           fullscreenDialog: true,
         );
+
+      case RouteNames.twizzInteraction:
+        if (args is TwizzInteractionScreenArgs) {
+          return MaterialPageRoute(
+            builder: (_) => TwizzInteractionScreen(args: args),
+          );
+        }
+        return _errorRoute(
+          'Invalid args for TwizzInteractionScreen',
+        );
+
+      case RouteNames.twizzDetail:
+        if (args is TwizzDetailScreenArgs) {
+          return MaterialPageRoute(
+            builder: (_) => TwizzDetailScreen(args: args),
+          );
+        }
+        return _errorRoute('Invalid args for TwizzDetailScreen');
 
       // Test Routes
       case RouteNames.videoTest:

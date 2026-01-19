@@ -67,4 +67,27 @@ class LikeService {
       );
     }
   }
+
+  /// Get users who liked a specific twizz
+  Future<UsersListResponse> getUsersWhoLikedTwizz({
+    required String twizzId,
+    int limit = 10,
+    int page = 1,
+  }) async {
+    try {
+      final response = await _apiClient.get(
+        '${ApiConstants.getUsersWhoLikedTwizz(twizzId)}?limit=$limit&page=$page',
+        includeAuth: true,
+      );
+      return UsersListResponse.fromJson(response);
+    } catch (e) {
+      if (e is ApiErrorResponse) {
+        rethrow;
+      }
+      throw ApiErrorResponse(
+        message:
+            'Lỗi tải danh sách người thích: ${e.toString()}',
+      );
+    }
+  }
 }

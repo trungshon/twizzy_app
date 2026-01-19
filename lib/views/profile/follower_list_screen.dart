@@ -231,7 +231,11 @@ class _FollowerListScreenState extends State<FollowerListScreen>
                       scrollInfo.metrics.maxScrollExtent &&
                   !viewModel.isLoadingMoreFollowing &&
                   viewModel.hasMoreFollowing) {
-                viewModel.loadFollowing(widget.args.userId);
+                Future.microtask(
+                  () => viewModel.loadFollowing(
+                    widget.args.userId,
+                  ),
+                );
               }
               return false;
             },

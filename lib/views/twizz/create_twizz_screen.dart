@@ -2,17 +2,21 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:video_player/video_player.dart';
 import '../../core/utils/snackbar_utils.dart';
 import '../../models/twizz/twizz_models.dart';
 import '../../viewmodels/auth/auth_viewmodel.dart';
 import '../../viewmodels/twizz/create_twizz_viewmodel.dart';
+import '../../widgets/common/twizz_video_player.dart';
+import '../../widgets/twizz/twizz_create_media_preview.dart';
+import '../../widgets/twizz/twizz_text_input_utils.dart';
 
 /// Create Twizz Screen
 ///
 /// Màn hình tạo bài viết mới
 class CreateTwizzScreen extends StatefulWidget {
-  const CreateTwizzScreen({super.key});
+  final Twizz? parentTwizz; // For quote mode
+
+  const CreateTwizzScreen({super.key, this.parentTwizz});
 
   @override
   State<CreateTwizzScreen> createState() =>
@@ -20,7 +24,7 @@ class CreateTwizzScreen extends StatefulWidget {
 }
 
 class _CreateTwizzScreenState extends State<CreateTwizzScreen> {
-  late final _HighlightTextController _contentController;
+  late final HighlightTextController _contentController;
   final FocusNode _contentFocusNode = FocusNode();
   final ImagePicker _imagePicker = ImagePicker();
 
@@ -33,11 +37,17 @@ class _CreateTwizzScreenState extends State<CreateTwizzScreen> {
   void initState() {
     super.initState();
     // Initialize highlight controller
-    _contentController = _HighlightTextController();
+    _contentController = HighlightTextController();
 
     // Clear all data when entering screen
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _clearAllData();
+      // Set parent twizz for quote mode
+      if (widget.parentTwizz != null) {
+        context.read<CreateTwizzViewModel>().setParentTwizz(
+          widget.parentTwizz,
+        );
+      }
       _contentFocusNode.requestFocus();
     });
 
@@ -558,7 +568,9 @@ class _CreateTwizzScreenState extends State<CreateTwizzScreen> {
                                       ),
                                   decoration: InputDecoration(
                                     hintText:
-                                        'Chuyện gì đang xảy ra?',
+                                        viewModel.isQuoteMode
+                                            ? 'Thêm bình luận'
+                                            : 'Chuyện gì đang xảy ra?',
                                     hintStyle: TextStyle(
                                       color: themeData
                                           .colorScheme
@@ -594,7 +606,7 @@ class _CreateTwizzScreenState extends State<CreateTwizzScreen> {
 
                                 // Mention suggestions
                                 if (_showMentionSuggestions)
-                                  _MentionSuggestions(
+                                  MentionSuggestions(
                                     query: _mentionQuery,
                                     results:
                                         viewModel.searchResults,
@@ -609,16 +621,23 @@ class _CreateTwizzScreenState extends State<CreateTwizzScreen> {
                         ],
                       ),
 
+                      // Quote preview (parent twizz)
+                      if (viewModel.isQuoteMode &&
+                          viewModel.parentTwizz != null)
+                        _QuoteTwizzPreview(
+                          twizz: viewModel.parentTwizz!,
+                        ),
+
                       // Selected media preview
                       if (viewModel.selectedImages.isNotEmpty)
-                        _MediaPreview(
+                        TwizzCreateMediaPreview(
                           images: viewModel.selectedImages,
                           onRemove: viewModel.removeImage,
                           isLoading: viewModel.isLoading,
                         ),
 
                       if (viewModel.selectedVideo != null)
-                        _VideoPreview(
+                        TwizzCreateVideoPreview(
                           video: viewModel.selectedVideo!,
                           onRemove: viewModel.removeVideo,
                           isLoading: viewModel.isLoading,
@@ -912,643 +931,256 @@ class _AudienceOption extends StatelessWidget {
   }
 }
 
-/// Media preview widget - Horizontal scrollable images
-class _MediaPreview extends StatelessWidget {
-  final List<File> images;
-  final void Function(int) onRemove;
-  final bool isLoading;
+/// Quote Twizz Preview - displays parent twizz in quote mode
+class _QuoteTwizzPreview extends StatelessWidget {
+  final Twizz twizz;
 
-  const _MediaPreview({
-    required this.images,
-    required this.onRemove,
-    required this.isLoading,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    // Nếu chỉ có 1 ảnh, hiển thị lớn hơn
-    if (images.length == 1) {
-      return Container(
-        margin: const EdgeInsets.only(top: 16),
-        child: _buildSingleImage(context, images.first, 0),
-      );
-    }
-
-    // Nhiều ảnh - hiển thị danh sách ngang có thể vuốt
-    return Container(
-      margin: const EdgeInsets.only(top: 16),
-      height: 180,
-      child: ListView.separated(
-        scrollDirection: Axis.horizontal,
-        itemCount: images.length,
-        separatorBuilder:
-            (context, index) => const SizedBox(width: 8),
-        itemBuilder: (context, index) {
-          return _buildImageItem(context, images[index], index);
-        },
-      ),
-    );
-  }
-
-  /// Build single image (larger display)
-  Widget _buildSingleImage(
-    BuildContext context,
-    File file,
-    int index,
-  ) {
-    return Stack(
-      children: [
-        ClipRRect(
-          borderRadius: BorderRadius.circular(16),
-          child: Image.file(
-            file,
-            width: double.infinity,
-            height: 220,
-            fit: BoxFit.cover,
-          ),
-        ),
-        if (!isLoading)
-          Positioned(
-            top: 8,
-            right: 8,
-            child: _buildRemoveButton(index),
-          ),
-      ],
-    );
-  }
-
-  /// Build image item for horizontal list
-  Widget _buildImageItem(
-    BuildContext context,
-    File file,
-    int index,
-  ) {
-    return Stack(
-      children: [
-        ClipRRect(
-          borderRadius: BorderRadius.circular(16),
-          child: Image.file(
-            file,
-            width: 140,
-            height: 180,
-            fit: BoxFit.cover,
-          ),
-        ),
-        if (!isLoading)
-          Positioned(
-            top: 8,
-            right: 8,
-            child: _buildRemoveButton(index),
-          ),
-      ],
-    );
-  }
-
-  /// Build remove button
-  Widget _buildRemoveButton(int index) {
-    return GestureDetector(
-      onTap: () => onRemove(index),
-      child: Container(
-        width: 28,
-        height: 28,
-        decoration: BoxDecoration(
-          color: Colors.black.withValues(alpha: 0.7),
-          shape: BoxShape.circle,
-        ),
-        child: const Icon(
-          Icons.close,
-          color: Colors.white,
-          size: 18,
-        ),
-      ),
-    );
-  }
-}
-
-/// Video preview widget with playback
-class _VideoPreview extends StatefulWidget {
-  final File video;
-  final VoidCallback onRemove;
-  final bool isLoading;
-
-  const _VideoPreview({
-    required this.video,
-    required this.onRemove,
-    required this.isLoading,
-  });
-
-  @override
-  State<_VideoPreview> createState() => _VideoPreviewState();
-}
-
-class _VideoPreviewState extends State<_VideoPreview> {
-  late VideoPlayerController _controller;
-  bool _isInitialized = false;
-  bool _hasError = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _initializeVideo();
-  }
-
-  Future<void> _initializeVideo() async {
-    _controller = VideoPlayerController.file(widget.video);
-    try {
-      await _controller.initialize();
-      _controller.setLooping(true);
-      if (mounted) {
-        setState(() {
-          _isInitialized = true;
-        });
-      }
-    } catch (e) {
-      debugPrint('Video init error: $e');
-      if (mounted) {
-        setState(() {
-          _hasError = true;
-        });
-      }
-    }
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  void _togglePlay() {
-    if (_controller.value.isPlaying) {
-      _controller.pause();
-    } else {
-      _controller.play();
-    }
-    setState(() {});
-  }
+  const _QuoteTwizzPreview({required this.twizz});
 
   @override
   Widget build(BuildContext context) {
     final themeData = Theme.of(context);
+    final user = twizz.user;
+    final name = user?.name ?? 'Người dùng';
+    final username = user?.username ?? '';
+    final avatar = user?.avatar;
 
     return Container(
-      margin: const EdgeInsets.only(top: 16),
-      child: Stack(
-        children: [
-          // Video container
-          ClipRRect(
-            borderRadius: BorderRadius.circular(16),
-            child: Container(
-              width: double.infinity,
-              height: 280,
-              color: Colors.black,
-              child: _buildVideoContent(themeData),
-            ),
+      margin: const EdgeInsets.only(top: 16, left: 56),
+      decoration: BoxDecoration(
+        border: Border.all(
+          color: themeData.colorScheme.onSurface.withValues(
+            alpha: 0.2,
           ),
-          // Play/Pause overlay
-          if (_isInitialized && !widget.isLoading)
-            Positioned.fill(
-              child: GestureDetector(
-                onTap: _togglePlay,
-                child: Container(
-                  color: Colors.transparent,
-                  child: Center(
-                    child: AnimatedOpacity(
-                      opacity:
-                          _controller.value.isPlaying
-                              ? 0.0
-                              : 1.0,
-                      duration: const Duration(
-                        milliseconds: 200,
-                      ),
-                      child: Container(
-                        width: 56,
-                        height: 56,
-                        decoration: BoxDecoration(
-                          color: Colors.black.withValues(
-                            alpha: 0.6,
+        ),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // User info row
+                  Row(
+                    children: [
+                      // Avatar
+                      if (avatar != null)
+                        CircleAvatar(
+                          radius: 12,
+                          backgroundImage: NetworkImage(avatar),
+                          onBackgroundImageError: (e, s) {},
+                        )
+                      else
+                        CircleAvatar(
+                          radius: 12,
+                          backgroundColor:
+                              themeData.colorScheme.secondary,
+                          child: Text(
+                            name.isNotEmpty
+                                ? name[0].toUpperCase()
+                                : 'U',
+                            style: TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                              color:
+                                  themeData
+                                      .colorScheme
+                                      .onSecondary,
+                            ),
                           ),
-                          shape: BoxShape.circle,
                         ),
-                        child: const Icon(
-                          Icons.play_arrow_rounded,
-                          color: Colors.white,
-                          size: 36,
+                      const SizedBox(width: 8),
+                      // Name
+                      Flexible(
+                        child: Text(
+                          name,
+                          style: themeData.textTheme.bodyMedium
+                              ?.copyWith(
+                                fontWeight: FontWeight.bold,
+                              ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
+                      const SizedBox(width: 4),
+                      // Username
+                      Flexible(
+                        child: Text(
+                          '@$username',
+                          style: themeData.textTheme.bodySmall
+                              ?.copyWith(
+                                color: themeData
+                                    .colorScheme
+                                    .onSurface
+                                    .withValues(alpha: 0.6),
+                              ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
+                  // Content
+                  if (twizz.content.isNotEmpty) ...[
+                    const SizedBox(height: 8),
+                    Text(
+                      twizz.content,
+                      style: themeData.textTheme.bodyMedium,
+                      maxLines: 3,
+                      overflow: TextOverflow.ellipsis,
                     ),
-                  ),
-                ),
+                  ],
+                ],
               ),
             ),
-          // Remove button
-          if (!widget.isLoading)
-            Positioned(
-              top: 8,
-              right: 8,
-              child: GestureDetector(
-                onTap: widget.onRemove,
-                child: Container(
-                  width: 28,
-                  height: 28,
-                  decoration: BoxDecoration(
-                    color: Colors.black.withValues(alpha: 0.7),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(
-                    Icons.close,
-                    color: Colors.white,
-                    size: 18,
-                  ),
-                ),
-              ),
-            ),
-          // Duration indicator
-          if (_isInitialized)
-            Positioned(
-              bottom: 8,
-              left: 8,
-              child: Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 8,
-                  vertical: 4,
-                ),
-                decoration: BoxDecoration(
-                  color: Colors.black.withValues(alpha: 0.7),
-                  borderRadius: BorderRadius.circular(4),
-                ),
-                child: Text(
-                  _formatDuration(_controller.value.duration),
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ),
-            ),
-        ],
+            // Media preview
+            if (twizz.medias.isNotEmpty)
+              _QuoteMediaPreview(medias: twizz.medias),
+          ],
+        ),
       ),
     );
   }
+}
 
-  Widget _buildVideoContent(ThemeData themeData) {
-    if (_hasError) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+/// Quote Media Preview - displays media grid for quote preview
+class _QuoteMediaPreview extends StatelessWidget {
+  final List<Media> medias;
+
+  const _QuoteMediaPreview({required this.medias});
+
+  @override
+  Widget build(BuildContext context) {
+    if (medias.isEmpty) return const SizedBox.shrink();
+
+    final count = medias.length;
+    final themeData = Theme.of(context);
+
+    // Single image or video
+    if (count == 1) {
+      final media = medias.first;
+      if (media.type == MediaType.video) {
+        return TwizzVideoPlayer(url: media.url);
+      }
+      return AspectRatio(
+        aspectRatio: 16 / 9,
+        child: Image.network(
+          media.url,
+          fit: BoxFit.cover,
+          errorBuilder:
+              (_, __, ___) => _buildErrorPlaceholder(themeData),
+        ),
+      );
+    }
+
+    // Multiple images grid
+    if (count == 2) {
+      return AspectRatio(
+        aspectRatio: 2 / 1,
+        child: Row(
           children: [
-            Icon(
-              Icons.error_outline,
-              size: 48,
-              color: themeData.colorScheme.error,
+            Expanded(
+              child: _buildGridImage(medias[0], themeData),
             ),
-            const SizedBox(height: 8),
-            Text(
-              'Không thể tải video',
-              style: TextStyle(
-                color: themeData.colorScheme.error,
-                fontSize: 14,
-              ),
+            const SizedBox(width: 2),
+            Expanded(
+              child: _buildGridImage(medias[1], themeData),
             ),
           ],
         ),
       );
     }
 
-    if (!_isInitialized) {
-      return Center(
-        child: CircularProgressIndicator(
-          strokeWidth: 2,
-          valueColor: AlwaysStoppedAnimation<Color>(
-            themeData.colorScheme.primary,
-          ),
-        ),
-      );
-    }
-
-    return FittedBox(
-      fit: BoxFit.cover,
-      child: SizedBox(
-        width: _controller.value.size.width,
-        height: _controller.value.size.height,
-        child: VideoPlayer(_controller),
-      ),
-    );
-  }
-
-  String _formatDuration(Duration duration) {
-    String twoDigits(int n) => n.toString().padLeft(2, '0');
-    final minutes = twoDigits(duration.inMinutes.remainder(60));
-    final seconds = twoDigits(duration.inSeconds.remainder(60));
-    if (duration.inHours > 0) {
-      final hours = twoDigits(duration.inHours);
-      return '$hours:$minutes:$seconds';
-    }
-    return '$minutes:$seconds';
-  }
-}
-
-/// Mention suggestions widget
-class _MentionSuggestions extends StatelessWidget {
-  final String query;
-  final List<SearchUserResult> results;
-  final bool isLoading;
-  final void Function(SearchUserResult) onSelect;
-
-  const _MentionSuggestions({
-    required this.query,
-    required this.results,
-    required this.isLoading,
-    required this.onSelect,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final themeData = Theme.of(context);
-
-    return Container(
-      margin: const EdgeInsets.only(top: 8),
-      constraints: const BoxConstraints(maxHeight: 200),
-      decoration: BoxDecoration(
-        color: themeData.colorScheme.surface,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: themeData.dividerColor.withValues(alpha: 0.3),
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.1),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(12),
-        child: _buildContent(context, themeData),
-      ),
-    );
-  }
-
-  Widget _buildContent(
-    BuildContext context,
-    ThemeData themeData,
-  ) {
-    if (isLoading) {
-      return const Padding(
-        padding: EdgeInsets.all(16),
-        child: Center(
-          child: SizedBox(
-            width: 20,
-            height: 20,
-            child: CircularProgressIndicator(strokeWidth: 2),
-          ),
-        ),
-      );
-    }
-
-    if (results.isEmpty) {
-      if (query.isEmpty) {
-        return Padding(
-          padding: const EdgeInsets.all(16),
-          child: Text(
-            'Nhập tên hoặc @username để tìm kiếm',
-            style: themeData.textTheme.bodySmall?.copyWith(
-              color: themeData.colorScheme.onSurface.withValues(
-                alpha: 0.6,
-              ),
-            ),
-          ),
-        );
-      }
-      return Padding(
-        padding: const EdgeInsets.all(16),
-        child: Text(
-          'Không tìm thấy "@$query"',
-          style: themeData.textTheme.bodySmall?.copyWith(
-            color: themeData.colorScheme.onSurface.withValues(
-              alpha: 0.6,
-            ),
-          ),
-        ),
-      );
-    }
-
-    return ListView.builder(
-      shrinkWrap: true,
-      padding: EdgeInsets.zero,
-      itemCount: results.length,
-      itemBuilder: (context, index) {
-        final user = results[index];
-        return _MentionUserTile(
-          user: user,
-          onTap: () => onSelect(user),
-        );
-      },
-    );
-  }
-}
-
-/// Mention user tile widget
-class _MentionUserTile extends StatelessWidget {
-  final SearchUserResult user;
-  final VoidCallback onTap;
-
-  const _MentionUserTile({
-    required this.user,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final themeData = Theme.of(context);
-
-    return InkWell(
-      onTap: onTap,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(
-          horizontal: 12,
-          vertical: 8,
-        ),
+    if (count == 3) {
+      return AspectRatio(
+        aspectRatio: 2 / 1,
         child: Row(
           children: [
-            // Avatar
-            user.avatar != null
-                ? CircleAvatar(
-                  radius: 18,
-                  backgroundImage: NetworkImage(user.avatar!),
-                  onBackgroundImageError: (e, s) {},
-                )
-                : CircleAvatar(
-                  radius: 18,
-                  backgroundColor:
-                      themeData.colorScheme.secondary,
-                  child: Text(
-                    user.name.isNotEmpty
-                        ? user.name[0].toUpperCase()
-                        : 'U',
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.bold,
-                      color: themeData.colorScheme.onSecondary,
-                    ),
-                  ),
-                ),
-            const SizedBox(width: 12),
-            // User info
+            Expanded(
+              child: _buildGridImage(medias[0], themeData),
+            ),
+            const SizedBox(width: 2),
             Expanded(
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(
-                    children: [
-                      Flexible(
-                        child: Text(
-                          user.name,
-                          style: themeData.textTheme.bodyMedium
-                              ?.copyWith(
-                                fontWeight: FontWeight.w600,
-                              ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                      if (user.isVerified) ...[
-                        const SizedBox(width: 4),
-                        const Icon(
-                          Icons.verified,
-                          size: 14,
-                          color: Color(0xFF1DA1F2),
-                        ),
-                      ],
-                    ],
+                  Expanded(
+                    child: _buildGridImage(medias[1], themeData),
                   ),
-                  Text(
-                    '@${user.username}',
-                    style: themeData.textTheme.bodySmall
-                        ?.copyWith(
-                          color: themeData.colorScheme.onSurface
-                              .withValues(alpha: 0.6),
-                        ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
+                  const SizedBox(height: 2),
+                  Expanded(
+                    child: _buildGridImage(medias[2], themeData),
                   ),
                 ],
               ),
             ),
           ],
         ),
+      );
+    }
+
+    // 4+ images
+    return AspectRatio(
+      aspectRatio: 1,
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              children: [
+                Expanded(
+                  child: _buildGridImage(medias[0], themeData),
+                ),
+                const SizedBox(height: 2),
+                Expanded(
+                  child: _buildGridImage(medias[2], themeData),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 2),
+          Expanded(
+            child: Column(
+              children: [
+                Expanded(
+                  child: _buildGridImage(medias[1], themeData),
+                ),
+                const SizedBox(height: 2),
+                Expanded(
+                  child: _buildGridImage(medias[3], themeData),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
-}
 
-/// Custom TextEditingController to highlight hashtags and mentions
-class _HighlightTextController extends TextEditingController {
-  // Regex patterns
-  static final RegExp _hashtagRegex = RegExp(r'#\w+');
-  static final RegExp _mentionRegex = RegExp(r'@\w+');
-
-  @override
-  TextSpan buildTextSpan({
-    required BuildContext context,
-    TextStyle? style,
-    required bool withComposing,
-  }) {
-    final List<InlineSpan> children = [];
-    final text = this.text;
-
-    if (text.isEmpty) {
-      return TextSpan(text: '', style: style);
-    }
-
-    const highlightColor = Color(0xFF1DA1F2);
-
-    // Find all matches
-    final List<_TextMatch> matches = [];
-
-    // Find hashtags
-    for (final match in _hashtagRegex.allMatches(text)) {
-      matches.add(
-        _TextMatch(
-          start: match.start,
-          end: match.end,
-          type: _MatchType.hashtag,
-        ),
-      );
-    }
-
-    // Find mentions
-    for (final match in _mentionRegex.allMatches(text)) {
-      matches.add(
-        _TextMatch(
-          start: match.start,
-          end: match.end,
-          type: _MatchType.mention,
-        ),
-      );
-    }
-
-    // Sort by start position
-    matches.sort((a, b) => a.start.compareTo(b.start));
-
-    // Build text spans
-    int currentIndex = 0;
-
-    for (final match in matches) {
-      // Skip overlapping matches
-      if (match.start < currentIndex) continue;
-
-      // Add normal text before match
-      if (match.start > currentIndex) {
-        children.add(
-          TextSpan(
-            text: text.substring(currentIndex, match.start),
-            style: style,
-          ),
-        );
-      }
-
-      // Add highlighted text
-      children.add(
-        TextSpan(
-          text: text.substring(match.start, match.end),
-          style:
-              style?.copyWith(color: highlightColor) ??
-              TextStyle(color: highlightColor),
-        ),
-      );
-
-      currentIndex = match.end;
-    }
-
-    // Add remaining text
-    if (currentIndex < text.length) {
-      children.add(
-        TextSpan(
-          text: text.substring(currentIndex),
-          style: style,
-        ),
-      );
-    }
-
-    return TextSpan(children: children, style: style);
+  Widget _buildGridImage(Media media, ThemeData themeData) {
+    return SizedBox(
+      width: double.infinity,
+      child: Image.network(
+        media.url,
+        fit: BoxFit.cover,
+        errorBuilder:
+            (_, __, ___) => _buildErrorPlaceholder(themeData),
+      ),
+    );
   }
-}
 
-/// Match type enum
-enum _MatchType { hashtag, mention }
-
-/// Text match helper class
-class _TextMatch {
-  final int start;
-  final int end;
-  final _MatchType type;
-
-  _TextMatch({
-    required this.start,
-    required this.end,
-    required this.type,
-  });
+  Widget _buildErrorPlaceholder(ThemeData themeData) {
+    return Container(
+      color: themeData.colorScheme.surface,
+      child: Icon(
+        Icons.broken_image_outlined,
+        color: themeData.colorScheme.onSurface.withValues(
+          alpha: 0.4,
+        ),
+      ),
+    );
+  }
 }

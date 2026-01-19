@@ -266,11 +266,6 @@ class EditProfileViewModel extends ChangeNotifier {
                 )
                 ? _coverPhoto
                 : null,
-        // Only include username if it changed
-        username:
-            hasStringChanged(_username, originalUser.username)
-                ? _username
-                : null,
       );
 
       final response = await _authService.updateMe(request);

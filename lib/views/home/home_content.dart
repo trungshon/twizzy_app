@@ -50,6 +50,7 @@ class HomeContentState extends State<HomeContent>
   @override
   Widget build(BuildContext context) {
     final themeData = Theme.of(context);
+    final isDarkMode = themeData.brightness == Brightness.dark;
     return Theme(
       data: themeData.copyWith(
         drawerTheme: DrawerThemeData(
@@ -110,10 +111,11 @@ class HomeContentState extends State<HomeContent>
               );
             },
           ),
-          title: const AppLogo(
+          title: AppLogo(
             showText: false,
-            width: 50,
-            height: 50,
+            isDarkMode: isDarkMode,
+            width: 56,
+            height: 56,
           ),
           centerTitle: true,
           // TabBar với 2 tabs

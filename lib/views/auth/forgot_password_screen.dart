@@ -49,6 +49,7 @@ class _ForgotPasswordScreenState
   @override
   Widget build(BuildContext context) {
     final themeData = Theme.of(context);
+    final isDarkMode = themeData.brightness == Brightness.dark;
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
@@ -67,10 +68,11 @@ class _ForgotPasswordScreenState
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   // Logo
-                  const AppLogo(
+                  AppLogo(
                     showText: true,
-                    width: 150,
-                    height: 150,
+                    isDarkMode: isDarkMode,
+                    width: 220,
+                    height: 220,
                   ),
                   const SizedBox(height: 40),
 

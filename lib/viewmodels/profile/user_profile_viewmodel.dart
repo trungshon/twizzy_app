@@ -82,8 +82,7 @@ class UserProfileViewModel extends ChangeNotifier {
 
   // Tab indices (only 3 tabs for user profile)
   static const int tabTwizz = 0;
-  static const int tabRetwizz = 1;
-  static const int tabQuoteTwizz = 2;
+  static const int tabQuoteTwizz = 1;
 
   // Getters
   User? get user => _user;
@@ -247,9 +246,6 @@ class UserProfileViewModel extends ChangeNotifier {
         case tabTwizz:
           type = TwizzType.twizz.index;
           break;
-        case tabRetwizz:
-          type = TwizzType.retwizz.index;
-          break;
         case tabQuoteTwizz:
           type = TwizzType.quoteTwizz.index;
           break;
@@ -368,77 +364,6 @@ class UserProfileViewModel extends ChangeNotifier {
     }
   }
 
-  /// Retwizz
-  Future<void> retwizz(Twizz twizz, int tabIndex) async {
-    final targetTwizz = twizz.parentTwizz ?? twizz;
-    final targetId = targetTwizz.id;
-
-    try {
-      final response = await _twizzService.createTwizz(
-        CreateTwizzRequest(
-          content: '',
-          parentId: targetId,
-          type: TwizzType.retwizz,
-          audience: TwizzAudience.everyone,
-        ),
-      );
-
-      final currentRetwizzCount = targetTwizz.retwizzCount ?? 0;
-      _updateTwizzState(
-        targetId,
-        isRetwizzed: true,
-        userRetwizzId: response.result.id,
-        retwizzCount: currentRetwizzCount + 1,
-      );
-
-      _syncService.emitUpdate(
-        targetTwizz.copyWith(
-          isRetwizzed: true,
-          userRetwizzId: response.result.id,
-          retwizzCount: currentRetwizzCount + 1,
-        ),
-      );
-    } catch (e) {
-      debugPrint('Retwizz error: $e');
-    }
-  }
-
-  /// Unretwizz
-  Future<void> unretwizz(Twizz twizz, int tabIndex) async {
-    final targetTwizz = twizz.parentTwizz ?? twizz;
-    final targetId = targetTwizz.id;
-    final userRetwizzId = targetTwizz.userRetwizzId;
-
-    if (userRetwizzId == null) return;
-
-    try {
-      await _twizzService.deleteTwizz(userRetwizzId);
-
-      final currentRetwizzCount = targetTwizz.retwizzCount ?? 1;
-      _updateTwizzState(
-        targetId,
-        isRetwizzed: false,
-        userRetwizzId: null,
-        retwizzCount: (currentRetwizzCount - 1).clamp(
-          0,
-          999999999,
-        ),
-      );
-
-      _syncService.emitUpdate(
-        targetTwizz.copyWith(
-          isRetwizzed: false,
-          retwizzCount: (currentRetwizzCount - 1).clamp(
-            0,
-            999999999,
-          ),
-        ),
-      );
-    } catch (e) {
-      debugPrint('Unretwizz error: $e');
-    }
-  }
-
   /// Delete twizz
   Future<bool> deleteTwizz(Twizz twizz) async {
     try {
@@ -465,9 +390,6 @@ class UserProfileViewModel extends ChangeNotifier {
     int? likes,
     bool? isBookmarked,
     int? bookmarks,
-    bool? isRetwizzed,
-    String? userRetwizzId,
-    int? retwizzCount,
     bool broadcast = true,
   }) {
     Twizz? updatedTwizz;
@@ -488,9 +410,6 @@ class UserProfileViewModel extends ChangeNotifier {
             likes: likes ?? target.likes,
             isBookmarked: isBookmarked ?? target.isBookmarked,
             bookmarks: bookmarks ?? target.bookmarks,
-            isRetwizzed: isRetwizzed ?? target.isRetwizzed,
-            userRetwizzId: userRetwizzId,
-            retwizzCount: retwizzCount ?? target.retwizzCount,
           );
 
           if (twizz.parentTwizz?.id == twizzId) {
@@ -521,9 +440,6 @@ class UserProfileViewModel extends ChangeNotifier {
       likes: updatedTwizz.likes,
       isBookmarked: updatedTwizz.isBookmarked,
       bookmarks: updatedTwizz.bookmarks,
-      isRetwizzed: updatedTwizz.isRetwizzed,
-      userRetwizzId: updatedTwizz.userRetwizzId,
-      retwizzCount: updatedTwizz.retwizzCount,
       broadcast: broadcast,
     );
   }

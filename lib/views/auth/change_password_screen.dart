@@ -194,6 +194,7 @@ class _ChangePasswordState extends State<_ChangePasswordView> {
       controller: controller,
       obscureText: !isVisible,
       decoration: InputDecoration(
+        fillColor: Theme.of(context).colorScheme.surface,
         hintStyle: TextStyle(
           color: Theme.of(
             context,

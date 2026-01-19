@@ -21,6 +21,7 @@ import 'viewmodels/twizz/create_twizz_viewmodel.dart';
 import 'viewmodels/newsfeed/newsfeed_viewmodel.dart';
 import 'viewmodels/profile/profile_viewmodel.dart';
 import 'viewmodels/profile/edit_profile_viewmodel.dart';
+import 'viewmodels/theme/theme_viewmodel.dart';
 
 void main() async {
   // Load environment variables
@@ -63,6 +64,7 @@ void main() async {
   final changePasswordViewModel = ChangePasswordViewModel(
     authService,
   );
+  final themeViewModel = ThemeViewModel(storageService);
 
   // Initialize Google Auth Service
   // Web Client ID (dùng cho serverClientId để lấy idToken) - lấy từ env
@@ -91,6 +93,7 @@ void main() async {
         ChangeNotifierProvider.value(
           value: changePasswordViewModel,
         ),
+        ChangeNotifierProvider.value(value: themeViewModel),
       ],
       child: const MyApp(),
     ),
@@ -102,12 +105,16 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final themeViewModel = Provider.of<ThemeViewModel>(context);
+
     return MaterialApp(
       title: 'Twizzy',
       // Theme tự động theo theme của thiết bị
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
-      themeMode: ThemeMode.system, // Tự động theo system theme
+      themeMode:
+          themeViewModel
+              .themeMode, // Tự động theo theme của viewmodel
       // Localization delegates for DatePicker and other Material widgets
       localizationsDelegates: const [
         GlobalMaterialLocalizations.delegate,

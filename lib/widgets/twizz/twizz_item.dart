@@ -1,6 +1,10 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-import 'package:video_player/video_player.dart';
 import '../../models/twizz/twizz_models.dart';
+import '../../routes/route_names.dart';
+import '../../views/twizz/twizz_interaction_screen.dart';
+import '../../views/twizz/twizz_detail_screen.dart';
+import '../common/twizz_video_player.dart';
 
 /// TwizzItem Widget
 ///
@@ -13,10 +17,12 @@ class TwizzItem extends StatelessWidget {
   final VoidCallback? onUserTap;
   final void Function(Twizz)? onLike;
   final void Function(Twizz)? onComment;
-  final void Function(Twizz)? onRetwizz;
   final void Function(Twizz)? onQuote;
   final void Function(Twizz)? onBookmark;
   final void Function(Twizz)? onDelete;
+
+  final bool isEmbedded;
+  final bool showToolbar;
 
   const TwizzItem({
     super.key,
@@ -26,46 +32,53 @@ class TwizzItem extends StatelessWidget {
     this.onUserTap,
     this.onLike,
     this.onComment,
-    this.onRetwizz,
     this.onQuote,
     this.onBookmark,
     this.onDelete,
+    this.isEmbedded = false,
+    this.showToolbar = true,
   });
 
   @override
   Widget build(BuildContext context) {
     final themeData = Theme.of(context);
 
-    // For retwizz, show parent twizz content
-    final isRetwizz = twizz.type == TwizzType.retwizz;
-    final displayTwizz =
-        (isRetwizz && twizz.parentTwizz != null)
-            ? twizz.parentTwizz!
-            : twizz;
+    final isQuoteTwizz = twizz.type == TwizzType.quoteTwizz;
+    final displayTwizz = twizz;
     final user = displayTwizz.user;
 
     return InkWell(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(
-          horizontal: 16,
-          vertical: 12,
-        ),
-        decoration: BoxDecoration(
-          border: Border(
-            bottom: BorderSide(
-              color: themeData.dividerColor.withValues(
-                alpha: 0.2,
-              ),
-            ),
-          ),
-        ),
+        padding:
+            isEmbedded
+                ? const EdgeInsets.all(12)
+                : const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
+                ),
+        decoration:
+            isEmbedded
+                ? BoxDecoration(
+                  border: Border.all(
+                    color: themeData.dividerColor.withValues(
+                      alpha: 0.2,
+                    ),
+                  ),
+                  borderRadius: BorderRadius.circular(16),
+                )
+                : BoxDecoration(
+                  border: Border(
+                    bottom: BorderSide(
+                      color: themeData.dividerColor.withValues(
+                        alpha: 0.2,
+                      ),
+                    ),
+                  ),
+                ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Retwizz header
-            if (isRetwizz)
-              _buildRetwizzHeader(context, themeData),
             // Main content
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -94,7 +107,13 @@ class TwizzItem extends StatelessWidget {
                         _TwizzContent(
                           content: displayTwizz.content,
                           onMentionTap: (username) {
-                            // TODO: Navigate to user profile
+                            if (username.isNotEmpty) {
+                              Navigator.pushNamed(
+                                context,
+                                RouteNames.userProfile,
+                                arguments: username,
+                              );
+                            }
                           },
                           onHashtagTap: (hashtag) {
                             // TODO: Navigate to hashtag search
@@ -110,31 +129,79 @@ class TwizzItem extends StatelessWidget {
                             medias: displayTwizz.medias,
                           ),
                         ),
+                      // Embedded parent for quote twizz
+                      if (isQuoteTwizz &&
+                          twizz.parentTwizz != null)
+                        Padding(
+                          padding: const EdgeInsets.only(
+                            top: 12,
+                          ),
+                          child: TwizzItem(
+                            twizz: twizz.parentTwizz!,
+                            isEmbedded: true,
+                            showToolbar: false,
+                            currentUserId: currentUserId,
+                            onTap: () {
+                              Navigator.pushNamed(
+                                context,
+                                RouteNames.twizzDetail,
+                                arguments: TwizzDetailScreenArgs(
+                                  twizz: twizz.parentTwizz!,
+                                ),
+                              );
+                            },
+                            onUserTap: () {
+                              final parentUser =
+                                  twizz.parentTwizz!.user;
+                              if (parentUser == null) return;
+
+                              if (parentUser.id ==
+                                  currentUserId) {
+                                Navigator.pushNamed(
+                                  context,
+                                  RouteNames.myProfile,
+                                );
+                              } else if (parentUser.username !=
+                                      null &&
+                                  parentUser
+                                      .username!
+                                      .isNotEmpty) {
+                                Navigator.pushNamed(
+                                  context,
+                                  RouteNames.userProfile,
+                                  arguments: parentUser.username,
+                                );
+                              }
+                            },
+                          ),
+                        ),
                       // Toolbar
-                      const SizedBox(height: 12),
-                      _TwizzToolbar(
-                        commentCount:
-                            displayTwizz.commentCount ?? 0,
-                        retwizzCount:
-                            displayTwizz.retwizzCount ?? 0,
-                        quoteCount: displayTwizz.quoteCount ?? 0,
-                        likeCount: displayTwizz.likes ?? 0,
-                        viewCount:
-                            displayTwizz.userViews +
-                            displayTwizz.guestViews,
-                        isLiked: displayTwizz.isLiked,
-                        isBookmarked: displayTwizz.isBookmarked,
-                        isRetwizzed: displayTwizz.isRetwizzed,
-                        onComment:
-                            () => onComment?.call(displayTwizz),
-                        onRetwizz:
-                            () => onRetwizz?.call(displayTwizz),
-                        onQuote:
-                            () => onQuote?.call(displayTwizz),
-                        onLike: () => onLike?.call(displayTwizz),
-                        onBookmark:
-                            () => onBookmark?.call(displayTwizz),
-                      ),
+                      if (showToolbar) ...[
+                        const SizedBox(height: 12),
+                        _TwizzToolbar(
+                          commentCount:
+                              displayTwizz.commentCount ?? 0,
+                          quoteCount:
+                              displayTwizz.quoteCount ?? 0,
+                          likeCount: displayTwizz.likes ?? 0,
+                          viewCount:
+                              displayTwizz.userViews +
+                              displayTwizz.guestViews,
+                          isLiked: displayTwizz.isLiked,
+                          isBookmarked:
+                              displayTwizz.isBookmarked,
+                          onComment:
+                              () =>
+                                  onComment?.call(displayTwizz),
+                          onQuote:
+                              () => onQuote?.call(displayTwizz),
+                          onLike:
+                              () => onLike?.call(displayTwizz),
+                          onBookmark:
+                              () =>
+                                  onBookmark?.call(displayTwizz),
+                        ),
+                      ],
                     ],
                   ),
                 ),
@@ -142,45 +209,6 @@ class TwizzItem extends StatelessWidget {
             ),
           ],
         ),
-      ),
-    );
-  }
-
-  /// Build retwizz header showing who retwizzed
-  Widget _buildRetwizzHeader(
-    BuildContext context,
-    ThemeData themeData,
-  ) {
-    final retwizzUser = twizz.user;
-    final isCurrentUser =
-        currentUserId != null && currentUserId == twizz.userId;
-    final displayName =
-        isCurrentUser
-            ? 'Bạn đã đăng lại'
-            : '${retwizzUser?.name ?? 'Người dùng'} đã đăng lại';
-
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8, left: 34),
-      child: Row(
-        children: [
-          Icon(
-            Icons.repeat,
-            size: 14,
-            color: themeData.colorScheme.onSurface.withValues(
-              alpha: 0.6,
-            ),
-          ),
-          const SizedBox(width: 6),
-          Text(
-            displayName,
-            style: themeData.textTheme.bodySmall?.copyWith(
-              color: themeData.colorScheme.onSurface.withValues(
-                alpha: 0.6,
-              ),
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-        ],
       ),
     );
   }
@@ -287,11 +315,15 @@ class TwizzItem extends StatelessWidget {
           onTap: () {
             _showMoreOptions(context, displayTwizz);
           },
-          child: Icon(
-            Icons.more_horiz,
-            size: 18,
-            color: themeData.colorScheme.onSurface.withValues(
-              alpha: 0.6,
+          child: SizedBox(
+            width: 36,
+            height: 36,
+            child: Icon(
+              Icons.more_horiz,
+              size: 24,
+              color: themeData.colorScheme.onSurface.withValues(
+                alpha: 0.6,
+              ),
             ),
           ),
         ),
@@ -346,7 +378,13 @@ class TwizzItem extends StatelessWidget {
                 title: const Text('Xem tương tác'),
                 onTap: () {
                   Navigator.pop(context);
-                  // TODO: Implement View Interactions
+                  Navigator.pushNamed(
+                    context,
+                    RouteNames.twizzInteraction,
+                    arguments: TwizzInteractionScreenArgs(
+                      twizzId: twizz.id,
+                    ),
+                  );
                 },
               ),
               const SizedBox(height: 8),
@@ -362,9 +400,9 @@ class TwizzItem extends StatelessWidget {
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: const Text('Xóa bài viết?'),
+          title: const Text('Xóa ?'),
           content: const Text(
-            'Bạn có chắc chắn muốn xóa bài viết này không? Hành động này không thể hoàn tác.',
+            'Bạn có chắc chắn muốn xóa không? Hành động này không thể hoàn tác.',
           ),
           actions: [
             TextButton(
@@ -405,7 +443,8 @@ class TwizzItem extends StatelessWidget {
 }
 
 /// Twizz Content with highlighted mentions and hashtags
-class _TwizzContent extends StatelessWidget {
+/// Twizz Content with highlighted mentions and hashtags
+class _TwizzContent extends StatefulWidget {
   final String content;
   final Function(String) onMentionTap;
   final Function(String) onHashtagTap;
@@ -417,13 +456,28 @@ class _TwizzContent extends StatelessWidget {
   });
 
   @override
+  State<_TwizzContent> createState() => _TwizzContentState();
+}
+
+class _TwizzContentState extends State<_TwizzContent> {
+  final List<TapGestureRecognizer> _recognizers = [];
+
+  @override
+  void dispose() {
+    for (final recognizer in _recognizers) {
+      recognizer.dispose();
+    }
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final themeData = Theme.of(context);
     const highlightColor = Color(0xFF1DA1F2);
 
     // Parse content for mentions and hashtags
     final spans = _parseContent(
-      content,
+      widget.content,
       themeData,
       highlightColor,
     );
@@ -461,10 +515,28 @@ class _TwizzContent extends StatelessWidget {
 
       // Add highlighted match
       final matchText = match.group(0)!;
+      final isMention = matchText.startsWith('@');
+
+      final recognizer =
+          TapGestureRecognizer()
+            ..onTap = () {
+              if (isMention) {
+                widget.onMentionTap(matchText.substring(1));
+              } else {
+                widget.onHashtagTap(matchText);
+              }
+            };
+
+      _recognizers.add(recognizer);
+
       spans.add(
         TextSpan(
           text: matchText,
-          style: TextStyle(color: highlightColor),
+          style: TextStyle(
+            color: highlightColor,
+            fontWeight: FontWeight.bold,
+          ),
+          recognizer: recognizer,
         ),
       );
 
@@ -493,7 +565,10 @@ class _TwizzMedia extends StatelessWidget {
     // Check if it's a video
     if (medias.length == 1 &&
         medias.first.type == MediaType.video) {
-      return _TwizzVideoPlayer(url: medias.first.url);
+      return TwizzVideoPlayer(
+        url: medias.first.url,
+        height: 200,
+      );
     }
 
     // Image grid
@@ -683,190 +758,27 @@ class _TwizzMedia extends StatelessWidget {
   }
 }
 
-/// Video Player for Twizz
-class _TwizzVideoPlayer extends StatefulWidget {
-  final String url;
-
-  const _TwizzVideoPlayer({required this.url});
-
-  @override
-  State<_TwizzVideoPlayer> createState() =>
-      _TwizzVideoPlayerState();
-}
-
-class _TwizzVideoPlayerState extends State<_TwizzVideoPlayer> {
-  late VideoPlayerController _controller;
-  bool _isInitialized = false;
-  bool _hasError = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _initializeVideo();
-  }
-
-  Future<void> _initializeVideo() async {
-    // Backend returns full URL for video
-    _controller = VideoPlayerController.networkUrl(
-      Uri.parse(widget.url),
-    );
-    try {
-      await _controller.initialize();
-      _controller.setLooping(true);
-      if (mounted) {
-        setState(() {
-          _isInitialized = true;
-        });
-      }
-    } catch (e) {
-      debugPrint('Video init error: $e');
-      if (mounted) {
-        setState(() {
-          _hasError = true;
-        });
-      }
-    }
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  void _togglePlay() {
-    if (_controller.value.isPlaying) {
-      _controller.pause();
-    } else {
-      _controller.play();
-    }
-    setState(() {});
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(16),
-      child: Container(
-        height: 200,
-        color: Colors.black,
-        child: Stack(
-          children: [
-            if (_isInitialized)
-              Center(
-                child: AspectRatio(
-                  aspectRatio: _controller.value.aspectRatio,
-                  child: VideoPlayer(_controller),
-                ),
-              )
-            else if (_hasError)
-              const Center(
-                child: Icon(
-                  Icons.error_outline,
-                  color: Colors.white54,
-                  size: 48,
-                ),
-              )
-            else
-              const Center(
-                child: CircularProgressIndicator(strokeWidth: 2),
-              ),
-            // Play/Pause overlay
-            if (_isInitialized)
-              Positioned.fill(
-                child: GestureDetector(
-                  onTap: _togglePlay,
-                  child: AnimatedOpacity(
-                    opacity:
-                        _controller.value.isPlaying ? 0.0 : 1.0,
-                    duration: const Duration(milliseconds: 200),
-                    child: Container(
-                      color: Colors.transparent,
-                      child: Center(
-                        child: Container(
-                          width: 48,
-                          height: 48,
-                          decoration: BoxDecoration(
-                            color: Colors.black.withValues(
-                              alpha: 0.6,
-                            ),
-                            shape: BoxShape.circle,
-                          ),
-                          child: const Icon(
-                            Icons.play_arrow,
-                            color: Colors.white,
-                            size: 32,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            // Duration indicator
-            if (_isInitialized)
-              Positioned(
-                bottom: 8,
-                left: 8,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 6,
-                    vertical: 2,
-                  ),
-                  decoration: BoxDecoration(
-                    color: Colors.black.withValues(alpha: 0.7),
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                  child: Text(
-                    _formatDuration(_controller.value.duration),
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 11,
-                    ),
-                  ),
-                ),
-              ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  String _formatDuration(Duration duration) {
-    String twoDigits(int n) => n.toString().padLeft(2, '0');
-    final minutes = twoDigits(duration.inMinutes.remainder(60));
-    final seconds = twoDigits(duration.inSeconds.remainder(60));
-    return '$minutes:$seconds';
-  }
-}
-
 /// Twizz Action Toolbar
 class _TwizzToolbar extends StatelessWidget {
   final int commentCount;
-  final int retwizzCount;
   final int quoteCount;
   final int likeCount;
   final int viewCount;
   final bool isLiked;
   final bool isBookmarked;
-  final bool isRetwizzed;
   final VoidCallback? onComment;
-  final VoidCallback? onRetwizz;
   final VoidCallback? onQuote;
   final VoidCallback? onLike;
   final VoidCallback? onBookmark;
 
   const _TwizzToolbar({
     required this.commentCount,
-    required this.retwizzCount,
     required this.quoteCount,
     required this.likeCount,
     required this.viewCount,
     this.isLiked = false,
     this.isBookmarked = false,
-    this.isRetwizzed = false,
     this.onComment,
-    this.onRetwizz,
     this.onQuote,
     this.onLike,
     this.onBookmark,
@@ -889,13 +801,7 @@ class _TwizzToolbar extends StatelessWidget {
           color: iconColor,
           onTap: onComment,
         ),
-        // Retwizz
-        _ToolbarItem(
-          icon: Icons.repeat,
-          count: retwizzCount,
-          color: isRetwizzed ? Colors.green : iconColor,
-          onTap: onRetwizz,
-        ),
+
         // Quote
         _ToolbarItem(
           icon: Icons.format_quote,
@@ -948,7 +854,11 @@ class _ToolbarItem extends StatelessWidget {
       onTap: onTap,
       child: Row(
         children: [
-          Icon(icon, size: 24, color: color),
+          SizedBox(
+            width: 40,
+            height: 40,
+            child: Icon(icon, size: 24, color: color),
+          ),
           if (count > 0) ...[
             const SizedBox(width: 4),
             Text(

@@ -12,6 +12,7 @@ class RouteNames {
   static const String verifyForgotPassword =
       '/verify-forgot-password';
   static const String resetPassword = '/reset-password';
+  static const String setUsername = '/set-username';
 
   // Main Routes
   static const String home = '/home';
@@ -25,6 +26,8 @@ class RouteNames {
 
   // Twizz Routes
   static const String createTwizz = '/create-twizz';
+  static const String twizzInteraction = '/twizz-interaction';
+  static const String twizzDetail = '/twizz-detail';
 
   // Test Routes
   static const String videoTest = '/video-test';

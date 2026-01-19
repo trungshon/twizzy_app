@@ -35,9 +35,6 @@ class NewsFeedViewModel extends ChangeNotifier {
         likes: updatedTwizz.likes,
         isBookmarked: updatedTwizz.isBookmarked,
         bookmarks: updatedTwizz.bookmarks,
-        isRetwizzed: updatedTwizz.isRetwizzed,
-        userRetwizzId: updatedTwizz.userRetwizzId,
-        retwizzCount: updatedTwizz.retwizzCount,
         commentCount: updatedTwizz.commentCount,
         quoteCount: updatedTwizz.quoteCount,
         userViews: updatedTwizz.userViews,
@@ -46,7 +43,7 @@ class NewsFeedViewModel extends ChangeNotifier {
       );
     } else if (event.type == TwizzSyncEventType.delete &&
         event.twizzId != null) {
-      // Remove the deleted post and any retwizzs of it
+      // Remove the deleted post
       _twizzs.removeWhere(
         (t) =>
             t.id == event.twizzId ||
@@ -283,40 +280,6 @@ class NewsFeedViewModel extends ChangeNotifier {
     }
   }
 
-  /// Create a retwizz
-  Future<bool> retwizz(Twizz twizz) async {
-    try {
-      final response = await _twizzService.createRetwizz(
-        twizz.id,
-      );
-
-      // Add the new retwizz to the top of the list
-      final newRetwizz = response.result.copyWith(
-        parentTwizz: twizz,
-      );
-      _twizzs.insert(0, newRetwizz);
-
-      // Update original twizz state
-      _updateTwizzState(
-        twizz.id,
-        isRetwizzed: true,
-        userRetwizzId: newRetwizz.id,
-        retwizzCount: (twizz.retwizzCount ?? 0) + 1,
-      );
-
-      // Broadcast new retwizz
-      _syncService.emitCreate(newRetwizz);
-
-      notifyListeners();
-      return true;
-    } catch (e) {
-      if (e is ApiErrorResponse) {
-        debugPrint('Retwizz error: ${e.message}');
-      }
-      return false;
-    }
-  }
-
   /// Delete a twizz
   Future<bool> deleteTwizz(Twizz twizz) async {
     try {
@@ -335,37 +298,6 @@ class NewsFeedViewModel extends ChangeNotifier {
         debugPrint('Delete error: ${e.message}');
       } else {
         debugPrint('Delete error: $e');
-      }
-      return false;
-    }
-  }
-
-  /// Unretwizz (delete the retwizz post)
-  Future<bool> unretwizz(Twizz twizz) async {
-    final retwizzId = twizz.userRetwizzId;
-    if (retwizzId == null) return false;
-
-    try {
-      await _twizzService.deleteTwizz(retwizzId);
-
-      // Update original twizz state
-      _updateTwizzState(
-        twizz.id,
-        isRetwizzed: false,
-        retwizzCount: (twizz.retwizzCount ?? 0) - 1,
-      );
-
-      // Remove the retwizz post itself from feed if present
-      _twizzs.removeWhere((t) => t.id == retwizzId);
-
-      // Broadcast the deletion of the retwizz
-      _syncService.emitDelete(retwizzId);
-
-      notifyListeners();
-      return true;
-    } catch (e) {
-      if (e is ApiErrorResponse) {
-        debugPrint('Unretwizz error: ${e.message}');
       }
       return false;
     }
@@ -391,13 +323,10 @@ class NewsFeedViewModel extends ChangeNotifier {
     int? likes,
     bool? isBookmarked,
     int? bookmarks,
-    bool? isRetwizzed,
-    int? retwizzCount,
     int? commentCount,
     int? quoteCount,
     int? userViews,
     int? guestViews,
-    String? userRetwizzId,
     bool broadcast = true,
   }) {
     bool modified = false;
@@ -409,14 +338,10 @@ class NewsFeedViewModel extends ChangeNotifier {
           likes: likes,
           isBookmarked: isBookmarked,
           bookmarks: bookmarks,
-          isRetwizzed: isRetwizzed,
-          retwizzCount: retwizzCount,
           commentCount: commentCount,
           quoteCount: quoteCount,
           userViews: userViews,
           guestViews: guestViews,
-          userRetwizzId:
-              userRetwizzId ?? _twizzs[i].userRetwizzId,
         );
         modified = true;
 
@@ -432,15 +357,10 @@ class NewsFeedViewModel extends ChangeNotifier {
             likes: likes,
             isBookmarked: isBookmarked,
             bookmarks: bookmarks,
-            isRetwizzed: isRetwizzed,
-            retwizzCount: retwizzCount,
             commentCount: commentCount,
             quoteCount: quoteCount,
             userViews: userViews,
             guestViews: guestViews,
-            userRetwizzId:
-                userRetwizzId ??
-                _twizzs[i].parentTwizz!.userRetwizzId,
           ),
         );
         modified = true;

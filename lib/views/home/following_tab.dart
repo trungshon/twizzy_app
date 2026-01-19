@@ -3,8 +3,8 @@ import 'package:provider/provider.dart';
 import 'package:twizzy_app/widgets/twizz/twizz_list.dart';
 import '../../viewmodels/newsfeed/newsfeed_viewmodel.dart';
 import '../../viewmodels/auth/auth_viewmodel.dart';
-import '../../models/twizz/twizz_models.dart';
 import '../../routes/route_names.dart';
+import '../twizz/twizz_detail_screen.dart';
 
 /// Following Tab Content
 ///
@@ -84,16 +84,15 @@ class FollowingTabState extends State<FollowingTab> {
           scrollController: _scrollController,
           currentUserId: currentUserId,
           onTwizzTap: (twizz) {
-            // TODO: Navigate to twizz detail
+            Navigator.pushNamed(
+              context,
+              RouteNames.twizzDetail,
+              arguments: TwizzDetailScreenArgs(twizz: twizz),
+            );
           },
           onUserTap: (twizz) {
             // Navigate to user profile or my profile
-            final displayTwizz =
-                (twizz.type == TwizzType.retwizz &&
-                        twizz.parentTwizz != null)
-                    ? twizz.parentTwizz!
-                    : twizz;
-            final user = displayTwizz.user;
+            final user = twizz.user;
             if (user == null) return;
 
             if (user.id == currentUserId) {
@@ -111,10 +110,22 @@ class FollowingTabState extends State<FollowingTab> {
             viewModel.toggleLike(twizz);
           },
           onComment: (twizz) {
-            // TODO: Comment on twizz
+            Navigator.pushNamed(
+              context,
+              RouteNames.twizzDetail,
+              arguments: TwizzDetailScreenArgs(
+                twizz: twizz,
+                focusComment: true,
+              ),
+            );
           },
-          onRetwizz: (twizz) {
-            _handleRetwizz(context, viewModel, twizz);
+
+          onQuote: (twizz) {
+            Navigator.pushNamed(
+              context,
+              RouteNames.createTwizz,
+              arguments: twizz,
+            );
           },
           onBookmark: (twizz) {
             viewModel.toggleBookmark(twizz);
@@ -126,47 +137,6 @@ class FollowingTabState extends State<FollowingTab> {
         );
       },
     );
-  }
-
-  /// Handle retwizz/unretwizz
-  void _handleRetwizz(
-    BuildContext context,
-    NewsFeedViewModel viewModel,
-    Twizz twizz,
-  ) async {
-    if (twizz.isRetwizzed) {
-      // Show confirmation dialog for unretwizz
-      final confirm = await showDialog<bool>(
-        context: context,
-        builder:
-            (context) => AlertDialog(
-              title: const Text('Hủy đăng lại?'),
-              content: const Text(
-                'Bạn có chắc chắn muốn hủy đăng lại bài viết này?',
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(context, false),
-                  child: const Text('Hủy'),
-                ),
-                TextButton(
-                  onPressed: () => Navigator.pop(context, true),
-                  style: TextButton.styleFrom(
-                    foregroundColor:
-                        Theme.of(context).colorScheme.error,
-                  ),
-                  child: const Text('Hủy đăng lại'),
-                ),
-              ],
-            ),
-      );
-
-      if (confirm == true) {
-        await viewModel.unretwizz(twizz);
-      }
-    } else {
-      await viewModel.retwizz(twizz);
-    }
   }
 
   Widget _buildEmptyState(BuildContext context) {

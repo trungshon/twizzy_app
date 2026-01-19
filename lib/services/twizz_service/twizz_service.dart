@@ -61,6 +61,29 @@ class TwizzService {
     }
   }
 
+  /// Get twizz children by type (comment, quote)
+  Future<NewFeedsResponse> getTwizzChildren({
+    required String twizzId,
+    required TwizzType type,
+    int limit = 10,
+    int page = 1,
+  }) async {
+    try {
+      final response = await _apiClient.get(
+        '${ApiConstants.getTwizzChildren(twizzId)}?twizz_type=${type.index}&limit=$limit&page=$page',
+        includeAuth: true,
+      );
+      return NewFeedsResponse.fromJson(response);
+    } catch (e) {
+      if (e is ApiErrorResponse) {
+        rethrow;
+      }
+      throw ApiErrorResponse(
+        message: 'Lỗi tải bài viết liên quan: ${e.toString()}',
+      );
+    }
+  }
+
   /// Create a new Twizz
   Future<CreateTwizzResponse> createTwizz(
     CreateTwizzRequest request,
@@ -81,19 +104,6 @@ class TwizzService {
         message: 'Lỗi đăng bài: ${e.toString()}',
       );
     }
-  }
-
-  /// Create a retwizz (repost)
-  Future<CreateTwizzResponse> createRetwizz(
-    String parentTwizzId,
-  ) async {
-    final request = CreateTwizzRequest(
-      type: TwizzType.retwizz,
-      audience: TwizzAudience.everyone,
-      content: '',
-      parentId: parentTwizzId,
-    );
-    return createTwizz(request);
   }
 
   /// Upload images (with auto refresh token)

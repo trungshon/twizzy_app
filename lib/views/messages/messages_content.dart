@@ -30,7 +30,7 @@ class MessagesContent extends StatelessWidget {
               'Danh sách tin nhắn sẽ hiển thị ở đây',
               style: themeData.textTheme.bodyMedium?.copyWith(
                 color: themeData.colorScheme.onSurface
-                    .withOpacity(0.6),
+                    .withValues(alpha: 0.6),
               ),
             ),
           ],

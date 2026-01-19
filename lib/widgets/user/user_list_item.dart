@@ -103,8 +103,9 @@ class UserListItem extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 12),
-            // Follow Button
-            _buildFollowButton(themeData),
+            // Follow Button (hide for current user)
+            if (onFollow != null || onUnfollow != null)
+              _buildFollowButton(themeData),
           ],
         ),
       ),

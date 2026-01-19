@@ -27,15 +27,59 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
     super.dispose();
   }
 
+  void _skipVerification() {
+    showDialog(
+      context: context,
+      builder:
+          (context) => AlertDialog(
+            title: const Text('Bỏ qua xác minh?'),
+            content: const Text(
+              'Một số tính năng có thể bị hạn chế nếu bạn không xác minh email. Bạn có chắc chắn muốn bỏ qua?',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: const Text('Hủy'),
+              ),
+              TextButton(
+                onPressed: () {
+                  Navigator.of(context).pop(); // Close dialog
+                  Navigator.of(context).pushNamedAndRemoveUntil(
+                    RouteNames.setUsername,
+                    (route) => false,
+                  );
+                },
+                style: TextButton.styleFrom(
+                  foregroundColor:
+                      Theme.of(context).colorScheme.error,
+                ),
+                child: const Text('Bỏ qua'),
+              ),
+            ],
+          ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final themeData = Theme.of(context);
+    final isDarkMode = themeData.brightness == Brightness.dark;
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () => Navigator.of(context).pop(),
         ),
+        actions: [
+          TextButton(
+            onPressed: _skipVerification,
+            child: const Text(
+              'Bỏ qua',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
+          ),
+          const SizedBox(width: 8),
+        ],
       ),
       body: SafeArea(
         child: Center(
@@ -49,11 +93,12 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
                 children: [
                   const SizedBox(height: 20),
                   // Logo
-                  const Center(
+                  Center(
                     child: AppLogo(
                       showText: true,
-                      width: 150,
-                      height: 150,
+                      isDarkMode: isDarkMode,
+                      width: 220,
+                      height: 220,
                     ),
                   ),
                   const SizedBox(height: 40),
@@ -193,7 +238,7 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
                                         ? themeData
                                             .colorScheme
                                             .secondary
-                                            .withOpacity(0.5)
+                                            .withValues(alpha: 0.5)
                                         : themeData
                                             .colorScheme
                                             .secondary,
@@ -258,11 +303,11 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
                                           ),
                                         ),
                                       );
-                                      // Navigate to home screen
+                                      // Navigate to set username screen
                                       Navigator.of(
                                         context,
                                       ).pushNamedAndRemoveUntil(
-                                        RouteNames.home,
+                                        RouteNames.setUsername,
                                         (route) => false,
                                       );
                                     } else if (context.mounted &&

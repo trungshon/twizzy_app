@@ -2,12 +2,11 @@ import '../auth/auth_models.dart';
 import '../../core/utils/media_url_helper.dart';
 
 /// TwizzType enum
-/// Các loại twizz: bài viết gốc, retwizz, comment, quote
+/// Các loại twizz: bài viết gốc, comment, quote
 enum TwizzType {
   twizz, // 0
-  retwizz, // 1
-  comment, // 2
-  quoteTwizz, // 3
+  comment, // 1
+  quoteTwizz, // 2
 }
 
 /// TwizzAudience enum
@@ -96,15 +95,11 @@ class Twizz {
   final User? user;
   final int? bookmarks;
   final int? likes;
-  final int? retwizzCount;
   final int? commentCount;
   final int? quoteCount;
   final bool isLiked;
   final bool isBookmarked;
-  final bool isRetwizzed;
-  final String? userRetwizzId;
-  final Twizz?
-  parentTwizz; // Parent twizz for retwizz/quote/comment
+  final Twizz? parentTwizz; // Parent twizz for quote/comment
 
   Twizz({
     required this.id,
@@ -123,13 +118,10 @@ class Twizz {
     this.user,
     this.bookmarks,
     this.likes,
-    this.retwizzCount,
     this.commentCount,
     this.quoteCount,
     this.isLiked = false,
     this.isBookmarked = false,
-    this.isRetwizzed = false,
-    this.userRetwizzId,
     this.parentTwizz,
   });
 
@@ -162,13 +154,10 @@ class Twizz {
               : null,
       bookmarks: json['bookmarks'] as int?,
       likes: json['likes'] as int?,
-      retwizzCount: json['retwizz_count'] as int?,
       commentCount: json['comment_count'] as int?,
       quoteCount: json['quote_count'] as int?,
       isLiked: json['is_liked'] as bool? ?? false,
       isBookmarked: json['is_bookmarked'] as bool? ?? false,
-      isRetwizzed: json['is_retwizzed'] as bool? ?? false,
-      userRetwizzId: json['user_retwizz_id'] as String?,
       parentTwizz:
           json['parent_twizz'] != null
               ? Twizz.fromJson(
@@ -184,14 +173,12 @@ class Twizz {
     bool? isBookmarked,
     int? likes,
     int? bookmarks,
-    int? retwizzCount,
     int? commentCount,
     int? quoteCount,
-    bool? isRetwizzed,
-    String? userRetwizzId,
     Twizz? parentTwizz,
     int? userViews,
     int? guestViews,
+    User? user,
   }) {
     return Twizz(
       id: id,
@@ -207,16 +194,13 @@ class Twizz {
       userViews: userViews ?? this.userViews,
       createdAt: createdAt,
       updatedAt: updatedAt,
-      user: user,
+      user: user ?? this.user,
       bookmarks: bookmarks ?? this.bookmarks,
       likes: likes ?? this.likes,
-      retwizzCount: retwizzCount ?? this.retwizzCount,
       commentCount: commentCount ?? this.commentCount,
       quoteCount: quoteCount ?? this.quoteCount,
       isLiked: isLiked ?? this.isLiked,
       isBookmarked: isBookmarked ?? this.isBookmarked,
-      isRetwizzed: isRetwizzed ?? this.isRetwizzed,
-      userRetwizzId: userRetwizzId ?? this.userRetwizzId,
       parentTwizz: parentTwizz ?? this.parentTwizz,
     );
   }

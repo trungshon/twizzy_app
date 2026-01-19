@@ -5,8 +5,8 @@ import '../../viewmodels/auth/auth_viewmodel.dart';
 import '../../viewmodels/profile/profile_viewmodel.dart';
 import '../../core/utils/number_formatter.dart';
 import '../../routes/route_names.dart';
-import '../../models/twizz/twizz_models.dart';
 import 'follower_list_screen.dart';
+import '../twizz/twizz_detail_screen.dart';
 
 /// My Profile Screen
 ///
@@ -27,7 +27,6 @@ class _MyProfileScreenState extends State<MyProfileScreen>
 
   final List<String> _tabs = [
     'Bài viết',
-    'Đăng lại',
     'Trích dẫn',
     'Đã thích',
     'Dấu trang',
@@ -244,33 +243,16 @@ class _MyProfileScreenState extends State<MyProfileScreen>
                   forceElevated: _showTitle,
                   title:
                       _showTitle
-                          ? Column(
-                            crossAxisAlignment:
-                                CrossAxisAlignment.start,
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Text(
-                                '@$username',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                  color:
-                                      themeData
-                                          .colorScheme
-                                          .onSurface,
-                                ),
-                              ),
-                              Text(
-                                '0 bài đăng',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: themeData
+                          ? Text(
+                            '@$username',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color:
+                                  themeData
                                       .colorScheme
-                                      .onSurface
-                                      .withValues(alpha: 0.7),
-                                ),
-                              ),
-                            ],
+                                      .onSurface,
+                            ),
                           )
                           : null,
                 ),
@@ -542,7 +524,9 @@ class _MyProfileScreenState extends State<MyProfileScreen>
                                         ),
                                   ).then((_) {
                                     if (context.mounted) {
-                                      context.read<AuthViewModel>().getMe();
+                                      context
+                                          .read<AuthViewModel>()
+                                          .getMe();
                                     }
                                   }),
                             ),
@@ -563,7 +547,9 @@ class _MyProfileScreenState extends State<MyProfileScreen>
                                         ),
                                   ).then((_) {
                                     if (context.mounted) {
-                                      context.read<AuthViewModel>().getMe();
+                                      context
+                                          .read<AuthViewModel>()
+                                          .getMe();
                                     }
                                   }),
                             ),
@@ -615,7 +601,6 @@ class _MyProfileScreenState extends State<MyProfileScreen>
               controller: _tabController,
               children: [
                 _buildTwizzTab(context),
-                _buildRetwizzTab(context),
                 _buildQuoteTwizzTab(context),
                 _buildLikedTab(context),
                 _buildBookmarksTab(context),
@@ -714,6 +699,13 @@ class _MyProfileScreenState extends State<MyProfileScreen>
           isLoading: isLoadingMore,
           hasMore: hasMore,
           currentUserId: userId,
+          onTwizzTap: (twizz) {
+            Navigator.pushNamed(
+              context,
+              RouteNames.twizzDetail,
+              arguments: TwizzDetailScreenArgs(twizz: twizz),
+            );
+          },
           onLoadMore:
               () => profileViewModel.loadMore(
                 userId: userId,
@@ -734,12 +726,21 @@ class _MyProfileScreenState extends State<MyProfileScreen>
                 twizz,
                 ProfileViewModel.tabTwizz,
               ),
-          onRetwizz: (twizz) {
-            _handleRetwizz(
+          onComment: (twizz) {
+            Navigator.pushNamed(
               context,
-              profileViewModel,
-              twizz,
-              ProfileViewModel.tabTwizz,
+              RouteNames.twizzDetail,
+              arguments: TwizzDetailScreenArgs(
+                twizz: twizz,
+                focusComment: true,
+              ),
+            );
+          },
+          onQuote: (twizz) {
+            Navigator.pushNamed(
+              context,
+              RouteNames.createTwizz,
+              arguments: twizz,
             );
           },
           onDelete:
@@ -749,102 +750,6 @@ class _MyProfileScreenState extends State<MyProfileScreen>
             icon: Icons.article_outlined,
             title: 'Chưa có bài viết',
             subtitle: 'Bài viết của bạn sẽ hiển thị ở đây',
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _buildRetwizzTab(BuildContext context) {
-    return Consumer2<ProfileViewModel, AuthViewModel>(
-      builder: (
-        context,
-        profileViewModel,
-        authViewModel,
-        child,
-      ) {
-        final userId = authViewModel.currentUser?.id;
-        if (userId == null) {
-          return _buildEmptyTab(
-            context,
-            icon: Icons.repeat,
-            title: 'Chưa có đăng lại',
-            subtitle: 'Bài viết bạn đăng lại sẽ hiển thị ở đây',
-          );
-        }
-
-        final twizzs = profileViewModel.getTwizzs(
-          ProfileViewModel.tabRetwizz,
-        );
-        final isLoading = profileViewModel.isLoading(
-          ProfileViewModel.tabRetwizz,
-        );
-        final isLoadingMore = profileViewModel.isLoadingMore(
-          ProfileViewModel.tabRetwizz,
-        );
-        final hasMore = profileViewModel.hasMore(
-          ProfileViewModel.tabRetwizz,
-        );
-        final error = profileViewModel.getError(
-          ProfileViewModel.tabRetwizz,
-        );
-
-        if (isLoading && twizzs.isEmpty) {
-          return const Center(
-            child: CircularProgressIndicator(),
-          );
-        }
-
-        if (error != null && twizzs.isEmpty) {
-          return _buildErrorTab(context, error, () {
-            profileViewModel.loadTwizzs(
-              userId: userId,
-              tabIndex: ProfileViewModel.tabRetwizz,
-              refresh: true,
-            );
-          });
-        }
-
-        return TwizzList(
-          twizzs: twizzs,
-          isLoading: isLoadingMore,
-          hasMore: hasMore,
-          currentUserId: userId,
-          onLoadMore:
-              () => profileViewModel.loadMore(
-                userId: userId,
-                tabIndex: ProfileViewModel.tabRetwizz,
-              ),
-          onRefresh:
-              () => profileViewModel.refresh(
-                userId: userId,
-                tabIndex: ProfileViewModel.tabRetwizz,
-              ),
-          onLike:
-              (twizz) => profileViewModel.toggleLike(
-                twizz,
-                ProfileViewModel.tabRetwizz,
-              ),
-          onBookmark:
-              (twizz) => profileViewModel.toggleBookmark(
-                twizz,
-                ProfileViewModel.tabRetwizz,
-              ),
-          onRetwizz: (twizz) {
-            _handleRetwizz(
-              context,
-              profileViewModel,
-              twizz,
-              ProfileViewModel.tabRetwizz,
-            );
-          },
-          onDelete:
-              (twizz) => profileViewModel.deleteTwizz(twizz),
-          emptyWidget: _buildEmptyTab(
-            context,
-            icon: Icons.repeat,
-            title: 'Chưa có đăng lại',
-            subtitle: 'Bài viết bạn đăng lại sẽ hiển thị ở đây',
           ),
         );
       },
@@ -906,6 +811,13 @@ class _MyProfileScreenState extends State<MyProfileScreen>
           isLoading: isLoadingMore,
           hasMore: hasMore,
           currentUserId: userId,
+          onTwizzTap: (twizz) {
+            Navigator.pushNamed(
+              context,
+              RouteNames.twizzDetail,
+              arguments: TwizzDetailScreenArgs(twizz: twizz),
+            );
+          },
           onLoadMore:
               () => profileViewModel.loadMore(
                 userId: userId,
@@ -926,12 +838,21 @@ class _MyProfileScreenState extends State<MyProfileScreen>
                 twizz,
                 ProfileViewModel.tabQuoteTwizz,
               ),
-          onRetwizz: (twizz) {
-            _handleRetwizz(
+          onComment: (twizz) {
+            Navigator.pushNamed(
               context,
-              profileViewModel,
-              twizz,
-              ProfileViewModel.tabQuoteTwizz,
+              RouteNames.twizzDetail,
+              arguments: TwizzDetailScreenArgs(
+                twizz: twizz,
+                focusComment: true,
+              ),
+            );
+          },
+          onQuote: (twizz) {
+            Navigator.pushNamed(
+              context,
+              RouteNames.createTwizz,
+              arguments: twizz,
             );
           },
           onDelete:
@@ -1002,6 +923,13 @@ class _MyProfileScreenState extends State<MyProfileScreen>
           isLoading: isLoadingMore,
           hasMore: hasMore,
           currentUserId: userId,
+          onTwizzTap: (twizz) {
+            Navigator.pushNamed(
+              context,
+              RouteNames.twizzDetail,
+              arguments: TwizzDetailScreenArgs(twizz: twizz),
+            );
+          },
           onLoadMore:
               () => profileViewModel.loadMore(
                 userId: userId,
@@ -1022,12 +950,11 @@ class _MyProfileScreenState extends State<MyProfileScreen>
                 twizz,
                 ProfileViewModel.tabLiked,
               ),
-          onRetwizz: (twizz) {
-            _handleRetwizz(
+          onQuote: (twizz) {
+            Navigator.pushNamed(
               context,
-              profileViewModel,
-              twizz,
-              ProfileViewModel.tabLiked,
+              RouteNames.createTwizz,
+              arguments: twizz,
             );
           },
           onDelete:
@@ -1098,6 +1025,13 @@ class _MyProfileScreenState extends State<MyProfileScreen>
           isLoading: isLoadingMore,
           hasMore: hasMore,
           currentUserId: userId,
+          onTwizzTap: (twizz) {
+            Navigator.pushNamed(
+              context,
+              RouteNames.twizzDetail,
+              arguments: TwizzDetailScreenArgs(twizz: twizz),
+            );
+          },
           onLoadMore:
               () => profileViewModel.loadMore(
                 userId: userId,
@@ -1118,12 +1052,11 @@ class _MyProfileScreenState extends State<MyProfileScreen>
                 twizz,
                 ProfileViewModel.tabBookmarked,
               ),
-          onRetwizz: (twizz) {
-            _handleRetwizz(
+          onQuote: (twizz) {
+            Navigator.pushNamed(
               context,
-              profileViewModel,
-              twizz,
-              ProfileViewModel.tabBookmarked,
+              RouteNames.createTwizz,
+              arguments: twizz,
             );
           },
           onDelete:
@@ -1179,48 +1112,6 @@ class _MyProfileScreenState extends State<MyProfileScreen>
         ],
       ),
     );
-  }
-
-  /// Handle retwizz/unretwizz
-  void _handleRetwizz(
-    BuildContext context,
-    ProfileViewModel viewModel,
-    Twizz twizz,
-    int tabIndex,
-  ) async {
-    if (twizz.isRetwizzed) {
-      // Show confirmation dialog for unretwizz
-      final confirm = await showDialog<bool>(
-        context: context,
-        builder:
-            (context) => AlertDialog(
-              title: const Text('Hủy đăng lại?'),
-              content: const Text(
-                'Bạn có chắc chắn muốn hủy đăng lại bài viết này?',
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(context, false),
-                  child: const Text('Hủy'),
-                ),
-                TextButton(
-                  onPressed: () => Navigator.pop(context, true),
-                  style: TextButton.styleFrom(
-                    foregroundColor:
-                        Theme.of(context).colorScheme.error,
-                  ),
-                  child: const Text('Hủy đăng lại'),
-                ),
-              ],
-            ),
-      );
-
-      if (confirm == true) {
-        await viewModel.unretwizz(twizz, tabIndex);
-      }
-    } else {
-      await viewModel.retwizz(twizz, tabIndex);
-    }
   }
 
   Widget _buildEmptyTab(

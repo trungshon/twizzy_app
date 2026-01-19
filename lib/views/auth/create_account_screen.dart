@@ -50,7 +50,7 @@ class _CreateAccountScreenState
       final trimmed = value.trim();
       if (trimmed.isEmpty) {
         _nameError = null; // Will be validated on submit
-      } else if (trimmed.length < 1) {
+      } else if (trimmed.isEmpty) {
         _nameError = 'Tên phải có ít nhất 1 ký tự';
       } else if (trimmed.length > 100) {
         _nameError = 'Tên không được vượt quá 100 ký tự';
@@ -570,7 +570,7 @@ class _CreateAccountScreenState
                                       });
                                       return;
                                     }
-                                    if (name.length < 1 ||
+                                    if (name.isEmpty ||
                                         name.length > 100) {
                                       setState(() {
                                         _nameError =

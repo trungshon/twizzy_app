@@ -30,7 +30,7 @@ class SearchContent extends StatelessWidget {
               'Chức năng tìm kiếm sẽ được triển khai sau',
               style: themeData.textTheme.bodyMedium?.copyWith(
                 color: themeData.colorScheme.onSurface
-                    .withOpacity(0.6),
+                    .withValues(alpha: 0.6),
               ),
             ),
           ],

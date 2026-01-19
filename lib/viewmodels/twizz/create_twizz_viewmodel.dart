@@ -41,6 +41,7 @@ class CreateTwizzViewModel extends ChangeNotifier {
   final List<Media> _uploadedMedias = [];
   final List<SearchUserResult> _mentionedUsers = [];
   List<SearchUserResult> _searchResults = [];
+  Twizz? _parentTwizz; // For quote twizz
 
   // Getters
   bool get isLoading => _isLoading;
@@ -69,6 +70,8 @@ class CreateTwizzViewModel extends ChangeNotifier {
   List<Media> get uploadedMedias => _uploadedMedias;
   List<SearchUserResult> get mentionedUsers => _mentionedUsers;
   List<SearchUserResult> get searchResults => _searchResults;
+  Twizz? get parentTwizz => _parentTwizz;
+  bool get isQuoteMode => _parentTwizz != null;
 
   /// Check if can post
   bool get canPost {
@@ -100,6 +103,12 @@ class CreateTwizzViewModel extends ChangeNotifier {
   /// Set audience
   void setAudience(TwizzAudience audience) {
     _audience = audience;
+    notifyListeners();
+  }
+
+  /// Set parent twizz for quote mode
+  void setParentTwizz(Twizz? twizz) {
+    _parentTwizz = twizz;
     notifyListeners();
   }
 
@@ -163,7 +172,7 @@ class CreateTwizzViewModel extends ChangeNotifier {
     }
 
     if (oversizedImages.isNotEmpty) {
-      final maxSizeKB = maxImageSizeBytes ~/ 1024;
+      const maxSizeKB = maxImageSizeBytes ~/ 1024;
       _error =
           'Ảnh vượt quá ${maxSizeKB}KB: ${oversizedImages.join(", ")}';
     }
@@ -199,7 +208,7 @@ class CreateTwizzViewModel extends ChangeNotifier {
     if (fileSize > maxVideoSizeBytes) {
       final fileSizeMB = (fileSize / (1024 * 1024))
           .toStringAsFixed(1);
-      final maxSizeMB = maxVideoSizeBytes ~/ (1024 * 1024);
+      const maxSizeMB = maxVideoSizeBytes ~/ (1024 * 1024);
       _error =
           'Video vượt quá ${maxSizeMB}MB (hiện tại: ${fileSizeMB}MB)';
       notifyListeners();
@@ -341,8 +350,13 @@ class CreateTwizzViewModel extends ChangeNotifier {
 
       // Create request
       final request = CreateTwizzRequest(
+        type:
+            _parentTwizz != null
+                ? TwizzType.quoteTwizz
+                : TwizzType.twizz,
         audience: _audience,
         content: _content,
+        parentId: _parentTwizz?.id,
         hashtags: hashtags,
         mentions: mentionIds,
         medias: _uploadedMedias,
@@ -383,6 +397,7 @@ class CreateTwizzViewModel extends ChangeNotifier {
     _mentionedUsers.clear();
     _searchResults.clear();
     _audience = TwizzAudience.everyone;
+    _parentTwizz = null;
   }
 
   /// Dispose and reset

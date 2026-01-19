@@ -6,6 +6,7 @@ import 'package:twizzy_app/views/profile/follower_list_screen.dart';
 import '../../viewmodels/auth/auth_viewmodel.dart';
 import '../../routes/route_names.dart';
 import '../../core/utils/number_formatter.dart';
+import '../../viewmodels/theme/theme_viewmodel.dart';
 
 /// App Drawer
 ///
@@ -287,6 +288,7 @@ class AppDrawer extends StatelessWidget {
                       ).pushNamed(RouteNames.changePassword);
                     },
                   ),
+                  _buildThemeItem(context),
 
                   Consumer<AuthViewModel>(
                     builder: (context, authViewModel, child) {
@@ -367,6 +369,170 @@ class AppDrawer extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildThemeItem(BuildContext context) {
+    final themeViewModel = Provider.of<ThemeViewModel>(context);
+    final themeData = Theme.of(context);
+
+    IconData themeIcon;
+    String themeText;
+
+    switch (themeViewModel.themeMode) {
+      case ThemeMode.light:
+        themeIcon = Icons.light_mode;
+        themeText = 'Sáng';
+        break;
+      case ThemeMode.dark:
+        themeIcon = Icons.dark_mode;
+        themeText = 'Tối';
+        break;
+      case ThemeMode.system:
+        themeIcon = Icons.brightness_auto;
+        themeText = 'Theo thiết bị';
+        break;
+    }
+
+    return ListTile(
+      leading: Icon(
+        themeIcon,
+        color: themeData.colorScheme.onSurface,
+        size: 32,
+      ),
+      title: Text(
+        'Giao diện',
+        style: themeData.textTheme.headlineSmall?.copyWith(
+          color: themeData.colorScheme.onSurface,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+      subtitle: Text(
+        themeText,
+        style: themeData.textTheme.bodyMedium?.copyWith(
+          color: themeData.colorScheme.primary,
+          fontWeight: FontWeight.w500,
+        ),
+      ),
+      onTap: () => _showThemeSelector(context),
+    );
+  }
+
+  void _showThemeSelector(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(
+          top: Radius.circular(20),
+        ),
+      ),
+      builder: (context) {
+        return Consumer<ThemeViewModel>(
+          builder: (context, themeViewModel, child) {
+            return SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  vertical: 20,
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      'Chọn giao diện',
+                      style: Theme.of(
+                        context,
+                      ).textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    _buildThemeOption(
+                      context,
+                      mode: ThemeMode.light,
+                      title: 'Sáng',
+                      icon: Icons.light_mode,
+                      currentMode: themeViewModel.themeMode,
+                      onTap: () {
+                        themeViewModel.setThemeMode(
+                          ThemeMode.light,
+                        );
+                        Navigator.pop(context);
+                      },
+                    ),
+                    _buildThemeOption(
+                      context,
+                      mode: ThemeMode.dark,
+                      title: 'Tối',
+                      icon: Icons.dark_mode,
+                      currentMode: themeViewModel.themeMode,
+                      onTap: () {
+                        themeViewModel.setThemeMode(
+                          ThemeMode.dark,
+                        );
+                        Navigator.pop(context);
+                      },
+                    ),
+                    _buildThemeOption(
+                      context,
+                      mode: ThemeMode.system,
+                      title: 'Theo thiết bị',
+                      icon: Icons.brightness_auto,
+                      currentMode: themeViewModel.themeMode,
+                      onTap: () {
+                        themeViewModel.setThemeMode(
+                          ThemeMode.system,
+                        );
+                        Navigator.pop(context);
+                      },
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Widget _buildThemeOption(
+    BuildContext context, {
+    required ThemeMode mode,
+    required String title,
+    required IconData icon,
+    required ThemeMode currentMode,
+    required VoidCallback onTap,
+  }) {
+    final themeData = Theme.of(context);
+    final isSelected = mode == currentMode;
+
+    return ListTile(
+      leading: Icon(
+        icon,
+        color:
+            isSelected
+                ? themeData.colorScheme.primary
+                : themeData.colorScheme.onSurface,
+      ),
+      title: Text(
+        title,
+        style: TextStyle(
+          fontWeight:
+              isSelected ? FontWeight.bold : FontWeight.normal,
+          color:
+              isSelected
+                  ? themeData.colorScheme.primary
+                  : themeData.colorScheme.onSurface,
+        ),
+      ),
+      trailing:
+          isSelected
+              ? Icon(
+                Icons.check,
+                color: themeData.colorScheme.primary,
+              )
+              : null,
+      onTap: onTap,
     );
   }
 

@@ -67,4 +67,27 @@ class BookmarkService {
       );
     }
   }
+
+  /// Get users who bookmarked a specific twizz
+  Future<UsersListResponse> getUsersWhoBookmarkedTwizz({
+    required String twizzId,
+    int limit = 10,
+    int page = 1,
+  }) async {
+    try {
+      final response = await _apiClient.get(
+        '${ApiConstants.getUsersWhoBookmarkedTwizz(twizzId)}?limit=$limit&page=$page',
+        includeAuth: true,
+      );
+      return UsersListResponse.fromJson(response);
+    } catch (e) {
+      if (e is ApiErrorResponse) {
+        rethrow;
+      }
+      throw ApiErrorResponse(
+        message:
+            'Lỗi tải danh sách người đánh dấu: ${e.toString()}',
+      );
+    }
+  }
 }

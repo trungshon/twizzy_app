@@ -142,6 +142,7 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     final themeData = Theme.of(context);
+    final isDarkMode = themeData.brightness == Brightness.dark;
     return Scaffold(
       body: SafeArea(
         child: Center(
@@ -154,10 +155,11 @@ class _LoginScreenState extends State<LoginScreen> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   // Logo
-                  const AppLogo(
+                  AppLogo(
                     showText: true,
-                    width: 150,
-                    height: 150,
+                    isDarkMode: isDarkMode,
+                    width: 220,
+                    height: 220,
                   ),
                   const SizedBox(height: 40),
 

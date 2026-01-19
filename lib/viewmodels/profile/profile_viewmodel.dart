@@ -47,21 +47,12 @@ class ProfileViewModel extends ChangeNotifier {
           notifyListeners();
         }
       }
-      // Handle Retwizz
-      else if (twizz.type == TwizzType.retwizz) {
-        final twizzs = _twizzsByTab[tabRetwizz] ?? [];
-        if (!twizzs.any((t) => t.id == twizz.id)) {
-          twizzs.insert(0, twizz);
-          _twizzsByTab[tabRetwizz] = twizzs;
-          notifyListeners();
-        }
-      }
     } else if (event.type == TwizzSyncEventType.delete &&
         event.twizzId != null) {
       for (final entry in _twizzsByTab.entries) {
         final tabIndex = entry.key;
         final list = entry.value;
-        // Remove the deleted post and any retwizzs of it
+        // Remove the deleted post
         list.removeWhere(
           (t) =>
               t.id == event.twizzId ||
@@ -84,10 +75,9 @@ class ProfileViewModel extends ChangeNotifier {
 
   // Tab indices
   static const int tabTwizz = 0;
-  static const int tabRetwizz = 1;
-  static const int tabQuoteTwizz = 2;
-  static const int tabLiked = 3;
-  static const int tabBookmarked = 4;
+  static const int tabQuoteTwizz = 1;
+  static const int tabLiked = 2;
+  static const int tabBookmarked = 3;
 
   // Getters
   List<Twizz> getTwizzs(int tabIndex) =>
@@ -119,7 +109,7 @@ class ProfileViewModel extends ChangeNotifier {
 
     _isLoadingByTab[tabIndex] = true;
     _errorByTab[tabIndex] = null;
-    notifyListeners();
+    Future.microtask(() => notifyListeners());
 
     try {
       NewFeedsResponse response;
@@ -133,14 +123,7 @@ class ProfileViewModel extends ChangeNotifier {
             page: _currentPageByTab[tabIndex] ?? 1,
           );
           break;
-        case tabRetwizz:
-          response = await _twizzService.getUserTwizzs(
-            userId: userId,
-            type: TwizzType.retwizz.index,
-            limit: _limit,
-            page: _currentPageByTab[tabIndex] ?? 1,
-          );
-          break;
+
         case tabQuoteTwizz:
           response = await _twizzService.getUserTwizzs(
             userId: userId,
@@ -195,11 +178,12 @@ class ProfileViewModel extends ChangeNotifier {
     required int tabIndex,
   }) async {
     if (_isLoadingMoreByTab[tabIndex] == true ||
-        !hasMore(tabIndex))
+        !hasMore(tabIndex)) {
       return;
+    }
 
     _isLoadingMoreByTab[tabIndex] = true;
-    notifyListeners();
+    Future.microtask(() => notifyListeners());
 
     try {
       NewFeedsResponse response;
@@ -213,14 +197,7 @@ class ProfileViewModel extends ChangeNotifier {
             page: _currentPageByTab[tabIndex] ?? 1,
           );
           break;
-        case tabRetwizz:
-          response = await _twizzService.getUserTwizzs(
-            userId: userId,
-            type: TwizzType.retwizz.index,
-            limit: _limit,
-            page: _currentPageByTab[tabIndex] ?? 1,
-          );
-          break;
+
         case tabQuoteTwizz:
           response = await _twizzService.getUserTwizzs(
             userId: userId,
@@ -401,41 +378,6 @@ class ProfileViewModel extends ChangeNotifier {
     }
   }
 
-  /// Create a retwizz
-  Future<bool> retwizz(Twizz twizz, int tabIndex) async {
-    try {
-      final response = await _twizzService.createRetwizz(
-        twizz.id,
-      );
-      final newRetwizzResult = response.result;
-
-      // Update the original twizz state across all tabs
-      final updatedTwizz = twizz.copyWith(
-        isRetwizzed: true,
-        userRetwizzId: newRetwizzResult.id,
-        retwizzCount: (twizz.retwizzCount ?? 0) + 1,
-      );
-      _updateTwizzInAllTabs(twizz.id, updatedTwizz);
-
-      // Add the new retwizz to the Retwizz tab if it exists
-      final newRetwizz = newRetwizzResult.copyWith(
-        parentTwizz: twizz,
-      );
-      if (_twizzsByTab.containsKey(tabRetwizz)) {
-        _twizzsByTab[tabRetwizz]!.insert(0, newRetwizz);
-      }
-
-      // Broadcast new retwizz
-      _syncService.emitCreate(newRetwizz);
-
-      notifyListeners();
-      return true;
-    } catch (e) {
-      debugPrint('Error creating retwizz: $e');
-      return false;
-    }
-  }
-
   /// Delete a twizz
   Future<bool> deleteTwizz(Twizz twizz) async {
     try {
@@ -456,43 +398,6 @@ class ProfileViewModel extends ChangeNotifier {
       return true;
     } catch (e) {
       debugPrint('Delete error: $e');
-      return false;
-    }
-  }
-
-  /// Unretwizz (delete the retwizz post)
-  Future<bool> unretwizz(Twizz twizz, int tabIndex) async {
-    final retwizzId = twizz.userRetwizzId;
-    if (retwizzId == null) return false;
-
-    try {
-      await _twizzService.deleteTwizz(retwizzId);
-
-      // Update original twizz state across all tabs
-      _updateTwizzInAllTabs(
-        twizz.id,
-        twizz.copyWith(
-          isRetwizzed: false,
-          userRetwizzId: null,
-          retwizzCount: (twizz.retwizzCount ?? 1) - 1,
-        ),
-      );
-
-      // Remove the retwizz post itself from all tabs
-      for (final entry in _twizzsByTab.entries) {
-        final tabIndex = entry.key;
-        final list = entry.value;
-        list.removeWhere((t) => t.id == retwizzId);
-        _twizzsByTab[tabIndex] = list;
-      }
-
-      // Broadcast deletion
-      _syncService.emitDelete(retwizzId);
-
-      notifyListeners();
-      return true;
-    } catch (e) {
-      debugPrint('Error unretwizzing: $e');
       return false;
     }
   }

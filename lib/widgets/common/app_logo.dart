@@ -9,6 +9,7 @@ import '../../core/constants/asset_paths.dart';
 class AppLogo extends StatelessWidget {
   final bool
   showText; // true = logo có chữ, false = logo chỉ có hình
+  final bool isDarkMode;
   final double? width;
   final double? height;
   final BoxFit fit;
@@ -16,6 +17,7 @@ class AppLogo extends StatelessWidget {
   const AppLogo({
     super.key,
     this.showText = true,
+    this.isDarkMode = false,
     this.width,
     this.height,
     this.fit = BoxFit.contain,
@@ -25,9 +27,17 @@ class AppLogo extends StatelessWidget {
   Widget build(BuildContext context) {
     final themeData = Theme.of(context);
     final String logoPath =
-        showText ? AssetPaths.logo : AssetPaths.logoImage;
+        showText
+            ? (isDarkMode
+                ? AssetPaths.logoDark
+                : AssetPaths.logoLight)
+            : (isDarkMode
+                ? AssetPaths.logoImageDark
+                : AssetPaths.logoImageLight);
 
     return Image.asset(
+      color: themeData.colorScheme.primary,
+      colorBlendMode: BlendMode.srcIn,
       logoPath,
       width: width,
       height: height,

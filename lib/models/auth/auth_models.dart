@@ -1,7 +1,3 @@
-/// Auth Models
-///
-/// Models cho authentication
-
 /// Login Request Model
 class LoginRequest {
   final String email;
@@ -435,6 +431,39 @@ class User {
       isFollowing: json['is_following'] as bool?,
     );
   }
+
+  /// Create a copy with updated fields
+  User copyWith({
+    String? name,
+    String? bio,
+    String? location,
+    String? website,
+    String? avatar,
+    String? coverPhoto,
+    int? followersCount,
+    int? followingCount,
+    bool? isFollowing,
+    String? verify,
+  }) {
+    return User(
+      id: id,
+      name: name ?? this.name,
+      email: email,
+      dateOfBirth: dateOfBirth,
+      createdAt: createdAt,
+      updatedAt: updatedAt,
+      verify: verify ?? this.verify,
+      bio: bio ?? this.bio,
+      location: location ?? this.location,
+      website: website ?? this.website,
+      username: username,
+      avatar: avatar ?? this.avatar,
+      coverPhoto: coverPhoto ?? this.coverPhoto,
+      followersCount: followersCount ?? this.followersCount,
+      followingCount: followingCount ?? this.followingCount,
+      isFollowing: isFollowing ?? this.isFollowing,
+    );
+  }
 }
 
 /// Get Me Response Model
@@ -619,4 +648,54 @@ class ChangePasswordRequest {
     'password': password,
     'confirm_password': confirmPassword,
   };
+}
+
+/// Users List Response Model
+/// Used for API responses that return a list of users
+class UsersListResponse {
+  final String message;
+  final UsersListResult result;
+
+  UsersListResponse({
+    required this.message,
+    required this.result,
+  });
+
+  factory UsersListResponse.fromJson(Map<String, dynamic> json) {
+    return UsersListResponse(
+      message: json['message'] as String,
+      result: UsersListResult.fromJson(
+        json['result'] as Map<String, dynamic>,
+      ),
+    );
+  }
+}
+
+/// Users List Result Model
+class UsersListResult {
+  final List<User> users;
+  final int limit;
+  final int page;
+  final int totalPage;
+
+  UsersListResult({
+    required this.users,
+    required this.limit,
+    required this.page,
+    required this.totalPage,
+  });
+
+  factory UsersListResult.fromJson(Map<String, dynamic> json) {
+    return UsersListResult(
+      users:
+          (json['users'] as List<dynamic>)
+              .map(
+                (e) => User.fromJson(e as Map<String, dynamic>),
+              )
+              .toList(),
+      limit: json['limit'] as int,
+      page: json['page'] as int,
+      totalPage: json['total_page'] as int,
+    );
+  }
 }

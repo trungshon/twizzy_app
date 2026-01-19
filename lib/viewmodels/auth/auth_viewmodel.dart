@@ -357,6 +357,41 @@ class AuthViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Update username
+  Future<bool> updateUsername(String username) async {
+    _isLoading = true;
+    _error = null;
+    _apiError = null;
+    notifyListeners();
+
+    try {
+      final request = UpdateProfileRequest(username: username);
+      await _authService.updateMe(request);
+
+      // Refresh current user info
+      await getMe();
+
+      _isLoading = false;
+      notifyListeners();
+      return true;
+    } catch (e) {
+      _isLoading = false;
+      if (e is ApiErrorResponse) {
+        _apiError = e;
+        if (e.hasValidationErrors()) {
+          final firstError = e.errors!.values.first;
+          _error = firstError.msg;
+        } else {
+          _error = e.message;
+        }
+      } else {
+        _error = 'Có lỗi xảy ra khi cập nhật username';
+      }
+      notifyListeners();
+      return false;
+    }
+  }
+
   /// Google Sign-In
   ///
   /// Returns:

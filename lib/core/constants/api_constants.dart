@@ -75,6 +75,8 @@ class ApiConstants {
   static const String deleteTwizz = '/twizzs';
   static String getUserTwizzs(String userId) =>
       '/twizzs/users/$userId/twizzs';
+  static String getTwizzChildren(String twizzId) =>
+      '/twizzs/$twizzId/children';
 
   // Media Upload
   static const String uploadImage = '/medias/upload-image';
@@ -83,12 +85,13 @@ class ApiConstants {
   // Search
   static const String search = '/search';
 
-  // Likes
   static const String likeTwizz = '/likes';
   static String unlikeTwizz(String twizzId) =>
       '/likes/twizzs/$twizzId';
   static String getUserLikedTwizzs(String userId) =>
       '/likes/users/$userId/liked-twizzs';
+  static String getUsersWhoLikedTwizz(String twizzId) =>
+      '/likes/twizzs/$twizzId/users';
 
   // Bookmarks
   static const String bookmarkTwizz = '/bookmarks';
@@ -96,6 +99,8 @@ class ApiConstants {
       '/bookmarks/twizzs/$twizzId';
   static String getUserBookmarkedTwizzs(String userId) =>
       '/bookmarks/users/$userId/bookmarked-twizzs';
+  static String getUsersWhoBookmarkedTwizz(String twizzId) =>
+      '/bookmarks/twizzs/$twizzId/users';
 
   // Static files (images, videos)
   static String videoStream(String name) =>
