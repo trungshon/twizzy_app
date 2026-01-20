@@ -91,8 +91,7 @@ class TwizzList extends StatelessWidget {
         padding: (padding ?? EdgeInsets.zero).add(
           const EdgeInsets.only(bottom: 80),
         ),
-        itemCount:
-            twizzs.length + (isLoading || hasMore ? 1 : 0),
+        itemCount: twizzs.length + (isLoading ? 1 : 0),
         itemBuilder: (context, index) {
           // Loading indicator at bottom
           if (index == twizzs.length) {
