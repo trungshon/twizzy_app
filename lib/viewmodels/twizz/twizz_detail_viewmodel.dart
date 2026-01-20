@@ -456,6 +456,30 @@ class TwizzDetailViewModel extends ChangeNotifier {
     }
   }
 
+  /// Update reply state in _repliesMap
+  void _updateReplyState(
+    String replyId, {
+    bool? isLiked,
+    int? likes,
+    bool? isBookmarked,
+    int? bookmarks,
+  }) {
+    for (final commentId in _repliesMap.keys) {
+      final replies = _repliesMap[commentId]!;
+      for (int i = 0; i < replies.length; i++) {
+        if (replies[i].id == replyId) {
+          _repliesMap[commentId]![i] = replies[i].copyWith(
+            isLiked: isLiked,
+            likes: likes,
+            isBookmarked: isBookmarked,
+            bookmarks: bookmarks,
+          );
+          return;
+        }
+      }
+    }
+  }
+
   // Interaction logic
   Future<void> toggleLike([Twizz? target]) async {
     final tw = target ?? _twizz;
@@ -474,11 +498,19 @@ class TwizzDetailViewModel extends ChangeNotifier {
         likes: newCount,
       );
     } else {
+      // Try to update in comments first
       final index = _comments.indexWhere(
         (c) => c.id == target.id,
       );
       if (index != -1) {
         _comments[index] = _comments[index].copyWith(
+          isLiked: newState,
+          likes: newCount,
+        );
+      } else {
+        // Try to update in replies
+        _updateReplyState(
+          target.id,
           isLiked: newState,
           likes: newCount,
         );
@@ -508,6 +540,13 @@ class TwizzDetailViewModel extends ChangeNotifier {
             isLiked: originalState,
             likes: originalCount,
           );
+        } else {
+          // Rollback in replies
+          _updateReplyState(
+            target.id,
+            isLiked: originalState,
+            likes: originalCount,
+          );
         }
       }
       notifyListeners();
@@ -531,11 +570,19 @@ class TwizzDetailViewModel extends ChangeNotifier {
         bookmarks: newCount,
       );
     } else {
+      // Try to update in comments first
       final index = _comments.indexWhere(
         (c) => c.id == target.id,
       );
       if (index != -1) {
         _comments[index] = _comments[index].copyWith(
+          isBookmarked: newState,
+          bookmarks: newCount,
+        );
+      } else {
+        // Try to update in replies
+        _updateReplyState(
+          target.id,
           isBookmarked: newState,
           bookmarks: newCount,
         );
@@ -562,6 +609,13 @@ class TwizzDetailViewModel extends ChangeNotifier {
         );
         if (index != -1) {
           _comments[index] = _comments[index].copyWith(
+            isBookmarked: originalState,
+            bookmarks: originalCount,
+          );
+        } else {
+          // Rollback in replies
+          _updateReplyState(
+            target.id,
             isBookmarked: originalState,
             bookmarks: originalCount,
           );

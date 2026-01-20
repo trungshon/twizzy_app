@@ -14,6 +14,7 @@ import '../../widgets/twizz/twizz_create_media_preview.dart';
 import '../../services/twizz_service/twizz_sync_service.dart';
 import '../../services/search_service/search_service.dart';
 import '../../widgets/twizz/twizz_text_input_utils.dart';
+import '../../models/auth/auth_models.dart';
 
 class TwizzDetailScreenArgs {
   final Twizz twizz;
@@ -249,6 +250,24 @@ class _TwizzDetailScreenState extends State<TwizzDetailScreen> {
     }
   }
 
+  void _navigateToProfile(User? user) {
+    if (user == null) return;
+
+    final authViewModel = context.read<AuthViewModel>();
+    final currentUserId = authViewModel.currentUser?.id;
+
+    if (user.id == currentUserId) {
+      Navigator.pushNamed(context, RouteNames.myProfile);
+    } else if (user.username != null &&
+        user.username!.isNotEmpty) {
+      Navigator.pushNamed(
+        context,
+        RouteNames.userProfile,
+        arguments: user.username,
+      );
+    }
+  }
+
   /// Build a nested reply item with visual thread indicator
   Widget _buildReplyItem(
     Twizz reply,
@@ -283,6 +302,7 @@ class _TwizzDetailScreenState extends State<TwizzDetailScreen> {
               onQuote: _handleQuote,
               onBookmark: (t) => viewModel.toggleBookmark(t),
               onDelete: (t) => _handleDelete(t, viewModel),
+              onUserTap: () => _navigateToProfile(reply.user),
               onTap: () {
                 Navigator.pushNamed(
                   context,
@@ -376,6 +396,14 @@ class _TwizzDetailScreenState extends State<TwizzDetailScreen> {
                                         t,
                                         viewModel,
                                       ),
+                                  onUserTap:
+                                      () => _navigateToProfile(
+                                        viewModel.twizz?.user ??
+                                            widget
+                                                .args
+                                                .twizz
+                                                .user,
+                                      ),
                                 ),
 
                                 const Divider(),
@@ -447,6 +475,10 @@ class _TwizzDetailScreenState extends State<TwizzDetailScreen> {
                                     (t) => _handleDelete(
                                       t,
                                       viewModel,
+                                    ),
+                                onUserTap:
+                                    () => _navigateToProfile(
+                                      comment.user,
                                     ),
                                 onTap: () {
                                   Navigator.pushNamed(
@@ -623,30 +655,39 @@ class _TwizzDetailScreenState extends State<TwizzDetailScreen> {
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    avatar != null
-                        ? CircleAvatar(
-                          radius: 20,
-                          backgroundImage: NetworkImage(avatar),
-                          onBackgroundImageError: (e, s) {},
-                        )
-                        : CircleAvatar(
-                          radius: 20,
-                          backgroundColor:
-                              themeData.colorScheme.secondary,
-                          child: Text(
-                            name.isNotEmpty
-                                ? name[0].toUpperCase()
-                                : 'U',
-                            style: TextStyle(
-                              fontSize: 24,
-                              fontWeight: FontWeight.bold,
-                              color:
-                                  themeData
-                                      .colorScheme
-                                      .onSecondary,
-                            ),
-                          ),
-                        ),
+                    GestureDetector(
+                      onTap: () => _navigateToProfile(user),
+                      child:
+                          avatar != null
+                              ? CircleAvatar(
+                                radius: 20,
+                                backgroundImage: NetworkImage(
+                                  avatar,
+                                ),
+                                onBackgroundImageError:
+                                    (e, s) {},
+                              )
+                              : CircleAvatar(
+                                radius: 20,
+                                backgroundColor:
+                                    themeData
+                                        .colorScheme
+                                        .secondary,
+                                child: Text(
+                                  name.isNotEmpty
+                                      ? name[0].toUpperCase()
+                                      : 'U',
+                                  style: TextStyle(
+                                    fontSize: 24,
+                                    fontWeight: FontWeight.bold,
+                                    color:
+                                        themeData
+                                            .colorScheme
+                                            .onSecondary,
+                                  ),
+                                ),
+                              ),
+                    ),
                     const SizedBox(width: 12),
                     Expanded(
                       child: Column(

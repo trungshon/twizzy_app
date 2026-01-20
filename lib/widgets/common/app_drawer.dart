@@ -48,40 +48,47 @@ class AppDrawer extends StatelessWidget {
                     children: [
                       Row(
                         children: [
-                          SizedBox(
-                            width: 54,
-                            height: 54,
-                            child:
-                                avatar != null
-                                    ? CircleAvatar(
-                                      radius: 40,
-                                      backgroundImage:
-                                          NetworkImage(avatar),
-                                      onBackgroundImageError:
-                                          (e, s) {},
-                                    )
-                                    : CircleAvatar(
-                                      radius: 40,
-                                      backgroundColor:
-                                          themeData
-                                              .colorScheme
-                                              .secondary,
-                                      child: Text(
-                                        name.isNotEmpty
-                                            ? name[0]
-                                                .toUpperCase()
-                                            : 'U',
-                                        style: TextStyle(
-                                          fontSize: 24,
-                                          fontWeight:
-                                              FontWeight.bold,
-                                          color:
-                                              themeData
-                                                  .colorScheme
-                                                  .onSecondary,
+                          GestureDetector(
+                            onTap: () {
+                              Navigator.of(
+                                context,
+                              ).pushNamed(RouteNames.myProfile);
+                            },
+                            child: SizedBox(
+                              width: 54,
+                              height: 54,
+                              child:
+                                  avatar != null
+                                      ? CircleAvatar(
+                                        radius: 40,
+                                        backgroundImage:
+                                            NetworkImage(avatar),
+                                        onBackgroundImageError:
+                                            (e, s) {},
+                                      )
+                                      : CircleAvatar(
+                                        radius: 40,
+                                        backgroundColor:
+                                            themeData
+                                                .colorScheme
+                                                .secondary,
+                                        child: Text(
+                                          name.isNotEmpty
+                                              ? name[0]
+                                                  .toUpperCase()
+                                              : 'U',
+                                          style: TextStyle(
+                                            fontSize: 24,
+                                            fontWeight:
+                                                FontWeight.bold,
+                                            color:
+                                                themeData
+                                                    .colorScheme
+                                                    .onSecondary,
+                                          ),
                                         ),
                                       ),
-                                    ),
+                            ),
                           ),
                           const SizedBox(width: 12),
                           // Tên và username
@@ -90,18 +97,27 @@ class AppDrawer extends StatelessWidget {
                               crossAxisAlignment:
                                   CrossAxisAlignment.start,
                               children: [
-                                Text(
-                                  name,
-                                  style: themeData
-                                      .textTheme
-                                      .titleMedium
-                                      ?.copyWith(
-                                        fontWeight:
-                                            FontWeight.bold,
-                                      ),
-                                  maxLines: 1,
-                                  overflow:
-                                      TextOverflow.ellipsis,
+                                GestureDetector(
+                                  onTap: () {
+                                    Navigator.of(
+                                      context,
+                                    ).pushNamed(
+                                      RouteNames.myProfile,
+                                    );
+                                  },
+                                  child: Text(
+                                    name,
+                                    style: themeData
+                                        .textTheme
+                                        .titleMedium
+                                        ?.copyWith(
+                                          fontWeight:
+                                              FontWeight.bold,
+                                        ),
+                                    maxLines: 1,
+                                    overflow:
+                                        TextOverflow.ellipsis,
+                                  ),
                                 ),
                                 const SizedBox(height: 4),
                                 Text(

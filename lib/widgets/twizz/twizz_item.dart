@@ -250,61 +250,68 @@ class TwizzItem extends StatelessWidget {
     final timeAgo = _getTimeAgo(displayTwizz.createdAt);
 
     return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         // Name
         Expanded(
-          child: Row(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Flexible(
-                child: GestureDetector(
-                  onTap: onUserTap,
-                  child: Text(
-                    name,
-                    style: themeData.textTheme.bodyMedium
-                        ?.copyWith(fontWeight: FontWeight.bold),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-              ),
-              // Verified badge
-              if (isVerified) ...[
-                const SizedBox(width: 4),
-                const Icon(
-                  Icons.verified,
-                  size: 16,
-                  color: Color(0xFF1DA1F2),
-                ),
-              ],
-              const SizedBox(width: 4),
-              // Username
-              Flexible(
-                child: Text(
-                  '@$username',
-                  style: themeData.textTheme.bodyMedium
-                      ?.copyWith(
-                        color: themeData.colorScheme.onSurface
-                            .withValues(alpha: 0.6),
+              Row(
+                children: [
+                  Flexible(
+                    child: GestureDetector(
+                      onTap: onUserTap,
+                      child: Text(
+                        name,
+                        style: themeData.textTheme.bodyMedium
+                            ?.copyWith(
+                              fontWeight: FontWeight.bold,
+                            ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
+                    ),
+                  ),
+                  // Verified badge
+                  if (isVerified) ...[
+                    const SizedBox(width: 4),
+                    const Icon(
+                      Icons.verified,
+                      size: 16,
+                      color: Color(0xFF1DA1F2),
+                    ),
+                  ],
+                  const SizedBox(width: 4),
+
+                  // Dot separator
+                  Text(
+                    ' · ',
+                    style: themeData.textTheme.bodyMedium
+                        ?.copyWith(
+                          color: themeData.colorScheme.onSurface
+                              .withValues(alpha: 0.6),
+                        ),
+                  ),
+                  // Time
+                  Text(
+                    timeAgo,
+                    style: themeData.textTheme.bodyMedium
+                        ?.copyWith(
+                          color: themeData.colorScheme.onSurface
+                              .withValues(alpha: 0.6),
+                        ),
+                  ),
+                ],
               ),
-              // Dot separator
               Text(
-                ' · ',
+                '@$username',
                 style: themeData.textTheme.bodyMedium?.copyWith(
                   color: themeData.colorScheme.onSurface
                       .withValues(alpha: 0.6),
                 ),
-              ),
-              // Time
-              Text(
-                timeAgo,
-                style: themeData.textTheme.bodyMedium?.copyWith(
-                  color: themeData.colorScheme.onSurface
-                      .withValues(alpha: 0.6),
-                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
             ],
           ),

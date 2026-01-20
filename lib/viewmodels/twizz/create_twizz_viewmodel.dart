@@ -78,7 +78,9 @@ class CreateTwizzViewModel extends ChangeNotifier {
     final hasContent = _content.trim().isNotEmpty;
     final hasMedia =
         _selectedImages.isNotEmpty || _selectedVideo != null;
-    return (hasContent || hasMedia) &&
+    // Quote twizz can have empty content (the quoted post is the content)
+    final isValidQuote = isQuoteMode;
+    return (hasContent || hasMedia || isValidQuote) &&
         !_isLoading &&
         !_isUploading;
   }

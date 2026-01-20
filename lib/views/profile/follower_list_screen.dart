@@ -66,6 +66,12 @@ class _FollowerListScreenState extends State<FollowerListScreen>
   @override
   Widget build(BuildContext context) {
     final themeData = Theme.of(context);
+    final authViewModel = Provider.of<AuthViewModel>(
+      context,
+      listen: false,
+    );
+    final currentUserId = authViewModel.currentUser?.id;
+
     return ChangeNotifierProvider<FollowerListViewModel>.value(
       value: _viewModel,
       child: Scaffold(
@@ -96,13 +102,16 @@ class _FollowerListScreenState extends State<FollowerListScreen>
         ),
         body: TabBarView(
           controller: _tabController,
-          children: [_buildFollowersTab(), _buildFollowingTab()],
+          children: [
+            _buildFollowersTab(currentUserId),
+            _buildFollowingTab(currentUserId),
+          ],
         ),
       ),
     );
   }
 
-  Widget _buildFollowersTab() {
+  Widget _buildFollowersTab(String? currentUserId) {
     return Consumer<FollowerListViewModel>(
       builder: (context, viewModel, child) {
         if (viewModel.isLoadingFollowers &&
@@ -169,11 +178,19 @@ class _FollowerListScreenState extends State<FollowerListScreen>
                   );
                 }
                 final user = viewModel.followers[index];
+                final isCurrentUser = user.id == currentUserId;
+
                 return UserListItem(
                   user: user,
                   isFollowing: user.isFollowing ?? false,
-                  onFollow: () => viewModel.followUser(user),
-                  onUnfollow: () => viewModel.unfollowUser(user),
+                  onFollow:
+                      isCurrentUser
+                          ? null
+                          : () => viewModel.followUser(user),
+                  onUnfollow:
+                      isCurrentUser
+                          ? null
+                          : () => viewModel.unfollowUser(user),
                   onTap: () => _navigateToProfile(user),
                 );
               },
@@ -184,7 +201,7 @@ class _FollowerListScreenState extends State<FollowerListScreen>
     );
   }
 
-  Widget _buildFollowingTab() {
+  Widget _buildFollowingTab(String? currentUserId) {
     return Consumer<FollowerListViewModel>(
       builder: (context, viewModel, child) {
         if (viewModel.isLoadingFollowing &&
@@ -253,11 +270,19 @@ class _FollowerListScreenState extends State<FollowerListScreen>
                   );
                 }
                 final user = viewModel.following[index];
+                final isCurrentUser = user.id == currentUserId;
+
                 return UserListItem(
                   user: user,
                   isFollowing: user.isFollowing ?? false,
-                  onFollow: () => viewModel.followUser(user),
-                  onUnfollow: () => viewModel.unfollowUser(user),
+                  onFollow:
+                      isCurrentUser
+                          ? null
+                          : () => viewModel.followUser(user),
+                  onUnfollow:
+                      isCurrentUser
+                          ? null
+                          : () => viewModel.unfollowUser(user),
                   onTap: () => _navigateToProfile(user),
                 );
               },

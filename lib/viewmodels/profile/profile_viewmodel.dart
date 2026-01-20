@@ -153,8 +153,17 @@ class ProfileViewModel extends ChangeNotifier {
           return;
       }
 
+      // Filter out comments for Liked and Bookmarked tabs
+      var twizzs = response.twizzs;
+      if (tabIndex == tabLiked || tabIndex == tabBookmarked) {
+        twizzs =
+            twizzs
+                .where((t) => t.type != TwizzType.comment)
+                .toList();
+      }
+
       final currentList = _twizzsByTab[tabIndex] ?? [];
-      currentList.addAll(response.twizzs);
+      currentList.addAll(twizzs);
       _twizzsByTab[tabIndex] = currentList;
       _totalPageByTab[tabIndex] = response.totalPage;
       final currentPage = _currentPageByTab[tabIndex] ?? 1;
@@ -227,8 +236,17 @@ class ProfileViewModel extends ChangeNotifier {
           return;
       }
 
+      // Filter out comments for Liked and Bookmarked tabs
+      var twizzs = response.twizzs;
+      if (tabIndex == tabLiked || tabIndex == tabBookmarked) {
+        twizzs =
+            twizzs
+                .where((t) => t.type != TwizzType.comment)
+                .toList();
+      }
+
       final currentList = _twizzsByTab[tabIndex] ?? [];
-      currentList.addAll(response.twizzs);
+      currentList.addAll(twizzs);
       _twizzsByTab[tabIndex] = currentList;
       _totalPageByTab[tabIndex] = response.totalPage;
       final currentPage = _currentPageByTab[tabIndex] ?? 1;
