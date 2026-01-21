@@ -177,7 +177,9 @@ class MentionSuggestions extends StatelessWidget {
           child: Text(
             'Nhập tên hoặc @username để tìm kiếm',
             style: themeData.textTheme.bodySmall?.copyWith(
-              color: themeData.colorScheme.onSurface.withValues(alpha: 0.6),
+              color: themeData.colorScheme.onSurface.withValues(
+                alpha: 0.6,
+              ),
             ),
           ),
         );
@@ -187,7 +189,9 @@ class MentionSuggestions extends StatelessWidget {
         child: Text(
           'Không tìm thấy "@$query"',
           style: themeData.textTheme.bodySmall?.copyWith(
-            color: themeData.colorScheme.onSurface.withValues(alpha: 0.6),
+            color: themeData.colorScheme.onSurface.withValues(
+              alpha: 0.6,
+            ),
           ),
         ),
       );
@@ -232,28 +236,27 @@ class MentionUserTile extends StatelessWidget {
         ),
         child: Row(
           children: [
-            // Avatar
-            user.avatar != null
+            (user.avatar != null && user.avatar!.isNotEmpty)
                 ? CircleAvatar(
-                  radius: 18,
+                  radius: 20,
                   backgroundImage: NetworkImage(user.avatar!),
                   onBackgroundImageError: (e, s) {},
                 )
                 : CircleAvatar(
-                  radius: 18,
-                  backgroundColor:
-                      themeData.colorScheme.secondary,
+                  radius: 20,
+                  backgroundColor: themeData.colorScheme.primary,
                   child: Text(
-                    user.name.isNotEmpty
-                        ? user.name[0].toUpperCase()
+                    (user.name.trim().isNotEmpty)
+                        ? user.name.trim()[0].toUpperCase()
                         : 'U',
                     style: TextStyle(
-                      fontSize: 14,
+                      fontSize: 18,
                       fontWeight: FontWeight.bold,
-                      color: themeData.colorScheme.onSecondary,
+                      color: themeData.colorScheme.onPrimary,
                     ),
                   ),
                 ),
+
             const SizedBox(width: 12),
             // User info
             Expanded(

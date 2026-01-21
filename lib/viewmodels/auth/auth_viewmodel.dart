@@ -459,4 +459,78 @@ class AuthViewModel extends ChangeNotifier {
       debugPrint('Google sign out error: $e');
     }
   }
+
+  /// Add user to Twizz Circle
+  Future<bool> addToTwizzCircle(User user) async {
+    if (_currentUser == null) {
+      return false;
+    }
+
+    try {
+      // Get current circle IDs
+      final currentCircle = _currentUser!.twizzCircle ?? [];
+
+      // Check if user is already in circle
+      if (currentCircle.any((u) => u.id == user.id)) {
+        return true; // Already in circle
+      }
+
+      // Add new user ID to the list
+      final newCircleIds = [
+        ...currentCircle.map((u) => u.id),
+        user.id,
+      ];
+
+      // Update on server
+      final response = await _authService.updateTwizzCircle(
+        newCircleIds,
+      );
+
+      // Update local state from server response
+      _currentUser = response.result;
+      notifyListeners();
+      return true;
+    } catch (e) {
+      if (e is ApiErrorResponse) {
+        _error = e.message;
+      } else {
+        _error = 'Lỗi thêm vào Twizz Circle';
+      }
+      notifyListeners();
+      return false;
+    }
+  }
+
+  /// Remove user from Twizz Circle
+  Future<bool> removeFromTwizzCircle(User user) async {
+    if (_currentUser == null) return false;
+
+    try {
+      // Get current circle
+      final currentCircle = _currentUser!.twizzCircle ?? [];
+
+      // Remove user from circle
+      final newCircle =
+          currentCircle.where((u) => u.id != user.id).toList();
+      final newCircleIds = newCircle.map((u) => u.id).toList();
+
+      // Update on server
+      final response = await _authService.updateTwizzCircle(
+        newCircleIds,
+      );
+
+      // Update local state from server response
+      _currentUser = response.result;
+      notifyListeners();
+      return true;
+    } catch (e) {
+      if (e is ApiErrorResponse) {
+        _error = e.message;
+      } else {
+        _error = 'Lỗi xóa khỏi Twizz Circle';
+      }
+      notifyListeners();
+      return false;
+    }
+  }
 }

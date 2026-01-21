@@ -307,6 +307,8 @@ class User {
   final int? followersCount;
   final int? followingCount;
   final bool? isFollowing;
+  final List<User>? twizzCircle;
+  final List<String>? twizzCircleIds;
 
   User({
     required this.id,
@@ -325,6 +327,8 @@ class User {
     this.followersCount,
     this.followingCount,
     this.isFollowing,
+    this.twizzCircle,
+    this.twizzCircleIds,
   });
 
   factory User.fromJson(Map<String, dynamic> json) {
@@ -429,6 +433,26 @@ class User {
       followersCount: json['followers_count'] as int?,
       followingCount: json['following_count'] as int?,
       isFollowing: json['is_following'] as bool?,
+      twizzCircle:
+          json['twizz_circle'] != null
+              ? (json['twizz_circle'] as List)
+                  .whereType<Map<String, dynamic>>()
+                  .map((u) => User.fromJson(u))
+                  .toList()
+              : null,
+      twizzCircleIds:
+          json['twizz_circle'] != null
+              ? (json['twizz_circle'] as List)
+                  .map((e) {
+                    if (e is String) return e;
+                    if (e is Map<String, dynamic> &&
+                        e['_id'] != null)
+                      return e['_id'] as String;
+                    return '';
+                  })
+                  .where((e) => e.isNotEmpty)
+                  .toList()
+              : null,
     );
   }
 
@@ -444,6 +468,7 @@ class User {
     int? followingCount,
     bool? isFollowing,
     String? verify,
+    List<User>? twizzCircle,
   }) {
     return User(
       id: id,
@@ -462,6 +487,7 @@ class User {
       followersCount: followersCount ?? this.followersCount,
       followingCount: followingCount ?? this.followingCount,
       isFollowing: isFollowing ?? this.isFollowing,
+      twizzCircle: twizzCircle ?? this.twizzCircle,
     );
   }
 }

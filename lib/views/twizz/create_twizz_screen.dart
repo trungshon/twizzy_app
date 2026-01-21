@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../core/utils/snackbar_utils.dart';
+import '../../models/auth/auth_models.dart';
 import '../../models/twizz/twizz_models.dart';
 import '../../viewmodels/auth/auth_viewmodel.dart';
 import '../../viewmodels/twizz/create_twizz_viewmodel.dart';
@@ -232,6 +233,7 @@ class _CreateTwizzScreenState extends State<CreateTwizzScreen> {
   void _showAudienceSelector(
     BuildContext context,
     CreateTwizzViewModel viewModel,
+    AuthViewModel authViewModel,
   ) {
     final themeData = Theme.of(context);
 
@@ -245,78 +247,365 @@ class _CreateTwizzScreenState extends State<CreateTwizzScreen> {
       ),
       builder: (context) {
         return SafeArea(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // Handle
-              Container(
-                margin: const EdgeInsets.only(top: 12),
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: themeData.colorScheme.onSurface
-                      .withValues(alpha: 0.3),
-                  borderRadius: BorderRadius.circular(2),
+          child: SingleChildScrollView(
+            child: Column(
+              children: [
+                // Handle
+                Container(
+                  margin: const EdgeInsets.only(top: 12),
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: themeData.colorScheme.onSurface
+                        .withValues(alpha: 0.3),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
                 ),
-              ),
-              // Title
-              Padding(
-                padding: const EdgeInsets.all(16),
-                child: Text(
-                  'Chọn đối tượng',
-                  style: themeData.textTheme.titleMedium
-                      ?.copyWith(fontWeight: FontWeight.bold),
-                ),
-              ),
-              const Divider(height: 1),
-              // Everyone option
-              _AudienceOption(
-                icon: Icons.public,
-                iconColor: themeData.colorScheme.primary,
-                title: 'Tất cả mọi người',
-                isSelected:
-                    viewModel.audience == TwizzAudience.everyone,
-                onTap: () {
-                  viewModel.setAudience(TwizzAudience.everyone);
-                  Navigator.pop(context);
-                },
-              ),
-              const Divider(height: 1),
-              // My Communities section
-              Padding(
-                padding: const EdgeInsets.fromLTRB(
-                  16,
-                  16,
-                  16,
-                  8,
-                ),
-                child: Align(
-                  alignment: Alignment.centerLeft,
+                // Title
+                Padding(
+                  padding: const EdgeInsets.all(8),
                   child: Text(
-                    'Cộng đồng của tôi',
-                    style: themeData.textTheme.titleSmall
+                    'Chọn đối tượng',
+                    style: themeData.textTheme.titleMedium
                         ?.copyWith(fontWeight: FontWeight.bold),
                   ),
                 ),
-              ),
-              // Twizz Circle option
-              _AudienceOption(
-                icon: Icons.group,
-                iconColor: themeData.colorScheme.primary,
-                title: 'Những người bạn cho phép',
-                isSelected:
-                    viewModel.audience ==
-                    TwizzAudience.twizzCircle,
-                onTap: () {
-                  viewModel.setAudience(
-                    TwizzAudience.twizzCircle,
-                  );
-                  Navigator.pop(context);
-                },
-              ),
-              const SizedBox(height: 16),
-            ],
+                // Everyone option
+                _AudienceOption(
+                  icon: Icons.public,
+                  iconColor: themeData.colorScheme.primary,
+                  title: 'Tất cả mọi người',
+                  isSelected:
+                      viewModel.audience ==
+                      TwizzAudience.everyone,
+                  onTap: () {
+                    viewModel.setAudience(
+                      TwizzAudience.everyone,
+                    );
+                    Navigator.pop(context);
+                  },
+                ),
+                const SizedBox(height: 8),
+                const Divider(height: 1),
+                const SizedBox(height: 8),
+
+                // Twizz Circle option
+                _AudienceOption(
+                  icon: Icons.group,
+                  iconColor: themeData.colorScheme.primary,
+                  title: 'Những người bạn cho phép',
+                  isSelected:
+                      viewModel.audience ==
+                      TwizzAudience.twizzCircle,
+                  onTap: () {
+                    viewModel.setAudience(
+                      TwizzAudience.twizzCircle,
+                    );
+                    Navigator.pop(context);
+                  },
+                ),
+
+                // Twizz Circle Members Section
+                const SizedBox(height: 8),
+                const Divider(height: 1),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(
+                    16,
+                    12,
+                    16,
+                    8,
+                  ),
+                  child: Row(
+                    mainAxisAlignment:
+                        MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Danh sách người được xem',
+                        style: themeData.textTheme.titleSmall
+                            ?.copyWith(
+                              fontWeight: FontWeight.bold,
+                            ),
+                      ),
+                      IconButton(
+                        icon: Icon(
+                          Icons.person_add,
+                          color: themeData.colorScheme.primary,
+                        ),
+                        onPressed: () {
+                          Navigator.pop(context);
+                          _showAddToCircleBottomSheet(
+                            context,
+                            authViewModel,
+                          );
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+
+                // Circle members list
+                Consumer<AuthViewModel>(
+                  builder: (context, auth, child) {
+                    final twizzCircle =
+                        auth.currentUser?.twizzCircle ?? [];
+                    if (twizzCircle.isEmpty) {
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 8,
+                        ),
+                        child: Text(
+                          'Chưa có ai trong danh sách',
+                          style: themeData.textTheme.bodyMedium
+                              ?.copyWith(
+                                color: themeData
+                                    .colorScheme
+                                    .onSurface
+                                    .withValues(alpha: 0.6),
+                              ),
+                        ),
+                      );
+                    }
+                    return ListView.builder(
+                      shrinkWrap: true,
+                      physics:
+                          const NeverScrollableScrollPhysics(),
+                      itemCount: twizzCircle.length,
+                      itemBuilder: (context, index) {
+                        final user = twizzCircle[index];
+                        return ListTile(
+                          leading: CircleAvatar(
+                            backgroundImage:
+                                user.avatar != null
+                                    ? NetworkImage(user.avatar!)
+                                    : null,
+                            child:
+                                user.avatar == null
+                                    ? Text(
+                                      user.name.isNotEmpty
+                                          ? user.name[0]
+                                          : 'U',
+                                    )
+                                    : null,
+                          ),
+                          title: Text(user.name),
+                          subtitle: Text(
+                            '@${user.username ?? ''}',
+                          ),
+                          trailing: IconButton(
+                            icon: const Icon(
+                              Icons.remove_circle_outline,
+                              color: Colors.red,
+                            ),
+                            onPressed: () async {
+                              final success = await auth
+                                  .removeFromTwizzCircle(user);
+                              if (success && context.mounted) {
+                                SnackBarUtils.showToast(
+                                  context,
+                                  message:
+                                      'Đã xóa ${user.name} khỏi danh sách người xem',
+                                );
+                              }
+                            },
+                          ),
+                        );
+                      },
+                    );
+                  },
+                ),
+                const SizedBox(height: 16),
+              ],
+            ),
           ),
+        );
+      },
+    );
+  }
+
+  /// Show bottom sheet to add user to Twizz Circle
+  void _showAddToCircleBottomSheet(
+    BuildContext context,
+    AuthViewModel authViewModel,
+  ) {
+    final themeData = Theme.of(context);
+    final searchController = TextEditingController();
+    final viewModel = context.read<CreateTwizzViewModel>();
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: themeData.scaffoldBackgroundColor,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(
+          top: Radius.circular(20),
+        ),
+      ),
+      builder: (context) {
+        return DraggableScrollableSheet(
+          initialChildSize: 0.7,
+          maxChildSize: 0.9,
+          minChildSize: 0.5,
+          expand: false,
+          builder: (context, scrollController) {
+            return Column(
+              children: [
+                // Handle
+                Container(
+                  margin: const EdgeInsets.only(top: 12),
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: themeData.colorScheme.onSurface
+                        .withValues(alpha: 0.3),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+                // Title
+                Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Text(
+                    'Thêm người vào danh sách',
+                    style: themeData.textTheme.titleMedium
+                        ?.copyWith(fontWeight: FontWeight.bold),
+                  ),
+                ),
+                // Search field
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                  ),
+                  child: TextField(
+                    controller: searchController,
+                    decoration: InputDecoration(
+                      hintText: 'Tìm kiếm người dùng...',
+                      prefixIcon: const Icon(Icons.search),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    onChanged: (value) {
+                      if (value.isNotEmpty) {
+                        viewModel.searchUsers(value);
+                      }
+                    },
+                  ),
+                ),
+                const SizedBox(height: 8),
+                // Search results
+                Expanded(
+                  child: Consumer2<
+                    CreateTwizzViewModel,
+                    AuthViewModel
+                  >(
+                    builder: (context, vm, auth, child) {
+                      if (vm.isSearchingUsers) {
+                        return const Center(
+                          child: CircularProgressIndicator(),
+                        );
+                      }
+                      if (vm.searchResults.isEmpty) {
+                        return Center(
+                          child: Text(
+                            searchController.text.isEmpty
+                                ? 'Nhập tên để tìm kiếm'
+                                : 'Không tìm thấy người dùng',
+                            style: themeData.textTheme.bodyMedium
+                                ?.copyWith(
+                                  color: themeData
+                                      .colorScheme
+                                      .onSurface
+                                      .withValues(alpha: 0.6),
+                                ),
+                          ),
+                        );
+                      }
+                      return ListView.builder(
+                        controller: scrollController,
+                        itemCount: vm.searchResults.length,
+                        itemBuilder: (context, index) {
+                          final user = vm.searchResults[index];
+                          final isInCircle =
+                              auth.currentUser?.twizzCircle?.any(
+                                (u) => u.id == user.id,
+                              ) ??
+                              false;
+                          return ListTile(
+                            leading: CircleAvatar(
+                              backgroundImage:
+                                  user.avatar != null
+                                      ? NetworkImage(
+                                        user.avatar!,
+                                      )
+                                      : null,
+                              child:
+                                  user.avatar == null
+                                      ? Text(
+                                        user.name.isNotEmpty
+                                            ? user.name[0]
+                                            : 'U',
+                                      )
+                                      : null,
+                            ),
+                            title: Text(user.name),
+                            subtitle: Text('@${user.username}'),
+                            trailing:
+                                isInCircle
+                                    ? const Icon(
+                                      Icons.check_circle,
+                                      color: Colors.green,
+                                    )
+                                    : IconButton(
+                                      icon: Icon(
+                                        Icons.add_circle_outline,
+                                        color:
+                                            themeData
+                                                .colorScheme
+                                                .primary,
+                                      ),
+                                      onPressed: () async {
+                                        // Convert SearchUserResult to User
+                                        final userToAdd = User(
+                                          id: user.id,
+                                          name: user.name,
+                                          email: '',
+                                          dateOfBirth:
+                                              DateTime.now(),
+                                          createdAt:
+                                              DateTime.now(),
+                                          updatedAt:
+                                              DateTime.now(),
+                                          verify:
+                                              user.isVerified
+                                                  ? 'Verified'
+                                                  : 'Unverified',
+                                          username:
+                                              user.username,
+                                          avatar: user.avatar,
+                                        );
+                                        final success = await auth
+                                            .addToTwizzCircle(
+                                              userToAdd,
+                                            );
+                                        if (success &&
+                                            context.mounted) {
+                                          SnackBarUtils.showToast(
+                                            context,
+                                            message:
+                                                'Đã thêm ${user.name} vào danh sách người xem',
+                                          );
+                                        }
+                                      },
+                                    ),
+                          );
+                        },
+                      );
+                    },
+                  ),
+                ),
+              ],
+            );
+          },
         );
       },
     );
@@ -499,6 +788,7 @@ class _CreateTwizzScreenState extends State<CreateTwizzScreen> {
                                               _showAudienceSelector(
                                                 context,
                                                 viewModel,
+                                                authViewModel,
                                               ),
                                   borderRadius:
                                       BorderRadius.circular(20),
@@ -1035,6 +1325,11 @@ class _QuoteTwizzPreview extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                     ),
                   ],
+                  // Nested parent preview
+                  if (twizz.parentTwizz != null)
+                    _QuoteTwizzPreview(
+                      twizz: twizz.parentTwizz!,
+                    ),
                 ],
               ),
             ),

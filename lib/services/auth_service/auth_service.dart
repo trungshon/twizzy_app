@@ -217,6 +217,28 @@ class AuthService {
     }
   }
 
+  /// Update current user's Twizz Circle
+  Future<UpdateMeResponse> updateTwizzCircle(
+    List<String> userIds,
+  ) async {
+    try {
+      final response = await _apiClient.patch(
+        ApiConstants.updateMe,
+        body: {'twizz_circle': userIds},
+        includeAuth: true,
+      );
+
+      return UpdateMeResponse.fromJson(response);
+    } catch (e) {
+      if (e is ApiErrorResponse) {
+        rethrow;
+      }
+      throw ApiErrorResponse(
+        message: 'Lỗi cập nhật Twizz Circle: ${e.toString()}',
+      );
+    }
+  }
+
   /// Forgot password - send OTP to email
   Future<ForgotPasswordResponse> forgotPassword(
     String email,

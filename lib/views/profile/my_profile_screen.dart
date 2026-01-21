@@ -164,25 +164,6 @@ class _MyProfileScreenState extends State<MyProfileScreen>
                           shape: BoxShape.circle,
                         ),
                         child: const Icon(
-                          Icons.search,
-                          color: Colors.white,
-                          size: 20,
-                        ),
-                      ),
-                      onPressed: () {
-                        // TODO: Search functionality
-                      },
-                    ),
-                    IconButton(
-                      icon: Container(
-                        padding: const EdgeInsets.all(6),
-                        decoration: BoxDecoration(
-                          color: Colors.black.withValues(
-                            alpha: 0.5,
-                          ),
-                          shape: BoxShape.circle,
-                        ),
-                        child: const Icon(
                           Icons.edit_outlined,
                           color: Colors.white,
                           size: 20,

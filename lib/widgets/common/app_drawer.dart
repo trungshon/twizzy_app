@@ -71,7 +71,7 @@ class AppDrawer extends StatelessWidget {
                                         backgroundColor:
                                             themeData
                                                 .colorScheme
-                                                .secondary,
+                                                .primary,
                                         child: Text(
                                           name.isNotEmpty
                                               ? name[0]
@@ -84,7 +84,7 @@ class AppDrawer extends StatelessWidget {
                                             color:
                                                 themeData
                                                     .colorScheme
-                                                    .onSecondary,
+                                                    .onPrimary,
                                           ),
                                         ),
                                       ),

@@ -32,7 +32,7 @@ class UserListItem extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Avatar
-            user.avatar != null
+            (user.avatar != null && user.avatar!.isNotEmpty)
                 ? CircleAvatar(
                   radius: 20,
                   backgroundImage: NetworkImage(user.avatar!),
@@ -42,8 +42,8 @@ class UserListItem extends StatelessWidget {
                   radius: 20,
                   backgroundColor: themeData.colorScheme.primary,
                   child: Text(
-                    user.name.isNotEmpty
-                        ? user.name[0].toUpperCase()
+                    (user.name.trim().isNotEmpty)
+                        ? user.name.trim()[0].toUpperCase()
                         : 'U',
                     style: TextStyle(
                       fontSize: 18,

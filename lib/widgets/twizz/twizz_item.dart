@@ -1,7 +1,10 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../models/twizz/twizz_models.dart';
 import '../../routes/route_names.dart';
+import '../../viewmodels/main/main_viewmodel.dart';
+import '../../viewmodels/search/search_viewmodel.dart';
 import '../../views/twizz/twizz_interaction_screen.dart';
 import '../../views/twizz/twizz_detail_screen.dart';
 import '../common/twizz_video_player.dart';
@@ -116,7 +119,14 @@ class TwizzItem extends StatelessWidget {
                             }
                           },
                           onHashtagTap: (hashtag) {
-                            // TODO: Navigate to hashtag search
+                            if (hashtag.isNotEmpty) {
+                              context
+                                  .read<SearchViewModel>()
+                                  .search(hashtag);
+                              context
+                                  .read<MainViewModel>()
+                                  .goToSearch();
+                            }
                           },
                         ),
                       // Media
@@ -129,52 +139,114 @@ class TwizzItem extends StatelessWidget {
                             medias: displayTwizz.medias,
                           ),
                         ),
-                      // Embedded parent for quote twizz
-                      if (isQuoteTwizz &&
-                          twizz.parentTwizz != null)
-                        Padding(
-                          padding: const EdgeInsets.only(
-                            top: 12,
-                          ),
-                          child: TwizzItem(
-                            twizz: twizz.parentTwizz!,
-                            isEmbedded: true,
-                            showToolbar: false,
-                            currentUserId: currentUserId,
-                            onTap: () {
-                              Navigator.pushNamed(
-                                context,
-                                RouteNames.twizzDetail,
-                                arguments: TwizzDetailScreenArgs(
-                                  twizz: twizz.parentTwizz!,
+                      // Embedded parent for quote twizz or retwizz
+                      if ((isQuoteTwizz ||
+                              displayTwizz.type ==
+                                  TwizzType.twizz) &&
+                          twizz.parentTwizz != null) ...[
+                        if (twizz.parentTwizz!.audience ==
+                                TwizzAudience.twizzCircle &&
+                            currentUserId !=
+                                twizz.parentTwizz!.userId &&
+                            (twizz
+                                        .parentTwizz!
+                                        .user
+                                        ?.twizzCircleIds ==
+                                    null ||
+                                !twizz
+                                    .parentTwizz!
+                                    .user!
+                                    .twizzCircleIds!
+                                    .contains(currentUserId)))
+                          Container(
+                            margin: const EdgeInsets.only(
+                              top: 12,
+                            ),
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              border: Border.all(
+                                color: Theme.of(context)
+                                    .dividerColor
+                                    .withValues(alpha: 0.3),
+                              ),
+                              borderRadius:
+                                  BorderRadius.circular(12),
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .surfaceContainerHighest
+                                  .withValues(alpha: 0.3),
+                            ),
+                            width: double.infinity,
+                            child: Column(
+                              mainAxisAlignment:
+                                  MainAxisAlignment.center,
+                              children: [
+                                Text(
+                                  'Bạn không có quyền xem bài viết này',
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .bodyMedium
+                                      ?.copyWith(
+                                        color:
+                                            Theme.of(
+                                              context,
+                                            ).disabledColor,
+                                        fontStyle:
+                                            FontStyle.italic,
+                                      ),
+                                  textAlign: TextAlign.center,
                                 ),
-                              );
-                            },
-                            onUserTap: () {
-                              final parentUser =
-                                  twizz.parentTwizz!.user;
-                              if (parentUser == null) return;
+                              ],
+                            ),
+                          )
+                        else
+                          Padding(
+                            padding: const EdgeInsets.only(
+                              top: 12,
+                            ),
+                            child: TwizzItem(
+                              twizz: twizz.parentTwizz!,
+                              isEmbedded: true,
+                              showToolbar: false,
+                              currentUserId: currentUserId,
+                              onTap: () {
+                                Navigator.pushNamed(
+                                  context,
+                                  RouteNames.twizzDetail,
+                                  arguments:
+                                      TwizzDetailScreenArgs(
+                                        twizz:
+                                            twizz.parentTwizz!,
+                                      ),
+                                );
+                              },
+                              onUserTap: () {
+                                final parentUser =
+                                    twizz.parentTwizz!.user;
+                                if (parentUser == null) return;
 
-                              if (parentUser.id ==
-                                  currentUserId) {
-                                Navigator.pushNamed(
-                                  context,
-                                  RouteNames.myProfile,
-                                );
-                              } else if (parentUser.username !=
-                                      null &&
-                                  parentUser
-                                      .username!
-                                      .isNotEmpty) {
-                                Navigator.pushNamed(
-                                  context,
-                                  RouteNames.userProfile,
-                                  arguments: parentUser.username,
-                                );
-                              }
-                            },
+                                if (parentUser.id ==
+                                    currentUserId) {
+                                  Navigator.pushNamed(
+                                    context,
+                                    RouteNames.myProfile,
+                                  );
+                                } else if (parentUser.username !=
+                                        null &&
+                                    parentUser
+                                        .username!
+                                        .isNotEmpty) {
+                                  Navigator.pushNamed(
+                                    context,
+                                    RouteNames.userProfile,
+                                    arguments:
+                                        parentUser.username,
+                                  );
+                                }
+                              },
+                            ),
                           ),
-                        ),
+                      ],
                       // Toolbar
                       if (showToolbar) ...[
                         const SizedBox(height: 12),
@@ -194,7 +266,14 @@ class TwizzItem extends StatelessWidget {
                               () =>
                                   onComment?.call(displayTwizz),
                           onQuote:
-                              () => onQuote?.call(displayTwizz),
+                              (twizz.parentTwizz == null ||
+                                      twizz
+                                              .parentTwizz!
+                                              .parentTwizz ==
+                                          null)
+                                  ? () =>
+                                      onQuote?.call(displayTwizz)
+                                  : null,
                           onLike:
                               () => onLike?.call(displayTwizz),
                           onBookmark:
@@ -468,13 +547,19 @@ class _TwizzContent extends StatefulWidget {
 
 class _TwizzContentState extends State<_TwizzContent> {
   final List<TapGestureRecognizer> _recognizers = [];
+  bool _isExpanded = false;
 
   @override
   void dispose() {
+    _clearRecognizers();
+    super.dispose();
+  }
+
+  void _clearRecognizers() {
     for (final recognizer in _recognizers) {
       recognizer.dispose();
     }
-    super.dispose();
+    _recognizers.clear();
   }
 
   @override
@@ -482,22 +567,64 @@ class _TwizzContentState extends State<_TwizzContent> {
     final themeData = Theme.of(context);
     const highlightColor = Color(0xFF1DA1F2);
 
-    // Parse content for mentions and hashtags
+    _clearRecognizers();
     final spans = _parseContent(
       widget.content,
       themeData,
       highlightColor,
     );
 
-    return Text.rich(
-      TextSpan(
-        style: themeData.textTheme.bodyLarge?.copyWith(
-          height: 1.4,
-        ),
-        children: spans,
+    final textSpan = TextSpan(
+      style: themeData.textTheme.bodyLarge?.copyWith(
+        height: 1.4,
       ),
-      maxLines: 3,
-      overflow: TextOverflow.ellipsis,
+      children: spans,
+    );
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final textPainter = TextPainter(
+          text: textSpan,
+          maxLines: 3,
+          textDirection: TextDirection.ltr,
+        )..layout(maxWidth: constraints.maxWidth);
+
+        final isOverflowing = textPainter.didExceedMaxLines;
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text.rich(
+              textSpan,
+              maxLines: _isExpanded ? null : 3,
+              overflow:
+                  _isExpanded
+                      ? TextOverflow.visible
+                      : TextOverflow.ellipsis,
+              textAlign: TextAlign.justify,
+            ),
+            if (isOverflowing)
+              GestureDetector(
+                onTap: () {
+                  setState(() {
+                    _isExpanded = !_isExpanded;
+                  });
+                },
+                child: Padding(
+                  padding: const EdgeInsets.only(top: 4),
+                  child: Text(
+                    _isExpanded ? 'Thu gọn' : 'Xem thêm',
+                    style: const TextStyle(
+                      color: highlightColor,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 14,
+                    ),
+                  ),
+                ),
+              ),
+          ],
+        );
+      },
     );
   }
 
@@ -799,42 +926,52 @@ class _TwizzToolbar extends StatelessWidget {
     );
 
     return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         // Comment
-        _ToolbarItem(
-          icon: Icons.chat_bubble_outline,
-          count: commentCount,
-          color: iconColor,
-          onTap: onComment,
+        Expanded(
+          child: _ToolbarItem(
+            icon: Icons.chat_bubble_outline,
+            count: commentCount,
+            color: iconColor,
+            onTap: onComment,
+          ),
         ),
 
         // Quote
-        _ToolbarItem(
-          icon: Icons.format_quote,
-          count: quoteCount,
-          color: iconColor,
-          onTap: onQuote,
-        ),
+        if (onQuote != null)
+          Expanded(
+            child: _ToolbarItem(
+              icon: Icons.format_quote,
+              count: quoteCount,
+              color: iconColor,
+              onTap: onQuote,
+            ),
+          ),
+
         // Like
-        _ToolbarItem(
-          icon: isLiked ? Icons.favorite : Icons.favorite_border,
-          count: likeCount,
-          color: isLiked ? Colors.red : iconColor,
-          onTap: onLike,
+        Expanded(
+          child: _ToolbarItem(
+            icon:
+                isLiked ? Icons.favorite : Icons.favorite_border,
+            count: likeCount,
+            color: isLiked ? Colors.red : iconColor,
+            onTap: onLike,
+          ),
         ),
+
         // Bookmark
-        GestureDetector(
-          onTap: onBookmark,
-          child: Icon(
-            isBookmarked
-                ? Icons.bookmark
-                : Icons.bookmark_border,
-            size: 24,
+        Expanded(
+          child: _ToolbarItem(
+            icon:
+                isBookmarked
+                    ? Icons.bookmark
+                    : Icons.bookmark_border,
+            count: 0,
             color:
                 isBookmarked
                     ? const Color(0xFF1DA1F2)
                     : iconColor,
+            onTap: onBookmark,
           ),
         ),
       ],
@@ -858,22 +995,23 @@ class _ToolbarItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
+      behavior: HitTestBehavior.opaque,
       onTap: onTap,
-      child: Row(
-        children: [
-          SizedBox(
-            width: 40,
-            height: 40,
-            child: Icon(icon, size: 24, color: color),
-          ),
-          if (count > 0) ...[
-            const SizedBox(width: 4),
-            Text(
-              _formatCount(count),
-              style: TextStyle(color: color, fontSize: 12),
-            ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, size: 20, color: color),
+            if (count > 0) ...[
+              const SizedBox(width: 4),
+              Text(
+                _formatCount(count),
+                style: TextStyle(color: color, fontSize: 12),
+              ),
+            ],
           ],
-        ],
+        ),
       ),
     );
   }

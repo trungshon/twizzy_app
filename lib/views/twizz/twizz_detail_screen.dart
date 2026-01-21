@@ -276,43 +276,37 @@ class _TwizzDetailScreenState extends State<TwizzDetailScreen> {
   ) {
     final themeData = Theme.of(context);
 
-    return IntrinsicHeight(
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          // Thread line indicator
-          Container(
-            padding: const EdgeInsets.only(left: 32),
-            child: Container(
+    return Padding(
+      padding: const EdgeInsets.only(left: 32),
+      child: Container(
+        decoration: BoxDecoration(
+          border: Border(
+            left: BorderSide(
               width: 1,
               color: themeData.colorScheme.outline,
             ),
           ),
-
-          // Reply content
-          Expanded(
-            child: TwizzItem(
-              twizz: reply,
-              currentUserId: currentUserId,
-              onLike: (t) => viewModel.toggleLike(t),
-              onComment: (t) {
-                viewModel.setReplyingTo(t);
-                _replyFocusNode.requestFocus();
-              },
-              onQuote: _handleQuote,
-              onBookmark: (t) => viewModel.toggleBookmark(t),
-              onDelete: (t) => _handleDelete(t, viewModel),
-              onUserTap: () => _navigateToProfile(reply.user),
-              onTap: () {
-                Navigator.pushNamed(
-                  context,
-                  RouteNames.twizzDetail,
-                  arguments: TwizzDetailScreenArgs(twizz: reply),
-                );
-              },
-            ),
-          ),
-        ],
+        ),
+        child: TwizzItem(
+          twizz: reply,
+          currentUserId: currentUserId,
+          onLike: (t) => viewModel.toggleLike(t),
+          onComment: (t) {
+            viewModel.setReplyingTo(t);
+            _replyFocusNode.requestFocus();
+          },
+          onQuote: _handleQuote,
+          onBookmark: (t) => viewModel.toggleBookmark(t),
+          onDelete: (t) => _handleDelete(t, viewModel),
+          onUserTap: () => _navigateToProfile(reply.user),
+          onTap: () {
+            Navigator.pushNamed(
+              context,
+              RouteNames.twizzDetail,
+              arguments: TwizzDetailScreenArgs(twizz: reply),
+            );
+          },
+        ),
       ),
     );
   }
@@ -672,7 +666,7 @@ class _TwizzDetailScreenState extends State<TwizzDetailScreen> {
                                 backgroundColor:
                                     themeData
                                         .colorScheme
-                                        .secondary,
+                                        .primary,
                                 child: Text(
                                   name.isNotEmpty
                                       ? name[0].toUpperCase()
@@ -683,7 +677,7 @@ class _TwizzDetailScreenState extends State<TwizzDetailScreen> {
                                     color:
                                         themeData
                                             .colorScheme
-                                            .onSecondary,
+                                            .onPrimary,
                                   ),
                                 ),
                               ),

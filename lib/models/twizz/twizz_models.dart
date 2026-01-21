@@ -260,6 +260,7 @@ class SearchUserResult {
   final String username;
   final String? avatar;
   final bool isVerified;
+  final bool? isFollowing;
 
   SearchUserResult({
     required this.id,
@@ -267,6 +268,7 @@ class SearchUserResult {
     required this.username,
     this.avatar,
     this.isVerified = false,
+    this.isFollowing,
   });
 
   factory SearchUserResult.fromJson(Map<String, dynamic> json) {
@@ -276,6 +278,7 @@ class SearchUserResult {
       username: json['username'] as String? ?? '',
       avatar: json['avatar'] as String?,
       isVerified: json['verify'] == 1,
+      isFollowing: json['is_following'] as bool?,
     );
   }
 }

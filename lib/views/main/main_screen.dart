@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../viewmodels/main/main_viewmodel.dart';
 import '../../viewmodels/newsfeed/newsfeed_viewmodel.dart';
 import '../home/home_content.dart';
 import '../search/search_content.dart';
@@ -17,7 +18,6 @@ class MainScreen extends StatefulWidget {
 }
 
 class _MainScreenState extends State<MainScreen> {
-  int _currentIndex = 0;
   final GlobalKey<HomeContentState> _homeContentKey =
       GlobalKey<HomeContentState>();
 
@@ -43,9 +43,11 @@ class _MainScreenState extends State<MainScreen> {
   @override
   Widget build(BuildContext context) {
     final themeData = Theme.of(context);
+    final mainViewModel = context.watch<MainViewModel>();
+
     return Scaffold(
       body: IndexedStack(
-        index: _currentIndex,
+        index: mainViewModel.currentIndex,
         children: _screens,
       ),
       bottomNavigationBar: Theme(
@@ -55,15 +57,13 @@ class _MainScreenState extends State<MainScreen> {
           splashFactory: NoSplash.splashFactory,
         ),
         child: BottomNavigationBar(
-          currentIndex: _currentIndex,
+          currentIndex: mainViewModel.currentIndex,
           onTap: (index) {
             // Nếu đang ở home và tap lại home thì scroll lên đầu
-            if (index == 0 && _currentIndex == 0) {
+            if (index == 0 && mainViewModel.currentIndex == 0) {
               _homeContentKey.currentState?.scrollToTop();
             }
-            setState(() {
-              _currentIndex = index;
-            });
+            mainViewModel.setIndex(index);
           },
           type: BottomNavigationBarType.fixed,
           showSelectedLabels: false,

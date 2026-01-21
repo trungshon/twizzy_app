@@ -152,6 +152,76 @@ class SnackBarUtils {
     );
   }
 
+  /// Show a toast message at the top of the screen
+  /// Use this when a SnackBar might be covered by a BottomSheet
+  static void showToast(
+    BuildContext context, {
+    required String message,
+    SnackBarType type = SnackBarType.success,
+    Duration duration = const Duration(seconds: 2),
+  }) {
+    final overlay = Overlay.of(context);
+    final themeData = Theme.of(context);
+    final config = _getConfig(type, themeData);
+
+    late OverlayEntry entry;
+    entry = OverlayEntry(
+      builder:
+          (context) => Positioned(
+            top: MediaQuery.of(context).padding.top + 20,
+            left: 20,
+            right: 20,
+            child: Material(
+              color: Colors.transparent,
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
+                ),
+                decoration: BoxDecoration(
+                  color: config.backgroundColor,
+                  borderRadius: BorderRadius.circular(10),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.2),
+                      blurRadius: 8,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      config.icon,
+                      color: themeData.colorScheme.onPrimary,
+                      size: 20,
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        message,
+                        style: TextStyle(
+                          color: themeData.colorScheme.onPrimary,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+    );
+
+    overlay.insert(entry);
+    Future.delayed(duration, () {
+      if (entry.mounted) {
+        entry.remove();
+      }
+    });
+  }
+
   /// Clear all SnackBars
   static void clear(BuildContext context) {
     ScaffoldMessenger.of(context).clearSnackBars();

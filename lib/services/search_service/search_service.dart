@@ -11,15 +11,17 @@ class SearchService {
 
   SearchService(this._apiClient);
 
-  /// Search users (for mentions)
+  /// Search users
   ///
   /// [content] - Search query (username or name)
   /// [field] - 'username' | 'name' | null (search both)
+  /// [followOnly] - Only search people that the current user follows
   /// [limit] - Number of results per page
   /// [page] - Page number
   Future<SearchUsersResponse> searchUsers({
     required String content,
     String? field,
+    bool followOnly = false,
     int limit = 10,
     int page = 1,
   }) async {
@@ -29,6 +31,7 @@ class SearchService {
         'type': 'users',
         'limit': limit.toString(),
         'page': page.toString(),
+        'people_follow': followOnly ? '1' : '0',
       };
 
       if (field != null) {
@@ -50,7 +53,55 @@ class SearchService {
         rethrow;
       }
       throw ApiErrorResponse(
-        message: 'Lỗi tìm kiếm: ${e.toString()}',
+        message: 'Lỗi tìm kiếm người dùng: ${e.toString()}',
+      );
+    }
+  }
+
+  /// Search twizzs
+  ///
+  /// [content] - Search query
+  /// [mediaType] - Filter by media type (image/video)
+  /// [followOnly] - Only search twizzs from people that the current user follows
+  /// [limit] - Number of results per page
+  /// [page] - Page number
+  Future<NewFeedsResponse> searchTwizzs({
+    required String content,
+    MediaType? mediaType,
+    bool followOnly = false,
+    int limit = 10,
+    int page = 1,
+  }) async {
+    try {
+      final queryParams = <String, String>{
+        'content': content,
+        'type': 'twizzs',
+        'limit': limit.toString(),
+        'page': page.toString(),
+        'people_follow': followOnly ? '1' : '0',
+      };
+
+      if (mediaType != null) {
+        queryParams['media_type'] =
+            mediaType == MediaType.image ? 'image' : 'video';
+      }
+
+      final queryString = queryParams.entries
+          .map((e) => '${e.key}=${Uri.encodeComponent(e.value)}')
+          .join('&');
+
+      final response = await _apiClient.get(
+        '${ApiConstants.search}?$queryString',
+        includeAuth: true,
+      );
+
+      return NewFeedsResponse.fromJson(response);
+    } catch (e) {
+      if (e is ApiErrorResponse) {
+        rethrow;
+      }
+      throw ApiErrorResponse(
+        message: 'Lỗi tìm kiếm bài viết: ${e.toString()}',
       );
     }
   }
