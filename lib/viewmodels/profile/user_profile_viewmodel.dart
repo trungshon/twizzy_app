@@ -68,6 +68,7 @@ class UserProfileViewModel extends ChangeNotifier {
   bool _isLoadingProfile = false;
   String? _profileError;
   bool _isFollowing = false;
+  bool _isFollower = false;
   bool _isLoadingFollow = false;
 
   // State for each tab
@@ -89,6 +90,7 @@ class UserProfileViewModel extends ChangeNotifier {
   bool get isLoadingProfile => _isLoadingProfile;
   String? get profileError => _profileError;
   bool get isFollowing => _isFollowing;
+  bool get isFollower => _isFollower;
   bool get isLoadingFollow => _isLoadingFollow;
 
   List<Twizz> getTwizzs(int tabIndex) =>
@@ -115,6 +117,7 @@ class UserProfileViewModel extends ChangeNotifier {
     try {
       _user = await _authService.getUserProfile(username);
       _isFollowing = _user?.isFollowing ?? false;
+      _isFollower = _user?.isFollower ?? false;
       _isLoadingProfile = false;
       notifyListeners();
     } catch (e) {
@@ -157,6 +160,7 @@ class UserProfileViewModel extends ChangeNotifier {
           followersCount: (_user!.followersCount ?? 0) + 1,
           followingCount: _user!.followingCount,
           isFollowing: true,
+          isFollower: _user!.isFollower,
         );
       }
       _isLoadingFollow = false;
@@ -198,6 +202,7 @@ class UserProfileViewModel extends ChangeNotifier {
               .clamp(0, 999999999),
           followingCount: _user!.followingCount,
           isFollowing: false,
+          isFollower: _user!.isFollower,
         );
       }
       _isLoadingFollow = false;

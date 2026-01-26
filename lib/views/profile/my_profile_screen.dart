@@ -120,6 +120,7 @@ class _MyProfileScreenState extends State<MyProfileScreen>
 
         return Scaffold(
           floatingActionButton: FloatingActionButton(
+            heroTag: 'profile_fab',
             onPressed: () {
               Navigator.pushNamed(
                 context,

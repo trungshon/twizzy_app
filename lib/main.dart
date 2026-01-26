@@ -16,6 +16,8 @@ import 'services/search_service/search_service.dart';
 import 'services/like_service/like_service.dart';
 import 'services/bookmark_service/bookmark_service.dart';
 import 'services/twizz_service/twizz_sync_service.dart';
+import 'services/socket_service/socket_service.dart';
+import 'services/chat_service/chat_service.dart';
 import 'viewmodels/auth/auth_viewmodel.dart';
 import 'viewmodels/twizz/create_twizz_viewmodel.dart';
 import 'viewmodels/newsfeed/newsfeed_viewmodel.dart';
@@ -40,9 +42,20 @@ void main() async {
   final likeService = LikeService(apiClient);
   final bookmarkService = BookmarkService(apiClient);
   final twizzSyncService = TwizzSyncService();
+  final socketService = SocketService();
+  final chatService = ChatService(apiClient);
+
+  // Auto connect socket if already logged in
+  final initialAccessToken = await authService.getAccessToken();
+  if (initialAccessToken != null) {
+    socketService.connect(initialAccessToken);
+  }
 
   // Initialize view models
-  final authViewModel = AuthViewModel(authService);
+  final authViewModel = AuthViewModel(
+    authService,
+    socketService,
+  );
   final createTwizzViewModel = CreateTwizzViewModel(
     twizzService,
     searchService,
@@ -77,7 +90,10 @@ void main() async {
     twizzService,
     twizzSyncService,
   );
-  final chatViewModel = ChatViewModel();
+  final chatViewModel = ChatViewModel(
+    socketService,
+    chatService,
+  );
 
   // Initialize Google Auth Service
   // Web Client ID (dùng cho serverClientId để lấy idToken) - lấy từ env
@@ -94,6 +110,8 @@ void main() async {
         Provider.value(value: likeService),
         Provider.value(value: bookmarkService),
         Provider.value(value: twizzSyncService),
+        Provider.value(value: socketService),
+        Provider.value(value: chatService),
         ChangeNotifierProvider.value(value: authViewModel),
         ChangeNotifierProvider.value(
           value: createTwizzViewModel,

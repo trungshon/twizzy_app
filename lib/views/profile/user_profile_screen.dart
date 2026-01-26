@@ -12,6 +12,7 @@ import '../twizz/twizz_detail_screen.dart';
 import '../../core/utils/number_formatter.dart';
 import '../../routes/route_names.dart';
 import 'follower_list_screen.dart';
+import '../chat/chat_detail_screen.dart';
 
 /// User Profile Screen
 ///
@@ -298,7 +299,14 @@ class _UserProfileViewState extends State<_UserProfileView>
                               // Message button
                               OutlinedButton(
                                 onPressed: () {
-                                  // TODO: Navigate to chat
+                                  Navigator.pushNamed(
+                                    context,
+                                    RouteNames.chatDetail,
+                                    arguments:
+                                        ChatDetailScreenArgs(
+                                          otherUser: user,
+                                        ),
+                                  );
                                 },
                                 style: OutlinedButton.styleFrom(
                                   shape: const CircleBorder(),
@@ -359,6 +367,9 @@ class _UserProfileViewState extends State<_UserProfileView>
                                         : Text(
                                           viewModel.isFollowing
                                               ? 'Đang theo dõi'
+                                              : viewModel
+                                                  .isFollower
+                                              ? 'Theo dõi lại'
                                               : 'Theo dõi',
                                         ),
                               ),
@@ -395,15 +406,56 @@ class _UserProfileViewState extends State<_UserProfileView>
                           ],
                         ),
                         const SizedBox(height: 4),
-                        Text(
-                          '@$username',
-                          style: themeData.textTheme.bodyMedium
-                              ?.copyWith(
-                                color: themeData
-                                    .colorScheme
-                                    .onSurface
-                                    .withValues(alpha: 0.6),
+                        Row(
+                          children: [
+                            Text(
+                              '@$username',
+                              style: themeData
+                                  .textTheme
+                                  .bodyMedium
+                                  ?.copyWith(
+                                    color: themeData
+                                        .colorScheme
+                                        .onSurface
+                                        .withValues(alpha: 0.6),
+                                  ),
+                            ),
+                            if (viewModel.isFollower) ...[
+                              const SizedBox(width: 8),
+                              Container(
+                                padding:
+                                    const EdgeInsets.symmetric(
+                                      horizontal: 6,
+                                      vertical: 2,
+                                    ),
+                                decoration: BoxDecoration(
+                                  color: themeData
+                                      .colorScheme
+                                      .onSurface
+                                      .withValues(alpha: 0.1),
+                                  borderRadius:
+                                      BorderRadius.circular(4),
+                                ),
+                                child: Text(
+                                  'Theo dõi bạn',
+                                  style: themeData
+                                      .textTheme
+                                      .labelSmall
+                                      ?.copyWith(
+                                        color: themeData
+                                            .colorScheme
+                                            .onSurface
+                                            .withValues(
+                                              alpha: 0.6,
+                                            ),
+                                        fontSize: 10,
+                                        fontWeight:
+                                            FontWeight.bold,
+                                      ),
+                                ),
                               ),
+                            ],
+                          ],
                         ),
 
                         // Bio

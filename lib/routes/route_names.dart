@@ -32,6 +32,9 @@ class RouteNames {
   // Test Routes
   static const String videoTest = '/video-test';
 
+  // Chat Routes
+  static const String chatDetail = '/chat-detail';
+
   // Private constructor để prevent instantiation
   RouteNames._();
 }

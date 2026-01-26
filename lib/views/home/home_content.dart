@@ -144,6 +144,7 @@ class HomeContentState extends State<HomeContent>
           ],
         ),
         floatingActionButton: FloatingActionButton(
+          heroTag: 'home_fab',
           onPressed: () {
             Navigator.pushNamed(context, RouteNames.createTwizz);
           },

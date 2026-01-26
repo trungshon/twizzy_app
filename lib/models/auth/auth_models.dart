@@ -307,6 +307,7 @@ class User {
   final int? followersCount;
   final int? followingCount;
   final bool? isFollowing;
+  final bool? isFollower;
   final List<User>? twizzCircle;
   final List<String>? twizzCircleIds;
 
@@ -327,6 +328,7 @@ class User {
     this.followersCount,
     this.followingCount,
     this.isFollowing,
+    this.isFollower,
     this.twizzCircle,
     this.twizzCircleIds,
   });
@@ -433,6 +435,7 @@ class User {
       followersCount: json['followers_count'] as int?,
       followingCount: json['following_count'] as int?,
       isFollowing: json['is_following'] as bool?,
+      isFollower: json['is_follower'] as bool?,
       twizzCircle:
           json['twizz_circle'] != null
               ? (json['twizz_circle'] as List)
@@ -467,6 +470,7 @@ class User {
     int? followersCount,
     int? followingCount,
     bool? isFollowing,
+    bool? isFollower,
     String? verify,
     List<User>? twizzCircle,
   }) {
@@ -487,6 +491,7 @@ class User {
       followersCount: followersCount ?? this.followersCount,
       followingCount: followingCount ?? this.followingCount,
       isFollowing: isFollowing ?? this.isFollowing,
+      isFollower: isFollower ?? this.isFollower,
       twizzCircle: twizzCircle ?? this.twizzCircle,
     );
   }

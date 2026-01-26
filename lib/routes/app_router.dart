@@ -19,6 +19,7 @@ import '../views/profile/follower_list_screen.dart';
 import '../views/twizz/create_twizz_screen.dart';
 import '../views/twizz/twizz_interaction_screen.dart';
 import '../views/twizz/twizz_detail_screen.dart';
+import '../views/chat/chat_detail_screen.dart';
 import '../views/test/video_test_screen.dart';
 
 /// App Router
@@ -200,6 +201,14 @@ class AppRouter {
         return MaterialPageRoute(
           builder: (_) => const VideoTestScreen(),
         );
+
+      case RouteNames.chatDetail:
+        if (args is ChatDetailScreenArgs) {
+          return MaterialPageRoute(
+            builder: (_) => ChatDetailScreen(args: args),
+          );
+        }
+        return _errorRoute('Invalid args for ChatDetailScreen');
 
       default:
         return _errorRoute('Route not found: ${settings.name}');

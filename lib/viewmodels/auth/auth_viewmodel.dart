@@ -3,14 +3,16 @@ import 'package:flutter/material.dart';
 import '../../models/auth/auth_models.dart';
 import '../../services/auth_service/auth_service.dart';
 import '../../services/google_auth/google_auth_service.dart';
+import '../../services/socket_service/socket_service.dart';
 
 /// Auth ViewModel
 ///
 /// Quản lý state và business logic cho authentication
 class AuthViewModel extends ChangeNotifier {
   final AuthService _authService;
+  final SocketService _socketService;
 
-  AuthViewModel(this._authService);
+  AuthViewModel(this._authService, this._socketService);
 
   // State
   bool _isLoading = false;
@@ -63,6 +65,7 @@ class AuthViewModel extends ChangeNotifier {
         request,
       );
       _accessToken = registerResponse.result.accessToken;
+      _socketService.connect(_accessToken!);
       _isRegistered = true;
       _registeredEmail = email;
       _isLoading = false;
@@ -106,6 +109,10 @@ class AuthViewModel extends ChangeNotifier {
 
       final loginResponse = await _authService.login(request);
       _accessToken = loginResponse.result.accessToken;
+      debugPrint(
+        'Login successful, connecting socket for user...',
+      );
+      _socketService.connect(_accessToken!);
 
       _isLoading = false;
       notifyListeners();
@@ -190,6 +197,9 @@ class AuthViewModel extends ChangeNotifier {
     try {
       await _authService.refreshToken();
       _accessToken = await _authService.getAccessToken();
+      if (_accessToken != null) {
+        _socketService.connect(_accessToken!);
+      }
       _isLoading = false;
       notifyListeners();
       return true;
@@ -216,6 +226,9 @@ class AuthViewModel extends ChangeNotifier {
       final response = await _authService.getMe();
       _currentUser = response.result;
       _accessToken = await _authService.getAccessToken();
+      if (_accessToken != null) {
+        _socketService.connect(_accessToken!);
+      }
       _isLoading = false;
       notifyListeners();
       return true;
@@ -336,11 +349,13 @@ class AuthViewModel extends ChangeNotifier {
 
   /// Logout
   Future<void> logout() async {
+    debugPrint('Logging out and disconnecting socket...');
     _isLoading = true;
     notifyListeners();
 
     try {
       await _authService.logout();
+      _socketService.disconnect();
       _currentUser = null;
       _isRegistered = false;
       _registeredEmail = null;
@@ -443,6 +458,8 @@ class AuthViewModel extends ChangeNotifier {
         _registeredEmail = result.email;
         return 'new_user';
       }
+      _accessToken = response.result.accessToken;
+      _socketService.connect(_accessToken!);
       return 'success';
     } catch (e) {
       _isLoading = false;
