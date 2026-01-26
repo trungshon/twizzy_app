@@ -196,7 +196,6 @@ class AppRouter {
         }
         return _errorRoute('Invalid args for TwizzDetailScreen');
 
-      // Test Routes
       case RouteNames.videoTest:
         return MaterialPageRoute(
           builder: (_) => const VideoTestScreen(),

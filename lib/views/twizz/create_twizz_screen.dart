@@ -289,6 +289,22 @@ class _CreateTwizzScreenState extends State<CreateTwizzScreen> {
                 const Divider(height: 1),
                 const SizedBox(height: 8),
 
+                // Only Me option
+                _AudienceOption(
+                  icon: Icons.lock,
+                  iconColor: themeData.colorScheme.primary,
+                  title: 'Chỉ mình tôi',
+                  isSelected:
+                      viewModel.audience == TwizzAudience.onlyMe,
+                  onTap: () {
+                    viewModel.setAudience(TwizzAudience.onlyMe);
+                    Navigator.pop(context);
+                  },
+                ),
+                const SizedBox(height: 8),
+                const Divider(height: 1),
+                const SizedBox(height: 8),
+
                 // Twizz Circle option
                 _AudienceOption(
                   icon: Icons.group,

@@ -92,6 +92,8 @@ class CreateTwizzViewModel extends ChangeNotifier {
         return 'Tất cả mọi người';
       case TwizzAudience.twizzCircle:
         return 'Những người bạn cho phép';
+      case TwizzAudience.onlyMe:
+        return 'Chỉ mình tôi';
     }
   }
 

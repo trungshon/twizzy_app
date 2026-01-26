@@ -139,25 +139,31 @@ class TwizzItem extends StatelessWidget {
                             medias: displayTwizz.medias,
                           ),
                         ),
-                      // Embedded parent for quote twizz or retwizz
+                      // Embedded parent for quote twizz
                       if ((isQuoteTwizz ||
                               displayTwizz.type ==
                                   TwizzType.twizz) &&
                           twizz.parentTwizz != null) ...[
-                        if (twizz.parentTwizz!.audience ==
-                                TwizzAudience.twizzCircle &&
-                            currentUserId !=
-                                twizz.parentTwizz!.userId &&
-                            (twizz
+                        if ((twizz.parentTwizz!.audience ==
+                                    TwizzAudience.twizzCircle &&
+                                currentUserId !=
+                                    twizz.parentTwizz!.userId &&
+                                (twizz
+                                            .parentTwizz!
+                                            .user
+                                            ?.twizzCircleIds ==
+                                        null ||
+                                    !twizz
                                         .parentTwizz!
-                                        .user
-                                        ?.twizzCircleIds ==
-                                    null ||
-                                !twizz
-                                    .parentTwizz!
-                                    .user!
-                                    .twizzCircleIds!
-                                    .contains(currentUserId)))
+                                        .user!
+                                        .twizzCircleIds!
+                                        .contains(
+                                          currentUserId,
+                                        ))) ||
+                            (twizz.parentTwizz!.audience ==
+                                    TwizzAudience.onlyMe &&
+                                currentUserId !=
+                                    twizz.parentTwizz!.userId))
                           Container(
                             margin: const EdgeInsets.only(
                               top: 12,
@@ -165,13 +171,12 @@ class TwizzItem extends StatelessWidget {
                             padding: const EdgeInsets.all(12),
                             decoration: BoxDecoration(
                               border: Border.all(
-                                color: Theme.of(context)
-                                    .dividerColor
+                                color: themeData.dividerColor
                                     .withValues(alpha: 0.3),
                               ),
                               borderRadius:
                                   BorderRadius.circular(12),
-                              color: Theme.of(context)
+                              color: themeData
                                   .colorScheme
                                   .surfaceContainerHighest
                                   .withValues(alpha: 0.3),
@@ -183,14 +188,13 @@ class TwizzItem extends StatelessWidget {
                               children: [
                                 Text(
                                   'Bạn không có quyền xem bài viết này',
-                                  style: Theme.of(context)
+                                  style: themeData
                                       .textTheme
                                       .bodyMedium
                                       ?.copyWith(
                                         color:
-                                            Theme.of(
-                                              context,
-                                            ).disabledColor,
+                                            themeData
+                                                .disabledColor,
                                         fontStyle:
                                             FontStyle.italic,
                                       ),
@@ -339,6 +343,7 @@ class TwizzItem extends StatelessWidget {
               Row(
                 children: [
                   Flexible(
+                    flex: 1,
                     child: GestureDetector(
                       onTap: onUserTap,
                       child: Text(
@@ -363,24 +368,38 @@ class TwizzItem extends StatelessWidget {
                   ],
                   const SizedBox(width: 4),
 
-                  // Dot separator
-                  Text(
-                    ' · ',
-                    style: themeData.textTheme.bodyMedium
-                        ?.copyWith(
-                          color: themeData.colorScheme.onSurface
-                              .withValues(alpha: 0.6),
-                        ),
+                  // Dot separator & Time combined and made flexible
+                  Flexible(
+                    flex: 1,
+                    child: Text(
+                      ' · $timeAgo',
+                      style: themeData.textTheme.bodyMedium
+                          ?.copyWith(
+                            color: themeData
+                                .colorScheme
+                                .onSurface
+                                .withValues(alpha: 0.6),
+                          ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
                   ),
-                  // Time
-                  Text(
-                    timeAgo,
-                    style: themeData.textTheme.bodyMedium
-                        ?.copyWith(
-                          color: themeData.colorScheme.onSurface
-                              .withValues(alpha: 0.6),
-                        ),
-                  ),
+                  // Audience icon - Only show for non-embedded posts
+                  if (!isEmbedded) ...[
+                    const SizedBox(width: 4),
+                    Icon(
+                      displayTwizz.audience ==
+                              TwizzAudience.everyone
+                          ? Icons.public
+                          : displayTwizz.audience ==
+                              TwizzAudience.twizzCircle
+                          ? Icons.people_alt
+                          : Icons.lock,
+                      size: 14,
+                      color: themeData.colorScheme.onSurface
+                          .withValues(alpha: 0.6),
+                    ),
+                  ],
                 ],
               ),
               Text(
@@ -396,23 +415,23 @@ class TwizzItem extends StatelessWidget {
           ),
         ),
 
-        // More button
-        GestureDetector(
-          onTap: () {
-            _showMoreOptions(context, displayTwizz);
-          },
-          child: SizedBox(
-            width: 36,
-            height: 36,
-            child: Icon(
-              Icons.more_horiz,
-              size: 24,
-              color: themeData.colorScheme.onSurface.withValues(
-                alpha: 0.6,
+        // More button - Hide when embedded to save space
+        if (!isEmbedded)
+          GestureDetector(
+            onTap: () {
+              _showMoreOptions(context, displayTwizz);
+            },
+            child: SizedBox(
+              width: 36,
+              height: 36,
+              child: Icon(
+                Icons.more_horiz,
+                size: 24,
+                color: themeData.colorScheme.onSurface
+                    .withValues(alpha: 0.6),
               ),
             ),
           ),
-        ),
       ],
     );
   }

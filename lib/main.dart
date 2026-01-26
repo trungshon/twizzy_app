@@ -24,6 +24,7 @@ import 'viewmodels/profile/edit_profile_viewmodel.dart';
 import 'viewmodels/theme/theme_viewmodel.dart';
 import 'viewmodels/search/search_viewmodel.dart';
 import 'viewmodels/main/main_viewmodel.dart';
+import 'viewmodels/chat/chat_viewmodel.dart';
 
 void main() async {
   // Load environment variables
@@ -76,6 +77,7 @@ void main() async {
     twizzService,
     twizzSyncService,
   );
+  final chatViewModel = ChatViewModel();
 
   // Initialize Google Auth Service
   // Web Client ID (dùng cho serverClientId để lấy idToken) - lấy từ env
@@ -107,6 +109,7 @@ void main() async {
         ChangeNotifierProvider.value(value: searchViewModel),
         ChangeNotifierProvider.value(value: themeViewModel),
         ChangeNotifierProvider.value(value: mainViewModel),
+        ChangeNotifierProvider.value(value: chatViewModel),
       ],
       child: const MyApp(),
     ),

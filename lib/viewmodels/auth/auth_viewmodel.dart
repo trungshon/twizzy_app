@@ -19,6 +19,7 @@ class AuthViewModel extends ChangeNotifier {
   bool _isRegistered = false;
   String? _registeredEmail;
   User? _currentUser;
+  String? _accessToken;
 
   // Getters
   bool get isLoading => _isLoading;
@@ -27,6 +28,7 @@ class AuthViewModel extends ChangeNotifier {
   bool get isRegistered => _isRegistered;
   String? get registeredEmail => _registeredEmail;
   User? get currentUser => _currentUser;
+  String? get accessToken => _accessToken;
 
   /// Clear error
   void clearError() {
@@ -57,8 +59,10 @@ class AuthViewModel extends ChangeNotifier {
         dateOfBirth: dateOfBirth,
       );
 
-      await _authService.register(request);
-
+      final registerResponse = await _authService.register(
+        request,
+      );
+      _accessToken = registerResponse.result.accessToken;
       _isRegistered = true;
       _registeredEmail = email;
       _isLoading = false;
@@ -100,7 +104,8 @@ class AuthViewModel extends ChangeNotifier {
         password: password,
       );
 
-      await _authService.login(request);
+      final loginResponse = await _authService.login(request);
+      _accessToken = loginResponse.result.accessToken;
 
       _isLoading = false;
       notifyListeners();
@@ -184,6 +189,7 @@ class AuthViewModel extends ChangeNotifier {
 
     try {
       await _authService.refreshToken();
+      _accessToken = await _authService.getAccessToken();
       _isLoading = false;
       notifyListeners();
       return true;
@@ -209,6 +215,7 @@ class AuthViewModel extends ChangeNotifier {
     try {
       final response = await _authService.getMe();
       _currentUser = response.result;
+      _accessToken = await _authService.getAccessToken();
       _isLoading = false;
       notifyListeners();
       return true;

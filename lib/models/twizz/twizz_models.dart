@@ -14,6 +14,7 @@ enum TwizzType {
 enum TwizzAudience {
   everyone, // 0
   twizzCircle, // 1
+  onlyMe, // 2
 }
 
 /// MediaType enum

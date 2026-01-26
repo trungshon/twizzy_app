@@ -5,7 +5,7 @@ import '../../viewmodels/newsfeed/newsfeed_viewmodel.dart';
 import '../home/home_content.dart';
 import '../search/search_content.dart';
 import '../notifications/notifications_content.dart';
-import '../messages/messages_content.dart';
+import '../chat/chat_content.dart';
 
 /// Main Screen
 ///
@@ -31,7 +31,7 @@ class _MainScreenState extends State<MainScreen> {
       HomeContent(key: _homeContentKey),
       const SearchContent(),
       const NotificationsContent(),
-      const MessagesContent(),
+      const ChatContent(),
     ]);
     // Luôn load lại newsfeed khi vào app
     WidgetsBinding.instance.addPostFrameCallback((_) {

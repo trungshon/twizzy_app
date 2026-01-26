@@ -13,6 +13,11 @@ class AuthService {
 
   AuthService(this._apiClient, this._tokenStorage);
 
+  /// Get access token
+  Future<String?> getAccessToken() async {
+    return await _tokenStorage.getAccessToken();
+  }
+
   /// Register new user
   Future<RegisterResponse> register(
     RegisterRequest request,
