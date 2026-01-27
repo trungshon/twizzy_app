@@ -88,11 +88,16 @@ class _MainScreenState extends State<MainScreen> {
             BottomNavigationBarItem(
               icon: Consumer<ChatViewModel>(
                 builder: (context, chatViewModel, child) {
-                  final totalCount =
+                  final totalUnread =
                       chatViewModel.totalUnreadCount;
-                  return Badge.count(
-                    count: totalCount,
-                    isLabelVisible: totalCount > 0,
+                  return Badge(
+                    label: Text(
+                      totalUnread > 99
+                          ? '99+'
+                          : totalUnread.toString(),
+                    ),
+                    isLabelVisible: totalUnread > 0,
+                    backgroundColor: themeData.colorScheme.error,
                     child: const Icon(
                       Icons.mail_outline,
                       size: 28,
