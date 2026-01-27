@@ -14,6 +14,12 @@ class ApiClient {
   final http.Client _client;
   bool _isRefreshing = false;
 
+  /// Callback khi token được refresh thành công
+  void Function(String accessToken)? onTokenRefreshed;
+
+  /// Callback khi refresh token thất bại (cần logout)
+  void Function()? onRefreshTokenFailed;
+
   ApiClient(this._tokenStorage, {http.Client? client})
     : _client = client ?? http.Client();
 
@@ -97,9 +103,19 @@ class ApiClient {
         await _tokenStorage.saveRefreshToken(
           tokenResponse.refreshToken,
         );
+
+        // Notify that token has been refreshed
+        if (onTokenRefreshed != null) {
+          onTokenRefreshed!(tokenResponse.accessToken);
+        }
       } else {
         // Refresh token failed, clear tokens
         await _tokenStorage.clearTokens();
+
+        // Notify that refresh failed
+        if (onRefreshTokenFailed != null) {
+          onRefreshTokenFailed!();
+        }
         throw _handleError(response);
       }
     } finally {

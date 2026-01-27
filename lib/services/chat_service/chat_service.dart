@@ -42,4 +42,11 @@ class ChatService {
       includeAuth: true,
     );
   }
+
+  Future<void> markAsRead(String senderId) async {
+    await _apiClient.patch(
+      '/conversations/receivers/$senderId/mark-as-read',
+      includeAuth: true,
+    );
+  }
 }

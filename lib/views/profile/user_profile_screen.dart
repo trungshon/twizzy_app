@@ -275,7 +275,7 @@ class _UserProfileViewState extends State<_UserProfileView>
                                         backgroundColor:
                                             themeData
                                                 .colorScheme
-                                                .secondary,
+                                                .primary,
                                         child: Text(
                                           name.isNotEmpty
                                               ? name[0]
@@ -288,7 +288,7 @@ class _UserProfileViewState extends State<_UserProfileView>
                                             color:
                                                 themeData
                                                     .colorScheme
-                                                    .onSecondary,
+                                                    .onPrimary,
                                           ),
                                         ),
                                       ),

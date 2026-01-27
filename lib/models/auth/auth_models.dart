@@ -350,13 +350,14 @@ class User {
     DateTime dateOfBirth = DateTime.now();
     if (json['date_of_birth'] != null) {
       if (json['date_of_birth'] is String) {
-        dateOfBirth = DateTime.parse(json['date_of_birth']);
+        dateOfBirth =
+            DateTime.parse(json['date_of_birth']).toLocal();
       } else if (json['date_of_birth'] is Map) {
         // MongoDB Date format
         final dateStr =
             json['date_of_birth']['\$date'] as String?;
         if (dateStr != null) {
-          dateOfBirth = DateTime.parse(dateStr);
+          dateOfBirth = DateTime.parse(dateStr).toLocal();
         }
       }
     }
@@ -365,11 +366,11 @@ class User {
     DateTime createdAt = DateTime.now();
     if (json['created_at'] != null) {
       if (json['created_at'] is String) {
-        createdAt = DateTime.parse(json['created_at']);
+        createdAt = DateTime.parse(json['created_at']).toLocal();
       } else if (json['created_at'] is Map) {
         final dateStr = json['created_at']['\$date'] as String?;
         if (dateStr != null) {
-          createdAt = DateTime.parse(dateStr);
+          createdAt = DateTime.parse(dateStr).toLocal();
         }
       }
     }
@@ -378,11 +379,11 @@ class User {
     DateTime updatedAt = DateTime.now();
     if (json['updated_at'] != null) {
       if (json['updated_at'] is String) {
-        updatedAt = DateTime.parse(json['updated_at']);
+        updatedAt = DateTime.parse(json['updated_at']).toLocal();
       } else if (json['updated_at'] is Map) {
         final dateStr = json['updated_at']['\$date'] as String?;
         if (dateStr != null) {
-          updatedAt = DateTime.parse(dateStr);
+          updatedAt = DateTime.parse(dateStr).toLocal();
         }
       }
     }

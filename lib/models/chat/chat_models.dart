@@ -6,6 +6,7 @@ class Conversation {
   final String receiverId;
   final String content;
   final bool isAccepted;
+  final bool isRead;
   final DateTime createdAt;
   final DateTime updatedAt;
 
@@ -15,6 +16,7 @@ class Conversation {
     required this.receiverId,
     required this.content,
     required this.isAccepted,
+    required this.isRead,
     required this.createdAt,
     required this.updatedAt,
   });
@@ -26,13 +28,14 @@ class Conversation {
       receiverId: json['receiver_id'] ?? '',
       content: json['content'] ?? '',
       isAccepted: json['is_accepted'] ?? false,
+      isRead: json['is_read'] ?? false,
       createdAt:
           json['created_at'] != null
-              ? DateTime.parse(json['created_at'])
+              ? DateTime.parse(json['created_at']).toLocal()
               : DateTime.now(),
       updatedAt:
           json['updated_at'] != null
-              ? DateTime.parse(json['updated_at'])
+              ? DateTime.parse(json['updated_at']).toLocal()
               : DateTime.now(),
     );
   }

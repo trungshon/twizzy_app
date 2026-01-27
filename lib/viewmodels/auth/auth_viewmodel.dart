@@ -65,7 +65,10 @@ class AuthViewModel extends ChangeNotifier {
         request,
       );
       _accessToken = registerResponse.result.accessToken;
-      _socketService.connect(_accessToken!);
+
+      // Load user info
+      await getMe();
+
       _isRegistered = true;
       _registeredEmail = email;
       _isLoading = false;
@@ -109,10 +112,13 @@ class AuthViewModel extends ChangeNotifier {
 
       final loginResponse = await _authService.login(request);
       _accessToken = loginResponse.result.accessToken;
+
+      // Load user info immediately after login
+      await getMe();
+
       debugPrint(
         'Login successful, connecting socket for user...',
       );
-      _socketService.connect(_accessToken!);
 
       _isLoading = false;
       notifyListeners();
@@ -459,7 +465,10 @@ class AuthViewModel extends ChangeNotifier {
         return 'new_user';
       }
       _accessToken = response.result.accessToken;
-      _socketService.connect(_accessToken!);
+
+      // Load user info
+      await getMe();
+
       return 'success';
     } catch (e) {
       _isLoading = false;

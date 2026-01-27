@@ -357,6 +357,14 @@ class SearchViewModel extends ChangeNotifier {
     }
   }
 
+  void clearSearch() {
+    _query = '';
+    for (var tab in SearchTab.values) {
+      _clearResultsForTab(tab);
+    }
+    notifyListeners();
+  }
+
   void _clearResultsForTab(SearchTab tab) {
     _results[tab] = [];
     _currentPage[tab] = 1;

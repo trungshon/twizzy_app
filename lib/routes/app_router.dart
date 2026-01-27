@@ -20,6 +20,7 @@ import '../views/twizz/create_twizz_screen.dart';
 import '../views/twizz/twizz_interaction_screen.dart';
 import '../views/twizz/twizz_detail_screen.dart';
 import '../views/chat/chat_detail_screen.dart';
+import '../views/chat/new_message_screen.dart';
 import '../views/test/video_test_screen.dart';
 
 /// App Router
@@ -209,6 +210,12 @@ class AppRouter {
           );
         }
         return _errorRoute('Invalid args for ChatDetailScreen');
+
+      case RouteNames.newMessage:
+        return MaterialPageRoute(
+          builder: (_) => const NewMessageScreen(),
+          fullscreenDialog: true,
+        );
 
       default:
         return _errorRoute('Route not found: ${settings.name}');

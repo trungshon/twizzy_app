@@ -31,15 +31,14 @@ class _SearchContentState extends State<SearchContent>
     _tabController.addListener(_handleTabChange);
     _searchController.addListener(_onSearchChanged);
 
-    // Initial search if query is already set
+    // Clear search state when entering the search tab
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final viewModel = Provider.of<SearchViewModel>(
         context,
         listen: false,
       );
-      if (viewModel.query.isNotEmpty) {
-        _searchController.text = viewModel.query;
-      }
+      viewModel.clearSearch();
+      _searchController.clear();
     });
   }
 

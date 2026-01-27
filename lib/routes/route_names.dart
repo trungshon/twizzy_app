@@ -34,6 +34,7 @@ class RouteNames {
 
   // Chat Routes
   static const String chatDetail = '/chat-detail';
+  static const String newMessage = '/new-message';
 
   // Private constructor để prevent instantiation
   RouteNames._();

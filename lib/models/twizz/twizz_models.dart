@@ -145,8 +145,10 @@ class Twizz {
           [],
       guestViews: json['guest_views'] as int? ?? 0,
       userViews: json['user_views'] as int? ?? 0,
-      createdAt: DateTime.parse(json['created_at'] as String),
-      updatedAt: DateTime.parse(json['updated_at'] as String),
+      createdAt:
+          DateTime.parse(json['created_at'] as String).toLocal(),
+      updatedAt:
+          DateTime.parse(json['updated_at'] as String).toLocal(),
       user:
           json['user'] != null
               ? User.fromJson(

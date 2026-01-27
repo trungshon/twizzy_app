@@ -27,6 +27,7 @@ import 'viewmodels/theme/theme_viewmodel.dart';
 import 'viewmodels/search/search_viewmodel.dart';
 import 'viewmodels/main/main_viewmodel.dart';
 import 'viewmodels/chat/chat_viewmodel.dart';
+import 'viewmodels/chat/new_message_viewmodel.dart';
 
 void main() async {
   // Load environment variables
@@ -95,6 +96,30 @@ void main() async {
     chatService,
   );
 
+  // Link ApiClient callbacks for automatic socket reconnection and logout
+  apiClient.onTokenRefreshed = (token) {
+    debugPrint('Token refreshed, reconnecting socket...');
+    socketService.connect(token);
+  };
+
+  apiClient.onRefreshTokenFailed = () {
+    debugPrint('Refresh token failed, logging out...');
+    authViewModel.logout();
+  };
+
+  // Link Socket auth errors to token refresh
+  socketService.onAuthError = () {
+    debugPrint(
+      'Socket auth error detected, refreshing token...',
+    );
+    authViewModel.refreshToken();
+  };
+
+  final newMessageViewModel = NewMessageViewModel(
+    authService: authService,
+    searchService: searchService,
+  );
+
   // Initialize Google Auth Service
   // Web Client ID (dùng cho serverClientId để lấy idToken) - lấy từ env
   final googleWebClientId = dotenv.get('GOOGLE_WEB_CLIENT_ID');
@@ -128,6 +153,7 @@ void main() async {
         ChangeNotifierProvider.value(value: themeViewModel),
         ChangeNotifierProvider.value(value: mainViewModel),
         ChangeNotifierProvider.value(value: chatViewModel),
+        ChangeNotifierProvider.value(value: newMessageViewModel),
       ],
       child: const MyApp(),
     ),

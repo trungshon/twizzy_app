@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:twizzy_app/widgets/common/app_drawer.dart';
 import '../../viewmodels/auth/auth_viewmodel.dart';
-import '../../widgets/common/app_drawer.dart';
 import '../../widgets/common/app_logo.dart';
 import '../../routes/route_names.dart';
 import 'for_you_tab.dart';
 import 'following_tab.dart';
+import '../../widgets/common/user_avatar_leading.dart';
 
 /// Home Content
 ///
@@ -62,55 +63,7 @@ class HomeContentState extends State<HomeContent>
       child: Scaffold(
         drawer: const AppDrawer(),
         appBar: AppBar(
-          leading: Consumer<AuthViewModel>(
-            builder: (context, authViewModel, child) {
-              final user = authViewModel.currentUser;
-              final name = user?.name ?? 'User';
-              final avatar = user?.avatar;
-              return Builder(
-                builder:
-                    (context) => GestureDetector(
-                      onTap:
-                          () =>
-                              Scaffold.of(context).openDrawer(),
-                      child: Padding(
-                        padding: const EdgeInsets.all(6),
-                        child:
-                            avatar != null
-                                ? CircleAvatar(
-                                  radius: 40,
-                                  backgroundImage: NetworkImage(
-                                    avatar,
-                                  ),
-                                  onBackgroundImageError:
-                                      (e, s) {},
-                                )
-                                : CircleAvatar(
-                                  radius: 40,
-                                  backgroundColor:
-                                      themeData
-                                          .colorScheme
-                                          .primary,
-                                  child: Text(
-                                    name.isNotEmpty
-                                        ? name[0].toUpperCase()
-                                        : 'U',
-                                    style: TextStyle(
-                                      fontSize: 32,
-                                      fontWeight:
-                                          FontWeight.bold,
-                                      color:
-                                          themeData
-                                              .colorScheme
-                                              .onPrimary,
-                                    ),
-                                  ),
-                                ),
-                      ),
-                    ),
-              );
-            },
-          ),
+          leading: const UserAvatarLeading(),
           title: AppLogo(
             showText: false,
             isDarkMode: isDarkMode,
@@ -118,6 +71,7 @@ class HomeContentState extends State<HomeContent>
             height: 56,
           ),
           centerTitle: true,
+
           // TabBar với 2 tabs
           bottom: TabBar(
             controller: _tabController,

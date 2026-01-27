@@ -6,6 +6,7 @@ import '../home/home_content.dart';
 import '../search/search_content.dart';
 import '../notifications/notifications_content.dart';
 import '../chat/chat_content.dart';
+import '../../viewmodels/chat/chat_viewmodel.dart';
 
 /// Main Screen
 ///
@@ -71,23 +72,33 @@ class _MainScreenState extends State<MainScreen> {
           selectedItemColor: themeData.colorScheme.primary,
           unselectedItemColor: themeData.colorScheme.onSurface
               .withValues(alpha: 0.4),
-          items: const [
-            BottomNavigationBarItem(
+          items: [
+            const BottomNavigationBarItem(
               icon: Icon(Icons.home_outlined, size: 28),
               label: 'Trang chủ',
             ),
-            BottomNavigationBarItem(
+            const BottomNavigationBarItem(
               icon: Icon(Icons.search, size: 28),
               label: 'Tìm kiếm',
             ),
-            BottomNavigationBarItem(
+            const BottomNavigationBarItem(
               icon: Icon(Icons.notifications_outlined, size: 28),
               label: 'Thông báo',
             ),
             BottomNavigationBarItem(
-              icon: Icon(
-                Icons.chat_bubble_outline_outlined,
-                size: 28,
+              icon: Consumer<ChatViewModel>(
+                builder: (context, chatViewModel, child) {
+                  final totalCount =
+                      chatViewModel.totalUnreadCount;
+                  return Badge.count(
+                    count: totalCount,
+                    isLabelVisible: totalCount > 0,
+                    child: const Icon(
+                      Icons.mail_outline,
+                      size: 28,
+                    ),
+                  );
+                },
               ),
               label: 'Tin nhắn',
             ),

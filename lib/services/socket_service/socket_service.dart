@@ -6,6 +6,9 @@ class SocketService {
   io.Socket? _socket;
   final Map<String, List<Function(dynamic)>> _handlers = {};
 
+  /// Callback khi gặp lỗi authentication (token hết hạn)
+  void Function()? onAuthError;
+
   io.Socket? get socket => _socket;
 
   void connect(String token) {
@@ -50,10 +53,27 @@ class SocketService {
 
     _socket!.on('connectError', (data) {
       debugPrint('Connection Error: $data');
+      // Detect common auth error indicators
+      if (data?.toString().toLowerCase().contains(
+                'unauthorized',
+              ) ==
+              true ||
+          data?.toString().toLowerCase().contains('auth') ==
+              true) {
+        onAuthError?.call();
+      }
     });
 
     _socket!.on('error', (data) {
       debugPrint('Socket Error: $data');
+      if (data?.toString().toLowerCase().contains(
+                'unauthorized',
+              ) ==
+              true ||
+          data?.toString().toLowerCase().contains('auth') ==
+              true) {
+        onAuthError?.call();
+      }
     });
   }
 

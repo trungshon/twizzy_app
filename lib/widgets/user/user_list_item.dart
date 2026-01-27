@@ -7,6 +7,7 @@ class UserListItem extends StatelessWidget {
   final VoidCallback? onUnfollow;
   final VoidCallback? onTap;
   final bool isFollowing;
+  final bool showBio;
 
   const UserListItem({
     super.key,
@@ -15,6 +16,7 @@ class UserListItem extends StatelessWidget {
     this.onUnfollow,
     this.onTap,
     this.isFollowing = false,
+    this.showBio = true,
   });
 
   @override
@@ -89,7 +91,8 @@ class UserListItem extends StatelessWidget {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
-                  if (user.bio != null &&
+                  if (showBio &&
+                      user.bio != null &&
                       user.bio!.isNotEmpty) ...[
                     const SizedBox(height: 4),
                     Text(

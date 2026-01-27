@@ -12,21 +12,62 @@ class ChatViewModel extends ChangeNotifier {
   List<ChatThread> _requestConversations = [];
   bool _isLoadingList = false;
   String? _lastUserId;
+  String _searchQuery = '';
 
   ChatViewModel(this._socketService, this._chatService) {
     _initListeners();
   }
 
   bool get isConnected => _isConnected;
-  List<ChatThread> get allConversations => _allConversations;
-  List<ChatThread> get requestConversations =>
-      _requestConversations;
   bool get isLoadingList => _isLoadingList;
+  String get searchQuery => _searchQuery;
+
+  List<ChatThread> get allConversations =>
+      _searchQuery.isEmpty
+          ? _allConversations
+          : _allConversations.where((t) {
+            final name = t.otherUser.name.toLowerCase();
+            final username =
+                t.otherUser.username?.toLowerCase() ?? '';
+            final query = _searchQuery.toLowerCase();
+            return name.contains(query) ||
+                username.contains(query);
+          }).toList();
+
+  List<ChatThread> get requestConversations =>
+      _searchQuery.isEmpty
+          ? _requestConversations
+          : _requestConversations.where((t) {
+            final name = t.otherUser.name.toLowerCase();
+            final username =
+                t.otherUser.username?.toLowerCase() ?? '';
+            final query = _searchQuery.toLowerCase();
+            return name.contains(query) ||
+                username.contains(query);
+          }).toList();
+
+  int get unreadAllCount =>
+      _allConversations.where((t) {
+        return !t.latestMessage.isRead &&
+            t.latestMessage.receiverId == _lastUserId;
+      }).length;
+
+  int get unreadRequestCount =>
+      _requestConversations.where((t) {
+        return !t.latestMessage.isRead &&
+            t.latestMessage.receiverId == _lastUserId;
+      }).length;
+
+  int get totalUnreadCount =>
+      unreadAllCount + unreadRequestCount;
 
   void _initListeners() {
     _socketService.on('connect', (_) {
       debugPrint('ChatViewModel: Connected');
       _isConnected = true;
+      if (_lastUserId != null) {
+        loadConversationsList(_lastUserId!);
+      }
       notifyListeners();
     });
 
@@ -119,6 +160,16 @@ class ChatViewModel extends ChangeNotifier {
 
   void connect(String token) {
     _socketService.connect(token);
+  }
+
+  void setSearchQuery(String query) {
+    _searchQuery = query;
+    notifyListeners();
+  }
+
+  void clearSearch() {
+    _searchQuery = '';
+    notifyListeners();
   }
 
   void disconnect() {

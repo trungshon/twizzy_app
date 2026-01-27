@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:twizzy_app/core/constants/asset_paths.dart';
+import 'package:twizzy_app/widgets/common/app_drawer.dart';
 import '../../viewmodels/chat/chat_viewmodel.dart';
 import '../../viewmodels/auth/auth_viewmodel.dart';
 import '../../routes/route_names.dart';
 import 'chat_detail_screen.dart';
+import '../../widgets/common/user_avatar_leading.dart';
 
 /// Chat Content
 class ChatContent extends StatefulWidget {
@@ -15,12 +18,16 @@ class ChatContent extends StatefulWidget {
 
 class _ChatContentState extends State<ChatContent> {
   int _selectedTabIndex = 0;
+  final TextEditingController _searchController =
+      TextEditingController();
 
   @override
   void initState() {
     super.initState();
     // Socket connection is now handled globally by AuthViewModel
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<ChatViewModel>().clearSearch();
+      _searchController.clear();
       final authViewModel = context.read<AuthViewModel>();
       if (authViewModel.currentUser != null) {
         context.read<ChatViewModel>().loadConversationsList(
@@ -32,6 +39,7 @@ class _ChatContentState extends State<ChatContent> {
 
   @override
   void dispose() {
+    _searchController.dispose();
     // No need to disconnect here, socket lifecycle is managed globally
     super.dispose();
   }
@@ -40,102 +48,127 @@ class _ChatContentState extends State<ChatContent> {
   Widget build(BuildContext context) {
     final themeData = Theme.of(context);
     final chatViewModel = context.watch<ChatViewModel>();
-    final authViewModel = context.watch<AuthViewModel>();
-    final currentUser = authViewModel.currentUser;
 
-    return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        leading: Padding(
-          padding: const EdgeInsets.only(left: 16),
-          child: CircleAvatar(
-            backgroundImage:
-                currentUser?.avatar != null
-                    ? NetworkImage(currentUser!.avatar!)
-                    : null,
-            child:
-                currentUser?.avatar == null
-                    ? Text(
-                      currentUser?.name[0].toUpperCase() ?? 'U',
-                    )
-                    : null,
-          ),
-        ),
-        title: const Text(
-          'Chat',
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            fontSize: 20,
+    return Theme(
+      data: themeData.copyWith(
+        drawerTheme: DrawerThemeData(
+          scrimColor: themeData.colorScheme.onSurface.withValues(
+            alpha: 0.1,
           ),
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        heroTag: 'chat_fab',
-        onPressed: () {
-          // TODO: Start new chat
-        },
-        child: const Icon(Icons.mail_outline),
-      ),
-      body: Column(
-        children: [
-          // Search Bar
-          Padding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: 16,
-              vertical: 8,
+      child: Scaffold(
+        drawer: const AppDrawer(),
+        appBar: AppBar(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          leading: const UserAvatarLeading(),
+          leadingWidth: 56,
+          centerTitle: true,
+          title: const Text(
+            'Chat',
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 20,
             ),
-            child: Container(
-              height: 45,
-              decoration: BoxDecoration(
-                color: themeData
-                    .colorScheme
-                    .surfaceContainerHighest
-                    .withValues(alpha: 0.3),
-                borderRadius: BorderRadius.circular(25),
+          ),
+          actions: const [
+            SizedBox(width: 56), // Balance leading
+          ],
+        ),
+        floatingActionButton: FloatingActionButton(
+          heroTag: 'chat_fab',
+          onPressed: () {
+            Navigator.pushNamed(context, RouteNames.newMessage);
+          },
+          child: Image.asset(
+            color: themeData.colorScheme.onPrimary,
+            AssetPaths.addMail,
+            colorBlendMode: BlendMode.srcIn,
+            width: 36,
+            height: 36,
+          ),
+        ),
+        body: Column(
+          children: [
+            // Search Bar
+            Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 8,
               ),
-              child: TextField(
-                decoration: InputDecoration(
-                  fillColor: themeData.colorScheme.surface,
-                  hintText: 'Tìm kiếm',
-                  prefixIcon: const Icon(Icons.search, size: 20),
-                  border: InputBorder.none,
-                  contentPadding: const EdgeInsets.symmetric(
-                    vertical: 10,
+              child: Container(
+                height: 45,
+                decoration: BoxDecoration(
+                  color: themeData
+                      .colorScheme
+                      .surfaceContainerHighest
+                      .withValues(alpha: 0.3),
+                  borderRadius: BorderRadius.circular(25),
+                ),
+                child: TextField(
+                  controller: _searchController,
+                  onChanged:
+                      (value) => context
+                          .read<ChatViewModel>()
+                          .setSearchQuery(value),
+                  decoration: InputDecoration(
+                    hintStyle: TextStyle(
+                      color: themeData.colorScheme.onSurface
+                          .withValues(alpha: 0.5),
+                    ),
+                    fillColor: themeData.colorScheme.surface,
+                    hintText: 'Tìm kiếm',
+                    prefixIcon: const Icon(
+                      Icons.search,
+                      size: 20,
+                    ),
+                    border: InputBorder.none,
+                    contentPadding: const EdgeInsets.symmetric(
+                      vertical: 10,
+                    ),
                   ),
                 ),
               ),
             ),
-          ),
 
-          // Custom Tabs
-          Padding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: 16,
-              vertical: 12,
+            // Custom Tabs
+            Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 12,
+              ),
+              child: Row(
+                children: [
+                  _buildTabChip(
+                    'Tất cả',
+                    0,
+                    chatViewModel.unreadAllCount,
+                  ),
+                  const SizedBox(width: 12),
+                  _buildTabChip(
+                    'Yêu cầu',
+                    1,
+                    chatViewModel.unreadRequestCount,
+                  ),
+                ],
+              ),
             ),
-            child: Row(
-              children: [
-                _buildTabChip('Tất cả', 0),
-                const SizedBox(width: 12),
-                _buildTabChip('Yêu cầu', 1),
-              ],
-            ),
-          ),
 
-          // Content
-          Expanded(
-            child:
-                _selectedTabIndex == 0
-                    ? _buildChatList(chatViewModel, themeData)
-                    : _buildRequestList(themeData),
-          ),
-        ],
+            // Content
+            Expanded(
+              child:
+                  _selectedTabIndex == 0
+                      ? _buildChatList(chatViewModel, themeData)
+                      : _buildRequestList(themeData),
+            ),
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildTabChip(String label, int index) {
+  Widget _buildTabChip(String label, int index, int count) {
     final isSelected = _selectedTabIndex == index;
     final themeData = Theme.of(context);
 
@@ -145,35 +178,67 @@ class _ChatContentState extends State<ChatContent> {
           _selectedTabIndex = index;
         });
       },
-      child: Container(
-        padding: const EdgeInsets.symmetric(
-          horizontal: 12,
-          vertical: 4,
-        ),
-        decoration: BoxDecoration(
-          color:
-              isSelected
-                  ? themeData.colorScheme.primary
-                  : themeData.colorScheme.surface,
-          borderRadius: BorderRadius.circular(20),
-          border:
-              isSelected
-                  ? null
-                  : Border.all(
-                    color: themeData.colorScheme.onSurface
-                        .withValues(alpha: 0.3),
-                  ),
-        ),
-        child: Text(
-          label,
-          style: TextStyle(
-            color:
-                isSelected
-                    ? themeData.colorScheme.onPrimary
-                    : themeData.colorScheme.onSurface,
-            fontWeight: FontWeight.bold,
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          Container(
+            padding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 8,
+            ),
+            decoration: BoxDecoration(
+              color:
+                  isSelected
+                      ? themeData.colorScheme.primary
+                      : themeData.colorScheme.surface,
+              borderRadius: BorderRadius.circular(20),
+              border:
+                  isSelected
+                      ? null
+                      : Border.all(
+                        color: themeData.colorScheme.onSurface
+                            .withValues(alpha: 0.3),
+                      ),
+            ),
+            child: Text(
+              label,
+              style: TextStyle(
+                color:
+                    isSelected
+                        ? themeData.colorScheme.onPrimary
+                        : themeData.colorScheme.onSurface,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
           ),
-        ),
+          if (count > 0)
+            Positioned(
+              right: -5,
+              top: -5,
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 6,
+                  vertical: 2,
+                ),
+                decoration: BoxDecoration(
+                  color: themeData.colorScheme.error,
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(
+                    color: themeData.colorScheme.surface,
+                    width: 1.5,
+                  ),
+                ),
+                child: Text(
+                  count > 99 ? '99+' : count.toString(),
+                  style: TextStyle(
+                    color: themeData.colorScheme.onError,
+                    fontSize: 10,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ),
+        ],
       ),
     );
   }
@@ -182,41 +247,49 @@ class _ChatContentState extends State<ChatContent> {
     ChatViewModel viewModel,
     ThemeData themeData,
   ) {
-    if (viewModel.isLoadingList &&
-        viewModel.allConversations.isEmpty) {
-      return const Center(child: CircularProgressIndicator());
-    }
-
     if (viewModel.allConversations.isEmpty) {
       return RefreshIndicator(
         onRefresh: viewModel.loadCurrentConversations,
-        child: SingleChildScrollView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          child: SizedBox(
-            height: MediaQuery.of(context).size.height * 0.6,
-            child: Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.message_outlined,
-                    size: 64,
-                    color: themeData.disabledColor,
-                  ),
-                  const SizedBox(height: 16),
-                  const Text(
-                    'Chưa có cuộc trò chuyện nào',
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ],
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            return SingleChildScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              child: ConstrainedBox(
+                constraints: BoxConstraints(
+                  minHeight: constraints.maxHeight,
+                ),
+                child: Center(
+                  child:
+                      viewModel.isLoadingList
+                          ? const CircularProgressIndicator()
+                          : Column(
+                            mainAxisAlignment:
+                                MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.message_outlined,
+                                size: 64,
+                                color: themeData.disabledColor,
+                              ),
+                              const SizedBox(height: 16),
+                              const Text(
+                                'Chưa có cuộc trò chuyện nào',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
+                          ),
+                ),
               ),
-            ),
-          ),
+            );
+          },
         ),
       );
     }
+
+    final authViewModel = context.read<AuthViewModel>();
+    final currentUserId = authViewModel.currentUser?.id;
 
     return RefreshIndicator(
       onRefresh: viewModel.loadCurrentConversations,
@@ -224,11 +297,16 @@ class _ChatContentState extends State<ChatContent> {
         itemCount: viewModel.allConversations.length,
         itemBuilder: (context, index) {
           final thread = viewModel.allConversations[index];
+          final latest = thread.latestMessage;
+          final isUnread =
+              !latest.isRead &&
+              latest.receiverId == currentUserId;
+
           return _buildChatItem(
             thread.otherUser.name,
-            thread.latestMessage.content,
-            _formatTime(thread.latestMessage.createdAt),
-            false, // TODO: Add unread logic if backend supports
+            latest.content,
+            _formatTime(latest.createdAt),
+            isUnread,
             thread.otherUser.avatar,
             themeData,
             onTap: () {
@@ -269,9 +347,11 @@ class _ChatContentState extends State<ChatContent> {
     return ListTile(
       leading: CircleAvatar(
         backgroundImage:
-            imageUrl != null ? NetworkImage(imageUrl) : null,
+            imageUrl != null && imageUrl.isNotEmpty
+                ? NetworkImage(imageUrl)
+                : null,
         child:
-            imageUrl == null
+            imageUrl == null || imageUrl.isEmpty
                 ? Text(name[0].toUpperCase())
                 : null,
       ),
@@ -290,7 +370,9 @@ class _ChatContentState extends State<ChatContent> {
           Text(
             time,
             style: themeData.textTheme.bodySmall?.copyWith(
-              color: themeData.colorScheme.onSurface.withValues(alpha: 0.6),
+              color: themeData.colorScheme.onSurface.withValues(
+                alpha: 0.6,
+              ),
             ),
           ),
         ],
@@ -304,10 +386,15 @@ class _ChatContentState extends State<ChatContent> {
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: TextStyle(
+                fontWeight:
+                    isUnread
+                        ? FontWeight.bold
+                        : FontWeight.normal,
                 color:
                     isUnread
                         ? themeData.colorScheme.onSurface
-                        : themeData.colorScheme.onSurface.withValues(alpha: 0.6),
+                        : themeData.colorScheme.onSurface
+                            .withValues(alpha: 0.6),
               ),
             ),
           ),
@@ -329,43 +416,60 @@ class _ChatContentState extends State<ChatContent> {
   Widget _buildRequestList(ThemeData themeData) {
     final viewModel = context.watch<ChatViewModel>();
 
-    if (viewModel.isLoadingList &&
-        viewModel.requestConversations.isEmpty) {
-      return const Center(child: CircularProgressIndicator());
-    }
-
     if (viewModel.requestConversations.isEmpty) {
       return RefreshIndicator(
         onRefresh: viewModel.loadCurrentConversations,
-        child: SingleChildScrollView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          child: SizedBox(
-            height: MediaQuery.of(context).size.height * 0.6,
-            child: Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    'Chưa có tin nhắn yêu cầu',
-                    style: themeData.textTheme.titleMedium,
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Tin nhắn từ người không theo dõi bạn sẽ xuất hiện ở đây',
-                    textAlign: TextAlign.center,
-                    style: themeData.textTheme.bodyMedium
-                        ?.copyWith(
-                          color: themeData.colorScheme.onSurface
-                              .withValues(alpha: 0.6),
-                        ),
-                  ),
-                ],
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            return SingleChildScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              child: ConstrainedBox(
+                constraints: BoxConstraints(
+                  minHeight: constraints.maxHeight,
+                ),
+                child: Center(
+                  child:
+                      viewModel.isLoadingList
+                          ? const CircularProgressIndicator()
+                          : Column(
+                            mainAxisAlignment:
+                                MainAxisAlignment.center,
+                            children: [
+                              Text(
+                                'Chưa có tin nhắn yêu cầu',
+                                style:
+                                    themeData
+                                        .textTheme
+                                        .titleMedium,
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                'Tin nhắn từ người không theo dõi bạn sẽ xuất hiện ở đây',
+                                textAlign: TextAlign.center,
+                                style: themeData
+                                    .textTheme
+                                    .bodyMedium
+                                    ?.copyWith(
+                                      color: themeData
+                                          .colorScheme
+                                          .onSurface
+                                          .withValues(
+                                            alpha: 0.6,
+                                          ),
+                                    ),
+                              ),
+                            ],
+                          ),
+                ),
               ),
-            ),
-          ),
+            );
+          },
         ),
       );
     }
+
+    final authViewModel = context.read<AuthViewModel>();
+    final currentUserId = authViewModel.currentUser?.id;
 
     return RefreshIndicator(
       onRefresh: viewModel.loadCurrentConversations,
@@ -373,11 +477,16 @@ class _ChatContentState extends State<ChatContent> {
         itemCount: viewModel.requestConversations.length,
         itemBuilder: (context, index) {
           final thread = viewModel.requestConversations[index];
+          final latest = thread.latestMessage;
+          final isUnread =
+              !latest.isRead &&
+              latest.receiverId == currentUserId;
+
           return _buildChatItem(
             thread.otherUser.name,
-            thread.latestMessage.content,
-            _formatTime(thread.latestMessage.createdAt),
-            true,
+            latest.content,
+            _formatTime(latest.createdAt),
+            isUnread,
             thread.otherUser.avatar,
             themeData,
             onTap: () {
