@@ -272,7 +272,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                                 backgroundColor:
                                     themeData
                                         .colorScheme
-                                        .secondary,
+                                        .primary,
                                 child:
                                     editProfileViewModel
                                                 .avatar ==
@@ -289,7 +289,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                                             color:
                                                 themeData
                                                     .colorScheme
-                                                    .onSecondary,
+                                                    .onPrimary,
                                           ),
                                         )
                                         : null,

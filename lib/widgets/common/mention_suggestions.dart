@@ -136,8 +136,7 @@ class MentionUserTile extends StatelessWidget {
                 )
                 : CircleAvatar(
                   radius: 18,
-                  backgroundColor:
-                      themeData.colorScheme.secondary,
+                  backgroundColor: themeData.colorScheme.primary,
                   child: Text(
                     user.name.isNotEmpty
                         ? user.name[0].toUpperCase()
@@ -145,7 +144,7 @@ class MentionUserTile extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.bold,
-                      color: themeData.colorScheme.onSecondary,
+                      color: themeData.colorScheme.onPrimary,
                     ),
                   ),
                 ),

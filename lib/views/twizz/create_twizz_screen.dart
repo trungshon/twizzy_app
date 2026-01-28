@@ -773,7 +773,7 @@ class _CreateTwizzScreenState extends State<CreateTwizzScreen> {
                                 backgroundColor:
                                     themeData
                                         .colorScheme
-                                        .secondary,
+                                        .primary,
                                 child: Text(
                                   name.isNotEmpty
                                       ? name[0].toUpperCase()
@@ -784,7 +784,7 @@ class _CreateTwizzScreenState extends State<CreateTwizzScreen> {
                                     color:
                                         themeData
                                             .colorScheme
-                                            .onSecondary,
+                                            .onPrimary,
                                   ),
                                 ),
                               ),
@@ -1285,7 +1285,7 @@ class _QuoteTwizzPreview extends StatelessWidget {
                         CircleAvatar(
                           radius: 12,
                           backgroundColor:
-                              themeData.colorScheme.secondary,
+                              themeData.colorScheme.primary,
                           child: Text(
                             name.isNotEmpty
                                 ? name[0].toUpperCase()
@@ -1296,7 +1296,7 @@ class _QuoteTwizzPreview extends StatelessWidget {
                               color:
                                   themeData
                                       .colorScheme
-                                      .onSecondary,
+                                      .onPrimary,
                             ),
                           ),
                         ),

@@ -134,8 +134,9 @@ class SearchViewModel extends ChangeNotifier {
       _error[_currentTab] = null;
     } else {
       if (!_hasMore[_currentTab]! ||
-          _isLoadingMore[_currentTab]!)
+          _isLoadingMore[_currentTab]!) {
         return;
+      }
       _isLoadingMore[_currentTab] = true;
     }
     notifyListeners();

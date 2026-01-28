@@ -309,13 +309,13 @@ class TwizzItem extends StatelessWidget {
     }
     return CircleAvatar(
       radius: 22,
-      backgroundColor: themeData.colorScheme.secondary,
+      backgroundColor: themeData.colorScheme.primary,
       child: Text(
         name.isNotEmpty ? name[0].toUpperCase() : 'U',
         style: TextStyle(
           fontSize: 16,
           fontWeight: FontWeight.bold,
-          color: themeData.colorScheme.onSecondary,
+          color: themeData.colorScheme.onPrimary,
         ),
       ),
     );

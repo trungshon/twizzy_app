@@ -84,6 +84,11 @@ class ChatViewModel extends ChangeNotifier {
         notifyListeners();
       }
     });
+
+    _socketService.on('messages_read', (data) {
+      // Just notify listeners, ChatDetailScreen will reload messages
+      notifyListeners();
+    });
   }
 
   Future<void> loadCurrentConversations() async {
@@ -126,8 +131,9 @@ class ChatViewModel extends ChangeNotifier {
   Future<void> acceptConversation(String senderId) async {
     try {
       await _chatService.acceptConversation(senderId);
-      if (_lastUserId != null)
+      if (_lastUserId != null) {
         await loadConversationsList(_lastUserId!);
+      }
     } catch (e) {
       debugPrint('Error accepting conversation: $e');
     }
@@ -136,8 +142,9 @@ class ChatViewModel extends ChangeNotifier {
   Future<void> deleteConversation(String senderId) async {
     try {
       await _chatService.deleteConversation(senderId);
-      if (_lastUserId != null)
+      if (_lastUserId != null) {
         await loadConversationsList(_lastUserId!);
+      }
     } catch (e) {
       debugPrint('Error deleting conversation: $e');
     }

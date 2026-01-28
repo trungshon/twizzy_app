@@ -519,7 +519,6 @@ class _CreateAccountScreenState
                     style: themeData.textTheme.bodyMedium,
                     readOnly: true,
                     onTap: () async {
-                      // TODO: Show date picker
                       final DateTime? picked =
                           await showDatePicker(
                             context: context,

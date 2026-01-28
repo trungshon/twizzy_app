@@ -165,6 +165,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
 
         // Mark as read after loading first page
         if (_messages.isNotEmpty && !_messages.first.isRead) {
+          if (!mounted) return;
           // Check if the latest message was sent to ME
           final authViewModel = context.read<AuthViewModel>();
           if (_messages.first.receiverId ==
@@ -172,13 +173,16 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
             await chatService.markAsRead(
               widget.args.otherUser.id,
             );
+
+            if (!mounted) return;
+
             // Refresh conversation list in background to update unread indicator
             if (authViewModel.currentUser != null) {
-              context
-                  .read<ChatViewModel>()
-                  .loadConversationsList(
-                    authViewModel.currentUser!.id,
-                  );
+              final chatViewModel =
+                  context.read<ChatViewModel>();
+              chatViewModel.loadConversationsList(
+                authViewModel.currentUser!.id,
+              );
             }
           }
         }
@@ -214,6 +218,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
   @override
   Widget build(BuildContext context) {
     final otherUser = widget.args.otherUser;
+    final themeData = Theme.of(context);
 
     return Scaffold(
       appBar: AppBar(
@@ -308,6 +313,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
                               message,
                               context,
                               isMe,
+                              index,
                             );
 
                         if (isFirstUnread) {
@@ -318,9 +324,12 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
                                     const EdgeInsets.symmetric(
                                       vertical: 8,
                                     ),
-                                child: const DividerWithText(
+                                child: DividerWithText(
                                   text: 'Tin nhắn mới',
-                                  color: Colors.blue,
+                                  color:
+                                      themeData
+                                          .colorScheme
+                                          .secondary,
                                 ),
                               ),
                               messageBubble,
@@ -478,10 +487,22 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
     );
   }
 
+  int _getLatestMyMessageIndex() {
+    final currentUserId =
+        context.read<AuthViewModel>().currentUser?.id;
+    for (int i = 0; i < _messages.length; i++) {
+      if (_messages[i].senderId == currentUserId) {
+        return i;
+      }
+    }
+    return -1;
+  }
+
   Widget _buildMessageBubble(
     Conversation message,
     BuildContext context,
     bool isMe,
+    int index,
   ) {
     final themeData = Theme.of(context);
     final showTime = _selectedMessageId == message.id;
@@ -510,7 +531,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
             child: Container(
               margin: const EdgeInsets.symmetric(vertical: 2),
               padding: const EdgeInsets.symmetric(
-                horizontal: 16,
+                horizontal: 18,
                 vertical: 10,
               ),
               decoration: BoxDecoration(
@@ -525,9 +546,30 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
                   bottomRight: Radius.circular(isMe ? 0 : 20),
                 ),
               ),
-              child: Text(
-                message.content,
-                style: const TextStyle(color: Colors.white),
+              child: Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  Text(
+                    message.content,
+                    style: TextStyle(
+                      color: themeData.colorScheme.onSecondary,
+                    ),
+                  ),
+                  if (isMe &&
+                      index == _getLatestMyMessageIndex())
+                    Positioned(
+                      bottom: -6,
+                      right: -14,
+                      child: Icon(
+                        message.isRead
+                            ? Icons.check_circle
+                            : Icons.check_circle_outline,
+                        size: 14,
+                        color: themeData.colorScheme.onSecondary
+                            .withValues(alpha: 0.8),
+                      ),
+                    ),
+                ],
               ),
             ),
           ),
@@ -630,11 +672,12 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
             width: double.infinity,
             child: ElevatedButton(
               onPressed: () async {
-                await context
-                    .read<ChatViewModel>()
-                    .acceptConversation(
-                      widget.args.otherUser.id,
-                    );
+                final chatViewModel =
+                    context.read<ChatViewModel>();
+                await chatViewModel.acceptConversation(
+                  widget.args.otherUser.id,
+                );
+                if (!mounted) return;
                 _loadMessages();
               },
               style: ElevatedButton.styleFrom(
@@ -656,12 +699,13 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
             width: double.infinity,
             child: OutlinedButton(
               onPressed: () async {
-                await context
-                    .read<ChatViewModel>()
-                    .deleteConversation(
-                      widget.args.otherUser.id,
-                    );
-                Navigator.pop(context);
+                final chatViewModel =
+                    context.read<ChatViewModel>();
+                final navigator = Navigator.of(context);
+                await chatViewModel.deleteConversation(
+                  widget.args.otherUser.id,
+                );
+                navigator.pop();
               },
               child: Text(
                 'Xóa',

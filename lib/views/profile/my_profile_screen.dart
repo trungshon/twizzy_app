@@ -277,7 +277,7 @@ class _MyProfileScreenState extends State<MyProfileScreen>
                                         backgroundColor:
                                             themeData
                                                 .colorScheme
-                                                .secondary,
+                                                .primary,
                                         child: Text(
                                           name.isNotEmpty
                                               ? name[0]
@@ -290,7 +290,7 @@ class _MyProfileScreenState extends State<MyProfileScreen>
                                             color:
                                                 themeData
                                                     .colorScheme
-                                                    .onSecondary,
+                                                    .onPrimary,
                                           ),
                                         ),
                                       ),

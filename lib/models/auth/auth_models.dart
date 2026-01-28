@@ -450,8 +450,9 @@ class User {
                   .map((e) {
                     if (e is String) return e;
                     if (e is Map<String, dynamic> &&
-                        e['_id'] != null)
+                        e['_id'] != null) {
                       return e['_id'] as String;
+                    }
                     return '';
                   })
                   .where((e) => e.isNotEmpty)
