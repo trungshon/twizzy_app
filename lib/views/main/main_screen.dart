@@ -7,6 +7,8 @@ import '../search/search_content.dart';
 import '../notifications/notifications_content.dart';
 import '../chat/chat_content.dart';
 import '../../viewmodels/chat/chat_viewmodel.dart';
+import '../../viewmodels/auth/auth_viewmodel.dart';
+import '../../core/utils/verification_utils.dart';
 
 /// Main Screen
 ///
@@ -60,6 +62,19 @@ class _MainScreenState extends State<MainScreen> {
         child: BottomNavigationBar(
           currentIndex: mainViewModel.currentIndex,
           onTap: (index) {
+            // Check if user is trying to access messages
+            if (index == 3) {
+              final authViewModel =
+                  context.read<AuthViewModel>();
+              if (!authViewModel.isVerified) {
+                VerificationUtils.showUnverifiedWarning(
+                  context,
+                  authViewModel.currentUser?.email,
+                );
+                return;
+              }
+            }
+
             // Nếu đang ở home và tap lại home thì scroll lên đầu
             if (index == 0 && mainViewModel.currentIndex == 0) {
               _homeContentKey.currentState?.scrollToTop();

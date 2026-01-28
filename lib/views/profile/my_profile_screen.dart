@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:twizzy_app/widgets/twizz/twizz_list.dart';
 import '../../viewmodels/auth/auth_viewmodel.dart';
 import '../../viewmodels/profile/profile_viewmodel.dart';
+import '../../core/utils/verification_utils.dart';
 import '../../core/utils/number_formatter.dart';
 import '../../routes/route_names.dart';
 import 'follower_list_screen.dart';
@@ -303,6 +304,9 @@ class _MyProfileScreenState extends State<MyProfileScreen>
                                 children: [
                                   // Name và Verification Badge
                                   Row(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment
+                                            .center,
                                     children: [
                                       Flexible(
                                         child: Text(
@@ -352,6 +356,54 @@ class _MyProfileScreenState extends State<MyProfileScreen>
                                                 ),
                                               ),
                                             ],
+                                          ),
+                                        ),
+                                      ] else ...[
+                                        const SizedBox(width: 4),
+                                        GestureDetector(
+                                          onTap: () {
+                                            VerificationUtils.showUnverifiedWarning(
+                                              context,
+                                              authViewModel
+                                                  .currentUser
+                                                  ?.email,
+                                              message:
+                                                  'Tài khoản của bạn chưa được xác nhận. Bạn có muốn xác nhận tài khoản không',
+                                            );
+                                          },
+                                          child: Container(
+                                            padding:
+                                                const EdgeInsets.symmetric(
+                                                  horizontal: 8,
+                                                  vertical: 4,
+                                                ),
+                                            decoration: BoxDecoration(
+                                              color: themeData
+                                                  .colorScheme
+                                                  .error
+                                                  .withValues(
+                                                    alpha: 0.1,
+                                                  ),
+                                              borderRadius:
+                                                  BorderRadius.circular(
+                                                    16,
+                                                  ),
+                                            ),
+                                            child: Text(
+                                              'Chưa xác nhận',
+                                              style: themeData
+                                                  .textTheme
+                                                  .labelSmall
+                                                  ?.copyWith(
+                                                    color:
+                                                        themeData
+                                                            .colorScheme
+                                                            .error,
+                                                    fontWeight:
+                                                        FontWeight
+                                                            .bold,
+                                                  ),
+                                            ),
                                           ),
                                         ),
                                       ],

@@ -34,6 +34,8 @@ class AuthViewModel extends ChangeNotifier {
   User? get currentUser => _currentUser;
   String? get accessToken => _accessToken;
 
+  bool get isVerified => _currentUser?.verify == 'Verified';
+
   /// Clear error
   void clearError() {
     _error = null;
@@ -153,6 +155,9 @@ class AuthViewModel extends ChangeNotifier {
 
     try {
       await _authService.verifyEmail(email, otp);
+
+      // Refresh current user info immediately to update verification status
+      await getMe();
 
       _isLoading = false;
       notifyListeners();

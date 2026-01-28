@@ -9,8 +9,13 @@ import '../../routes/route_names.dart';
 /// Màn hình xác nhận email
 class VerifyEmailScreen extends StatefulWidget {
   final String email;
+  final bool isFromInitialFlow;
 
-  const VerifyEmailScreen({super.key, required this.email});
+  const VerifyEmailScreen({
+    super.key,
+    required this.email,
+    this.isFromInitialFlow = true,
+  });
 
   @override
   State<VerifyEmailScreen> createState() =>
@@ -44,10 +49,18 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
               TextButton(
                 onPressed: () {
                   Navigator.of(context).pop(); // Close dialog
-                  Navigator.of(context).pushNamedAndRemoveUntil(
-                    RouteNames.setUsername,
-                    (route) => false,
-                  );
+                  if (widget.isFromInitialFlow) {
+                    Navigator.of(
+                      context,
+                    ).pushNamedAndRemoveUntil(
+                      RouteNames.setUsername,
+                      (route) => false,
+                    );
+                  } else {
+                    Navigator.of(
+                      context,
+                    ).pop(); // Back to previous screen
+                  }
                 },
                 style: TextButton.styleFrom(
                   foregroundColor:
@@ -238,7 +251,9 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
                                         ? themeData
                                             .colorScheme
                                             .secondary
-                                            .withValues(alpha: 0.5)
+                                            .withValues(
+                                              alpha: 0.5,
+                                            )
                                         : themeData
                                             .colorScheme
                                             .secondary,
@@ -303,13 +318,20 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
                                           ),
                                         ),
                                       );
-                                      // Navigate to set username screen
-                                      Navigator.of(
-                                        context,
-                                      ).pushNamedAndRemoveUntil(
-                                        RouteNames.setUsername,
-                                        (route) => false,
-                                      );
+                                      // Navigate based on flow
+                                      if (widget
+                                          .isFromInitialFlow) {
+                                        Navigator.of(
+                                          context,
+                                        ).pushNamedAndRemoveUntil(
+                                          RouteNames.setUsername,
+                                          (route) => false,
+                                        );
+                                      } else {
+                                        Navigator.of(
+                                          context,
+                                        ).pop();
+                                      }
                                     } else if (context.mounted &&
                                         authViewModel.error !=
                                             null) {

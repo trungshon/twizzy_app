@@ -65,6 +65,8 @@ class AppRouter {
             builder:
                 (_) => VerifyEmailScreen(
                   email: args['email'] as String,
+                  isFromInitialFlow:
+                      args['isFromInitialFlow'] as bool? ?? true,
                 ),
           );
         }

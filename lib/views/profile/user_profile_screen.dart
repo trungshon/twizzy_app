@@ -397,10 +397,29 @@ class _UserProfileViewState extends State<_UserProfileView>
                             ),
                             if (isVerified) ...[
                               const SizedBox(width: 4),
-                              const Icon(
-                                Icons.verified,
-                                size: 20,
-                                color: Color(0xFF1DA1F2),
+                              Container(
+                                padding:
+                                    const EdgeInsets.symmetric(
+                                      horizontal: 8,
+                                      vertical: 4,
+                                    ),
+                                decoration: BoxDecoration(
+                                  color: const Color(
+                                    0xFF1DA1F2,
+                                  ).withValues(alpha: 0.1),
+                                  borderRadius:
+                                      BorderRadius.circular(16),
+                                ),
+                                child: const Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(
+                                      Icons.verified,
+                                      size: 16,
+                                      color: Color(0xFF1DA1F2),
+                                    ),
+                                  ],
+                                ),
                               ),
                             ],
                           ],

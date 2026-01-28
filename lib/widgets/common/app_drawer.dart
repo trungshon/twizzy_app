@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:twizzy_app/viewmodels/newsfeed/newsfeed_viewmodel.dart';
 import 'package:twizzy_app/viewmodels/profile/profile_viewmodel.dart';
 import 'package:twizzy_app/views/profile/follower_list_screen.dart';
+import '../../core/utils/verification_utils.dart';
 import '../../viewmodels/auth/auth_viewmodel.dart';
 import '../../routes/route_names.dart';
 import '../../core/utils/number_formatter.dart';
@@ -41,6 +42,7 @@ class AppDrawer extends StatelessWidget {
                 final avatar = user?.avatar;
                 final followersCount = user?.followersCount ?? 0;
                 final followingCount = user?.followingCount ?? 0;
+                final isVerified = user?.verify == 'Verified';
 
                 return Container(
                   padding: const EdgeInsets.all(16),
@@ -97,27 +99,115 @@ class AppDrawer extends StatelessWidget {
                               crossAxisAlignment:
                                   CrossAxisAlignment.start,
                               children: [
-                                GestureDetector(
-                                  onTap: () {
-                                    Navigator.of(
-                                      context,
-                                    ).pushNamed(
-                                      RouteNames.myProfile,
-                                    );
-                                  },
-                                  child: Text(
-                                    name,
-                                    style: themeData
-                                        .textTheme
-                                        .titleMedium
-                                        ?.copyWith(
-                                          fontWeight:
-                                              FontWeight.bold,
+                                Row(
+                                  children: [
+                                    GestureDetector(
+                                      onTap: () {
+                                        Navigator.of(
+                                          context,
+                                        ).pushNamed(
+                                          RouteNames.myProfile,
+                                        );
+                                      },
+                                      child: Text(
+                                        name,
+                                        style: themeData
+                                            .textTheme
+                                            .titleMedium
+                                            ?.copyWith(
+                                              fontWeight:
+                                                  FontWeight
+                                                      .bold,
+                                            ),
+                                        maxLines: 1,
+                                        overflow:
+                                            TextOverflow
+                                                .ellipsis,
+                                      ),
+                                    ),
+                                    if (isVerified) ...[
+                                      const SizedBox(width: 4),
+                                      Container(
+                                        padding:
+                                            const EdgeInsets.symmetric(
+                                              horizontal: 8,
+                                              vertical: 4,
+                                            ),
+                                        decoration: BoxDecoration(
+                                          color: const Color(
+                                            0xFF1DA1F2,
+                                          ).withValues(
+                                            alpha: 0.1,
+                                          ),
+                                          borderRadius:
+                                              BorderRadius.circular(
+                                                16,
+                                              ),
                                         ),
-                                    maxLines: 1,
-                                    overflow:
-                                        TextOverflow.ellipsis,
-                                  ),
+                                        child: const Row(
+                                          mainAxisSize:
+                                              MainAxisSize.min,
+                                          children: [
+                                            Icon(
+                                              Icons.verified,
+                                              size: 16,
+                                              color: Color(
+                                                0xFF1DA1F2,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ] else ...[
+                                      const SizedBox(width: 4),
+                                      GestureDetector(
+                                        onTap: () {
+                                          VerificationUtils.showUnverifiedWarning(
+                                            context,
+                                            authViewModel
+                                                .currentUser
+                                                ?.email,
+                                            message:
+                                                'Tài khoản của bạn chưa được xác nhận. Bạn có muốn xác nhận tài khoản không',
+                                          );
+                                        },
+                                        child: Container(
+                                          padding:
+                                              const EdgeInsets.symmetric(
+                                                horizontal: 8,
+                                                vertical: 4,
+                                              ),
+                                          decoration: BoxDecoration(
+                                            color: themeData
+                                                .colorScheme
+                                                .error
+                                                .withValues(
+                                                  alpha: 0.1,
+                                                ),
+                                            borderRadius:
+                                                BorderRadius.circular(
+                                                  16,
+                                                ),
+                                          ),
+                                          child: Text(
+                                            'Chưa xác nhận',
+                                            style: themeData
+                                                .textTheme
+                                                .labelSmall
+                                                ?.copyWith(
+                                                  color:
+                                                      themeData
+                                                          .colorScheme
+                                                          .error,
+                                                  fontWeight:
+                                                      FontWeight
+                                                          .bold,
+                                                ),
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ],
                                 ),
                                 const SizedBox(height: 4),
                                 Text(
