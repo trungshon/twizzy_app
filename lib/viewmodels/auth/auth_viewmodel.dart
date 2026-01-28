@@ -9,8 +9,10 @@ import '../../services/socket_service/socket_service.dart';
 ///
 /// Quản lý state và business logic cho authentication
 class AuthViewModel extends ChangeNotifier {
-  final AuthService _authService;
   final SocketService _socketService;
+  final AuthService _authService;
+
+  VoidCallback? onLogout;
 
   AuthViewModel(this._authService, this._socketService);
 
@@ -365,6 +367,12 @@ class AuthViewModel extends ChangeNotifier {
       _currentUser = null;
       _isRegistered = false;
       _registeredEmail = null;
+      _accessToken = null;
+
+      // Trigger global data clearing
+      if (onLogout != null) {
+        onLogout!();
+      }
     } catch (e) {
       // Log error but still clear state
       debugPrint('Logout error: $e');

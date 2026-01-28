@@ -185,6 +185,16 @@ class ChatViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
+  void clear() {
+    _allConversations.clear();
+    _requestConversations.clear();
+    _isLoadingList = false;
+    _lastUserId = null;
+    _searchQuery = '';
+    _isConnected = false;
+    notifyListeners();
+  }
+
   @override
   void dispose() {
     _socketService.disconnect();

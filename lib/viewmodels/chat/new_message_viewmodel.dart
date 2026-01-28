@@ -89,8 +89,15 @@ class NewMessageViewModel extends ChangeNotifier {
   }
 
   void clearSearch() {
-    _searchQuery = '';
     _searchResults = [];
+    notifyListeners();
+  }
+
+  void clear() {
+    _following = [];
+    _searchResults = [];
+    _isLoading = false;
+    _searchQuery = '';
     notifyListeners();
   }
 }

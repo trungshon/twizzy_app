@@ -290,4 +290,20 @@ class EditProfileViewModel extends ChangeNotifier {
       return null;
     }
   }
+
+  void clear() {
+    _isLoading = false;
+    _isUploadingImage = false;
+    _error = null;
+    _apiError = null;
+    _name = null;
+    _bio = null;
+    _location = null;
+    _website = null;
+    _dateOfBirth = null;
+    _avatar = null;
+    _coverPhoto = null;
+    _username = null;
+    notifyListeners();
+  }
 }

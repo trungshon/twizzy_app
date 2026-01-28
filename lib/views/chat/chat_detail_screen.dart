@@ -256,12 +256,12 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
             ],
           ),
         ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.info_outline),
-            onPressed: () {},
-          ),
-        ],
+        // actions: [
+        //   IconButton(
+        //     icon: const Icon(Icons.info_outline),
+        //     onPressed: () {},
+        //   ),
+        // ],
       ),
       body: Column(
         children: [
@@ -610,17 +610,18 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
         ),
       ),
       child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          IconButton(
-            icon: Icon(
-              Icons.add,
-              color: themeData.colorScheme.secondary,
-            ),
-            onPressed: () {},
-          ),
+          // IconButton(
+          //   icon: Icon(
+          //     Icons.add,
+          //     color: themeData.colorScheme.secondary,
+          //   ),
+          //   onPressed: () {},
+          // ),
           Expanded(
             child: Container(
-              padding: const EdgeInsets.symmetric(),
+              padding: const EdgeInsets.only(left: 16),
               child: TextField(
                 controller: _messageController,
                 style: themeData.textTheme.bodyMedium?.copyWith(

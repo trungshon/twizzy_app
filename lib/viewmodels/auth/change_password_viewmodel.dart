@@ -116,4 +116,17 @@ class ChangePasswordViewModel extends ChangeNotifier {
     _confirmPasswordController.dispose();
     super.dispose();
   }
+
+  void clear() {
+    _isLoading = false;
+    _error = null;
+    _apiError = null;
+    _oldPasswordController.clear();
+    _newPasswordController.clear();
+    _confirmPasswordController.clear();
+    _isPasswordVisible = false;
+    _isOldPasswordVisible = false;
+    _isConfirmPasswordVisible = false;
+    notifyListeners();
+  }
 }

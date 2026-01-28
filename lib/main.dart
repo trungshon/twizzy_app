@@ -107,6 +107,24 @@ void main() async {
     authViewModel.logout();
   };
 
+  final newMessageViewModel = NewMessageViewModel(
+    authService: authService,
+    searchService: searchService,
+  );
+
+  // Link global data clearing to logout
+  authViewModel.onLogout = () {
+    debugPrint('Global clear triggered from logout');
+    createTwizzViewModel.clear();
+    newsFeedViewModel.clear();
+    profileViewModel.clear();
+    editProfileViewModel.clear();
+    searchViewModel.clear();
+    chatViewModel.clear();
+    newMessageViewModel.clear();
+    changePasswordViewModel.clear();
+  };
+
   // Link Socket auth errors to token refresh
   socketService.onAuthError = () {
     debugPrint(
@@ -114,11 +132,6 @@ void main() async {
     );
     authViewModel.refreshToken();
   };
-
-  final newMessageViewModel = NewMessageViewModel(
-    authService: authService,
-    searchService: searchService,
-  );
 
   // Initialize Google Auth Service
   // Web Client ID (dùng cho serverClientId để lấy idToken) - lấy từ env

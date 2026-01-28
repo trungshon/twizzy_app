@@ -28,4 +28,9 @@ class MainViewModel extends ChangeNotifier {
   void goToMessages() {
     setIndex(3);
   }
+
+  void clear() {
+    _currentIndex = 0;
+    notifyListeners();
+  }
 }
