@@ -559,7 +559,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
                       index == _getLatestMyMessageIndex())
                     Positioned(
                       bottom: -6,
-                      right: -14,
+                      right: -16,
                       child: Icon(
                         message.isRead
                             ? Icons.check_circle

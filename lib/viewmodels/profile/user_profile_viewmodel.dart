@@ -306,9 +306,17 @@ class UserProfileViewModel extends ChangeNotifier {
 
   /// Toggle like
   Future<void> toggleLike(Twizz twizz, int tabIndex) async {
-    // Get the original twizz for engagement actions
-    final targetTwizz = twizz.parentTwizz ?? twizz;
-    final targetId = targetTwizz.id;
+    // For toggle actions:
+    // 1. If it's a Quote, target the quote itself.
+    // 2. If it's a Repost (type twizz with parent), target the parent.
+    final bool isQuote = twizz.type == TwizzType.quoteTwizz;
+    final targetId =
+        isQuote ? twizz.id : (twizz.parentTwizz?.id ?? twizz.id);
+
+    final targetTwizz =
+        (isQuote || twizz.parentTwizz == null)
+            ? twizz
+            : twizz.parentTwizz!;
     final isCurrentlyLiked = targetTwizz.isLiked;
     final currentLikes = targetTwizz.likes ?? 0;
 
@@ -339,8 +347,14 @@ class UserProfileViewModel extends ChangeNotifier {
 
   /// Toggle bookmark
   Future<void> toggleBookmark(Twizz twizz, int tabIndex) async {
-    final targetTwizz = twizz.parentTwizz ?? twizz;
-    final targetId = targetTwizz.id;
+    final bool isQuote = twizz.type == TwizzType.quoteTwizz;
+    final targetId =
+        isQuote ? twizz.id : (twizz.parentTwizz?.id ?? twizz.id);
+
+    final targetTwizz =
+        (isQuote || twizz.parentTwizz == null)
+            ? twizz
+            : twizz.parentTwizz!;
     final isCurrentlyBookmarked = targetTwizz.isBookmarked;
     final currentBookmarks = targetTwizz.bookmarks ?? 0;
 
@@ -403,26 +417,52 @@ class UserProfileViewModel extends ChangeNotifier {
       final list = entry.value;
       for (int i = 0; i < list.length; i++) {
         final twizz = list[i];
-        if (twizz.id == twizzId ||
-            twizz.parentTwizz?.id == twizzId) {
-          final target =
-              twizz.parentTwizz?.id == twizzId
-                  ? twizz.parentTwizz!
-                  : twizz;
 
-          final updated = target.copyWith(
+        // CASE 1: The item itself is the target
+        if (twizz.id == twizzId) {
+          final updated = twizz.copyWith(
+            isLiked: isLiked ?? twizz.isLiked,
+            likes: likes ?? twizz.likes,
+            isBookmarked: isBookmarked ?? twizz.isBookmarked,
+            bookmarks: bookmarks ?? twizz.bookmarks,
+          );
+          list[i] = updated;
+          updatedTwizz = updated;
+        }
+        // CASE 2: The item's parent is the target
+        else if (twizz.parentTwizz?.id == twizzId) {
+          final target = twizz.parentTwizz!;
+          final updatedParent = target.copyWith(
             isLiked: isLiked ?? target.isLiked,
             likes: likes ?? target.likes,
             isBookmarked: isBookmarked ?? target.isBookmarked,
             bookmarks: bookmarks ?? target.bookmarks,
           );
 
-          if (twizz.parentTwizz?.id == twizzId) {
-            list[i] = twizz.copyWith(parentTwizz: updated);
-          } else {
-            list[i] = updated;
+          // If it's a Repost (type twizz), sync top-level state with parent
+          final bool isRepost = twizz.type == TwizzType.twizz;
+
+          list[i] = twizz.copyWith(
+            parentTwizz: updatedParent,
+            isLiked:
+                isRepost
+                    ? (isLiked ?? twizz.isLiked)
+                    : twizz.isLiked,
+            likes:
+                isRepost ? (likes ?? twizz.likes) : twizz.likes,
+            isBookmarked:
+                isRepost
+                    ? (isBookmarked ?? twizz.isBookmarked)
+                    : twizz.isBookmarked,
+            bookmarks:
+                isRepost
+                    ? (bookmarks ?? twizz.bookmarks)
+                    : twizz.bookmarks,
+          );
+
+          if (updatedTwizz == null || isRepost) {
+            updatedTwizz = updatedParent;
           }
-          updatedTwizz = updated;
         }
       }
     }

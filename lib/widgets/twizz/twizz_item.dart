@@ -270,11 +270,13 @@ class TwizzItem extends StatelessWidget {
                               () =>
                                   onComment?.call(displayTwizz),
                           onQuote:
-                              (twizz.parentTwizz == null ||
-                                      twizz
-                                              .parentTwizz!
-                                              .parentTwizz ==
-                                          null)
+                              (twizz.type != TwizzType.comment &&
+                                      (twizz.parentTwizz ==
+                                              null ||
+                                          twizz
+                                                  .parentTwizz!
+                                                  .parentTwizz ==
+                                              null))
                                   ? () =>
                                       onQuote?.call(displayTwizz)
                                   : null,

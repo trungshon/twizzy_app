@@ -63,18 +63,13 @@ class _ChatContentState extends State<ChatContent> {
           backgroundColor: Colors.transparent,
           elevation: 0,
           leading: const UserAvatarLeading(),
-          leadingWidth: 56,
           centerTitle: true,
-          title: const Text(
+          title: Text(
             'Chat',
-            style: TextStyle(
+            style: themeData.textTheme.titleMedium?.copyWith(
               fontWeight: FontWeight.bold,
-              fontSize: 20,
             ),
           ),
-          actions: const [
-            SizedBox(width: 56), // Balance leading
-          ],
         ),
         floatingActionButton: FloatingActionButton(
           heroTag: 'chat_fab',

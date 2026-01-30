@@ -18,7 +18,9 @@ import 'services/bookmark_service/bookmark_service.dart';
 import 'services/twizz_service/twizz_sync_service.dart';
 import 'services/socket_service/socket_service.dart';
 import 'services/chat_service/chat_service.dart';
+import 'services/notification_service/notification_service.dart';
 import 'viewmodels/auth/auth_viewmodel.dart';
+import 'viewmodels/notification/notification_viewmodel.dart';
 import 'viewmodels/twizz/create_twizz_viewmodel.dart';
 import 'viewmodels/newsfeed/newsfeed_viewmodel.dart';
 import 'viewmodels/profile/profile_viewmodel.dart';
@@ -45,6 +47,7 @@ void main() async {
   final twizzSyncService = TwizzSyncService();
   final socketService = SocketService();
   final chatService = ChatService(apiClient);
+  final notificationService = NotificationService(apiClient);
 
   // Auto connect socket if already logged in
   final initialAccessToken = await authService.getAccessToken();
@@ -95,6 +98,10 @@ void main() async {
     socketService,
     chatService,
   );
+  final notificationViewModel = NotificationViewModel(
+    notificationService,
+    socketService,
+  );
 
   // Link ApiClient callbacks for automatic socket reconnection and logout
   apiClient.onTokenRefreshed = (token) {
@@ -123,6 +130,9 @@ void main() async {
     chatViewModel.clear();
     newMessageViewModel.clear();
     changePasswordViewModel.clear();
+    notificationViewModel.loadNotifications(
+      refresh: true,
+    ); // Reload or clear notifications
   };
 
   // Link Socket auth errors to token refresh
@@ -167,6 +177,9 @@ void main() async {
         ChangeNotifierProvider.value(value: mainViewModel),
         ChangeNotifierProvider.value(value: chatViewModel),
         ChangeNotifierProvider.value(value: newMessageViewModel),
+        ChangeNotifierProvider.value(
+          value: notificationViewModel,
+        ),
       ],
       child: const MyApp(),
     ),

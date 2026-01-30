@@ -7,6 +7,7 @@ import '../search/search_content.dart';
 import '../notifications/notifications_content.dart';
 import '../chat/chat_content.dart';
 import '../../viewmodels/chat/chat_viewmodel.dart';
+import '../../viewmodels/notification/notification_viewmodel.dart';
 import '../../viewmodels/auth/auth_viewmodel.dart';
 import '../../core/utils/verification_utils.dart';
 
@@ -96,8 +97,25 @@ class _MainScreenState extends State<MainScreen> {
               icon: Icon(Icons.search, size: 28),
               label: 'Tìm kiếm',
             ),
-            const BottomNavigationBarItem(
-              icon: Icon(Icons.notifications_outlined, size: 28),
+            BottomNavigationBarItem(
+              icon: Consumer<NotificationViewModel>(
+                builder: (context, viewModel, child) {
+                  final unreadCount = viewModel.unreadCount;
+                  return Badge(
+                    label: Text(
+                      unreadCount > 99
+                          ? '99+'
+                          : unreadCount.toString(),
+                    ),
+                    isLabelVisible: unreadCount > 0,
+                    backgroundColor: themeData.colorScheme.error,
+                    child: const Icon(
+                      Icons.notifications_outlined,
+                      size: 28,
+                    ),
+                  );
+                },
+              ),
               label: 'Thông báo',
             ),
             BottomNavigationBarItem(
