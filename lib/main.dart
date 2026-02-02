@@ -19,6 +19,7 @@ import 'services/twizz_service/twizz_sync_service.dart';
 import 'services/socket_service/socket_service.dart';
 import 'services/chat_service/chat_service.dart';
 import 'services/notification_service/notification_service.dart';
+import 'services/local_notification_service/local_notification_service.dart';
 import 'viewmodels/auth/auth_viewmodel.dart';
 import 'viewmodels/notification/notification_viewmodel.dart';
 import 'viewmodels/twizz/create_twizz_viewmodel.dart';
@@ -54,6 +55,10 @@ void main() async {
   if (initialAccessToken != null) {
     socketService.connect(initialAccessToken);
   }
+
+  // Initialize local notification service
+  final localNotificationService = LocalNotificationService();
+  await localNotificationService.initialize();
 
   // Initialize view models
   final authViewModel = AuthViewModel(
@@ -97,10 +102,12 @@ void main() async {
   final chatViewModel = ChatViewModel(
     socketService,
     chatService,
+    localNotificationService,
   );
   final notificationViewModel = NotificationViewModel(
     notificationService,
     socketService,
+    localNotificationService,
   );
 
   // Link ApiClient callbacks for automatic socket reconnection and logout
@@ -194,6 +201,7 @@ class MyApp extends StatelessWidget {
     final themeViewModel = Provider.of<ThemeViewModel>(context);
 
     return MaterialApp(
+      navigatorKey: navigatorKey,
       title: 'Twizzy',
       // Theme tự động theo theme của thiết bị
       theme: AppTheme.lightTheme,

@@ -1,11 +1,14 @@
 import 'package:flutter/foundation.dart';
 import '../../services/socket_service/socket_service.dart';
 import '../../services/chat_service/chat_service.dart';
+import '../../services/local_notification_service/local_notification_service.dart';
 import '../../models/chat/chat_models.dart';
+import '../../models/auth/auth_models.dart';
 
 class ChatViewModel extends ChangeNotifier {
   final SocketService _socketService;
   final ChatService _chatService;
+  final LocalNotificationService _localNotificationService;
 
   bool _isConnected = false;
   List<ChatThread> _allConversations = [];
@@ -14,7 +17,11 @@ class ChatViewModel extends ChangeNotifier {
   String? _lastUserId;
   String _searchQuery = '';
 
-  ChatViewModel(this._socketService, this._chatService) {
+  ChatViewModel(
+    this._socketService,
+    this._chatService,
+    this._localNotificationService,
+  ) {
     _initListeners();
   }
 
@@ -78,6 +85,50 @@ class ChatViewModel extends ChangeNotifier {
     });
 
     _socketService.on('receive_message', (data) {
+      // Try to show local notification if we have message data
+      try {
+        if (data != null && data is Map<String, dynamic>) {
+          final payload =
+              data['payload'] as Map<String, dynamic>?;
+          if (payload != null) {
+            final senderId = payload['sender_id'] as String?;
+            final content = payload['content'] as String?;
+            final senderInfo =
+                payload['sender'] as Map<String, dynamic>?;
+
+            // Only show notification if we're not the sender
+            if (senderId != null &&
+                senderId != _lastUserId &&
+                content != null) {
+              // Create a minimal user from sender info if available
+              final sender =
+                  senderInfo != null
+                      ? User.fromJson(senderInfo)
+                      : User.fromJson({
+                        '_id': senderId,
+                        'name': 'Tin nhắn mới',
+                        'email': '',
+                        'date_of_birth':
+                            DateTime.now().toIso8601String(),
+                        'created_at':
+                            DateTime.now().toIso8601String(),
+                        'updated_at':
+                            DateTime.now().toIso8601String(),
+                        'verify': 'Verified',
+                      });
+
+              _localNotificationService.showMessageNotification(
+                sender: sender,
+                messageContent: content,
+                conversationId: senderId,
+              );
+            }
+          }
+        }
+      } catch (e) {
+        debugPrint('Error showing message notification: $e');
+      }
+
       if (_lastUserId != null) {
         loadConversationsList(_lastUserId!);
       } else {

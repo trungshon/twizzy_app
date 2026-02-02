@@ -2,12 +2,14 @@ import 'package:flutter/material.dart';
 import '../../models/notification/notification_models.dart';
 import '../../services/notification_service/notification_service.dart';
 import '../../services/socket_service/socket_service.dart';
+import '../../services/local_notification_service/local_notification_service.dart';
 import '../../routes/route_names.dart';
 import '../../views/twizz/twizz_detail_screen.dart';
 
 class NotificationViewModel extends ChangeNotifier {
   final NotificationService _notificationService;
   final SocketService _socketService;
+  final LocalNotificationService _localNotificationService;
 
   List<NotificationModel> _notifications = [];
   bool _isLoading = false;
@@ -22,6 +24,7 @@ class NotificationViewModel extends ChangeNotifier {
   NotificationViewModel(
     this._notificationService,
     this._socketService,
+    this._localNotificationService,
   ) {
     _initSocket();
   }
@@ -58,6 +61,11 @@ class NotificationViewModel extends ChangeNotifier {
       _notifications.insert(0, notification);
       _sortNotifications();
       notifyListeners();
+
+      // Show local push notification
+      _localNotificationService.showSocialNotification(
+        notification,
+      );
     } catch (e) {
       debugPrint('Error parsing real-time notification: $e');
     }

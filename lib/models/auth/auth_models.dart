@@ -497,6 +497,29 @@ class User {
       twizzCircle: twizzCircle ?? this.twizzCircle,
     );
   }
+
+  /// Convert to JSON for serialization
+  Map<String, dynamic> toJson() {
+    return {
+      '_id': id,
+      'name': name,
+      'email': email,
+      'date_of_birth': dateOfBirth.toIso8601String(),
+      'created_at': createdAt.toIso8601String(),
+      'updated_at': updatedAt.toIso8601String(),
+      'verify': verify,
+      'bio': bio,
+      'location': location,
+      'website': website,
+      'username': username,
+      'avatar': avatar,
+      'cover_photo': coverPhoto,
+      'followers_count': followersCount,
+      'following_count': followingCount,
+      'is_following': isFollowing,
+      'is_follower': isFollower,
+    };
+  }
 }
 
 /// Get Me Response Model

@@ -207,6 +207,33 @@ class Twizz {
       parentTwizz: parentTwizz ?? this.parentTwizz,
     );
   }
+
+  /// Convert to JSON for serialization
+  Map<String, dynamic> toJson() {
+    return {
+      '_id': id,
+      'user_id': userId,
+      'type': type.index,
+      'audience': audience.index,
+      'content': content,
+      'parent_id': parentId,
+      'hashtags': hashtags,
+      'mentions': mentions,
+      'medias': medias.map((m) => m.toJson()).toList(),
+      'guest_views': guestViews,
+      'user_views': userViews,
+      'created_at': createdAt.toIso8601String(),
+      'updated_at': updatedAt.toIso8601String(),
+      'user': user?.toJson(),
+      'bookmarks': bookmarks,
+      'likes': likes,
+      'comment_count': commentCount,
+      'quote_count': quoteCount,
+      'is_liked': isLiked,
+      'is_bookmarked': isBookmarked,
+      'parent_twizz': parentTwizz?.toJson(),
+    };
+  }
 }
 
 /// Create Twizz Response
