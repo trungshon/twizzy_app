@@ -362,14 +362,88 @@ class _TwizzDetailScreenState extends State<TwizzDetailScreen> {
                         itemBuilder: (context, index) {
                           if (index == 0) {
                             // Main Twizz Post
+                            final mainTwizz =
+                                viewModel.twizz ??
+                                widget.args.twizz;
+                            final hasParent =
+                                mainTwizz.type ==
+                                    TwizzType.comment &&
+                                mainTwizz.parentTwizz != null;
+
                             return Column(
                               crossAxisAlignment:
                                   CrossAxisAlignment.start,
                               children: [
+                                if (hasParent) ...[
+                                  Padding(
+                                    padding:
+                                        const EdgeInsets.fromLTRB(
+                                          16,
+                                          12,
+                                          16,
+                                          4,
+                                        ),
+                                    child: Text(
+                                      'Đang bình luận:',
+                                      style: themeData
+                                          .textTheme
+                                          .bodySmall
+                                          ?.copyWith(
+                                            color: themeData
+                                                .colorScheme
+                                                .onSurface
+                                                .withValues(
+                                                  alpha: 0.6,
+                                                ),
+                                            fontWeight:
+                                                FontWeight.bold,
+                                          ),
+                                    ),
+                                  ),
+                                  TwizzItem(
+                                    twizz:
+                                        mainTwizz.parentTwizz!,
+                                    currentUserId: currentUserId,
+                                    isEmbedded: true,
+                                    showToolbar: false,
+                                    onTap: () {
+                                      Navigator.pushNamed(
+                                        context,
+                                        RouteNames.twizzDetail,
+                                        arguments:
+                                            TwizzDetailScreenArgs(
+                                              twizz:
+                                                  mainTwizz
+                                                      .parentTwizz!,
+                                            ),
+                                      );
+                                    },
+                                    onUserTap:
+                                        () => _navigateToProfile(
+                                          mainTwizz
+                                              .parentTwizz!
+                                              .user,
+                                        ),
+                                  ),
+                                  // Thread line indicator effect
+                                  Padding(
+                                    padding:
+                                        const EdgeInsets.only(
+                                          left: 37,
+                                        ),
+                                    child: Container(
+                                      width: 2,
+                                      height: 12,
+                                      color: themeData
+                                          .dividerColor
+                                          .withValues(
+                                            alpha: 0.2,
+                                          ),
+                                    ),
+                                  ),
+                                ],
                                 TwizzItem(
-                                  twizz:
-                                      viewModel.twizz ??
-                                      widget.args.twizz,
+                                  twizz: mainTwizz,
                                   currentUserId: currentUserId,
                                   showToolbar: true,
                                   onLike:
@@ -392,14 +466,9 @@ class _TwizzDetailScreenState extends State<TwizzDetailScreen> {
                                       ),
                                   onUserTap:
                                       () => _navigateToProfile(
-                                        viewModel.twizz?.user ??
-                                            widget
-                                                .args
-                                                .twizz
-                                                .user,
+                                        mainTwizz.user,
                                       ),
                                 ),
-
                                 const Divider(),
                               ],
                             );

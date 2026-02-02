@@ -7,6 +7,7 @@ enum NotificationType {
   comment, // 1
   quoteTwizz, // 2
   follow, // 3
+  mention, // 4
 }
 
 /// Notification Model

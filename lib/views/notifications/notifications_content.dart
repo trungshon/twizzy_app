@@ -5,6 +5,7 @@ import 'package:twizzy_app/widgets/common/user_avatar_leading.dart';
 import '../../core/utils/snackbar_utils.dart';
 import '../../viewmodels/notification/notification_viewmodel.dart';
 import '../../models/notification/notification_models.dart';
+import '../../models/twizz/twizz_models.dart';
 import '../../core/utils/media_url_helper.dart';
 
 /// Notifications Content
@@ -299,7 +300,7 @@ class _NotificationItem extends StatelessWidget {
                               ),
                               TextSpan(
                                 text: _getNotificationText(
-                                  notification.type,
+                                  notification,
                                 ),
                               ),
                               TextSpan(
@@ -370,20 +371,24 @@ class _NotificationItem extends StatelessWidget {
 
     switch (type) {
       case NotificationType.like:
-        iconData = Icons.favorite_rounded;
+        iconData = Icons.favorite_border;
         iconColor = Colors.red;
         break;
       case NotificationType.comment:
-        iconData = Icons.chat_bubble_rounded;
+        iconData = Icons.chat_bubble_outline;
         iconColor = themeData.colorScheme.primary;
         break;
       case NotificationType.quoteTwizz:
-        iconData = Icons.repeat_rounded;
+        iconData = Icons.repeat;
         iconColor = Colors.green;
         break;
       case NotificationType.follow:
-        iconData = Icons.person_add_rounded;
+        iconData = Icons.person_add_outlined;
         iconColor = themeData.colorScheme.secondary;
+        break;
+      case NotificationType.mention:
+        iconData = Icons.alternate_email_outlined;
+        iconColor = Colors.purple;
         break;
     }
 
@@ -417,16 +422,21 @@ class _NotificationItem extends StatelessWidget {
     );
   }
 
-  String _getNotificationText(NotificationType type) {
-    switch (type) {
+  String _getNotificationText(NotificationModel notification) {
+    switch (notification.type) {
       case NotificationType.like:
         return ' đã thích bài viết của bạn';
       case NotificationType.comment:
-        return ' đã trả lời bài viết của bạn';
+        if (notification.twizz?.type == TwizzType.comment) {
+          return ' đã trả lời bình luận của bạn';
+        }
+        return ' đã bình luận bài viết của bạn';
       case NotificationType.quoteTwizz:
         return ' đã trích dẫn bài viết của bạn';
       case NotificationType.follow:
         return ' đã bắt đầu theo dõi bạn';
+      case NotificationType.mention:
+        return ' đã nhắc đến bạn trong một bài viết';
     }
   }
 }
