@@ -390,6 +390,22 @@ class _NotificationItem extends StatelessWidget {
         iconData = Icons.alternate_email_outlined;
         iconColor = Colors.purple;
         break;
+      case NotificationType.reportResolved:
+        iconData = Icons.gavel_rounded;
+        iconColor = Colors.blue;
+        break;
+      case NotificationType.reportIgnored:
+        iconData = Icons.visibility_off_outlined;
+        iconColor = Colors.grey;
+        break;
+      case NotificationType.postDeleted:
+        iconData = Icons.delete_outline_rounded;
+        iconColor = Colors.orange;
+        break;
+      case NotificationType.accountBanned:
+        iconData = Icons.block_flipped;
+        iconColor = Colors.red;
+        break;
     }
 
     return Icon(iconData, color: iconColor, size: 28);
@@ -437,6 +453,16 @@ class _NotificationItem extends StatelessWidget {
         return ' đã bắt đầu theo dõi bạn';
       case NotificationType.mention:
         return ' đã nhắc đến bạn trong một bài viết';
+      case NotificationType.reportResolved:
+        return ': Báo cáo của bạn đã được xử lý thành công';
+      case NotificationType.reportIgnored:
+        return ': Báo cáo của bạn đã được xem xét và bỏ qua';
+      case NotificationType.postDeleted:
+        final violationCount =
+            notification.metadata?['violation_count'];
+        return ': Bài viết của bạn đã bị gỡ bỏ do vi phạm tiêu chuẩn cộng đồng.${violationCount != null ? 'Lưu ý: nếu bạn vi phạm 3 lần tài khoản của bạn sẽ bị khóa vĩnh viễn. Bạn đã vi phạm $violationCount lần.' : ''}';
+      case NotificationType.accountBanned:
+        return ': Tài khoản của bạn đã bị khóa vĩnh viễn do vi phạm nghiêm trọng hoặc lặp lại nhiều lần';
     }
   }
 }

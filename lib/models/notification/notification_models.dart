@@ -8,6 +8,10 @@ enum NotificationType {
   quoteTwizz, // 2
   follow, // 3
   mention, // 4
+  reportResolved, // 5
+  reportIgnored, // 6
+  postDeleted, // 7
+  accountBanned, // 8
 }
 
 /// Notification Model
@@ -17,6 +21,7 @@ class NotificationModel {
   final User sender;
   final NotificationType type;
   final String? twizzId;
+  final Map<String, dynamic>? metadata;
   final bool isRead;
   final DateTime createdAt;
   final Twizz? twizz;
@@ -27,6 +32,7 @@ class NotificationModel {
     required this.sender,
     required this.type,
     this.twizzId,
+    this.metadata,
     required this.isRead,
     required this.createdAt,
     this.twizz,
@@ -41,6 +47,7 @@ class NotificationModel {
       ),
       type: NotificationType.values[json['type'] as int],
       twizzId: json['twizz_id'] as String?,
+      metadata: json['metadata'] as Map<String, dynamic>?,
       isRead: json['is_read'] as bool? ?? false,
       createdAt:
           DateTime.parse(json['created_at'] as String).toLocal(),

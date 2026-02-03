@@ -181,6 +181,14 @@ class LocalNotificationService {
         return 'đã bắt đầu theo dõi bạn';
       case NotificationType.mention:
         return 'đã nhắc đến bạn trong một bài viết';
+      case NotificationType.reportResolved:
+        return 'Báo cáo của bạn đã được xử lý';
+      case NotificationType.reportIgnored:
+        return 'Báo cáo của bạn đã được xem xét';
+      case NotificationType.postDeleted:
+        return 'Bài viết của bạn đã bị gỡ bỏ';
+      case NotificationType.accountBanned:
+        return 'Tài khoản của bạn đã bị khóa';
     }
   }
 
