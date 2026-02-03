@@ -8,6 +8,8 @@ import '../../viewmodels/search/search_viewmodel.dart';
 import '../../views/twizz/twizz_interaction_screen.dart';
 import '../../views/twizz/twizz_detail_screen.dart';
 import '../common/twizz_video_player.dart';
+import 'report_dialog.dart';
+import '../../services/report_service/report_service.dart';
 
 /// TwizzItem Widget
 ///
@@ -494,6 +496,17 @@ class TwizzItem extends StatelessWidget {
                   );
                 },
               ),
+              if (!isOwner)
+                ListTile(
+                  leading: const Icon(
+                    Icons.report_problem_outlined,
+                  ),
+                  title: const Text('Báo cáo bài viết'),
+                  onTap: () {
+                    Navigator.pop(context);
+                    _showReportDialog(context);
+                  },
+                ),
               const SizedBox(height: 8),
             ],
           ),
@@ -527,6 +540,46 @@ class TwizzItem extends StatelessWidget {
               child: const Text('Xóa'),
             ),
           ],
+        );
+      },
+    );
+  }
+
+  void _showReportDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return ReportDialog(
+          twizzId: twizz.id,
+          onReport: (reason, description) async {
+            Navigator.pop(context);
+            try {
+              final reportService =
+                  context.read<ReportService>();
+              await reportService.createReport(
+                twizzId: twizz.id,
+                reason: reason,
+                description: description,
+              );
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text(
+                      'Cảm ơn bạn đã báo cáo. Chúng tôi sẽ xử lý sớm nhất có thể.',
+                    ),
+                  ),
+                );
+              }
+            } catch (e) {
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Lỗi: ${e.toString()}'),
+                  ),
+                );
+              }
+            }
+          },
         );
       },
     );

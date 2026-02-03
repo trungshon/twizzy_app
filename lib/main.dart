@@ -20,6 +20,7 @@ import 'services/socket_service/socket_service.dart';
 import 'services/chat_service/chat_service.dart';
 import 'services/notification_service/notification_service.dart';
 import 'services/local_notification_service/local_notification_service.dart';
+import 'services/report_service/report_service.dart';
 import 'viewmodels/auth/auth_viewmodel.dart';
 import 'viewmodels/notification/notification_viewmodel.dart';
 import 'viewmodels/twizz/create_twizz_viewmodel.dart';
@@ -49,6 +50,7 @@ void main() async {
   final socketService = SocketService();
   final chatService = ChatService(apiClient);
   final notificationService = NotificationService(apiClient);
+  final reportService = ReportService(apiClient);
 
   // Auto connect socket if already logged in
   final initialAccessToken = await authService.getAccessToken();
@@ -167,6 +169,7 @@ void main() async {
         Provider.value(value: twizzSyncService),
         Provider.value(value: socketService),
         Provider.value(value: chatService),
+        Provider.value(value: reportService),
         ChangeNotifierProvider.value(value: authViewModel),
         ChangeNotifierProvider.value(
           value: createTwizzViewModel,
