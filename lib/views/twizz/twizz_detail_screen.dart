@@ -445,6 +445,12 @@ class _TwizzDetailScreenState extends State<TwizzDetailScreen> {
                                 TwizzItem(
                                   twizz: mainTwizz,
                                   currentUserId: currentUserId,
+                                  isEmbedded:
+                                      mainTwizz.type ==
+                                      TwizzType.comment,
+                                  isHighlighted:
+                                      mainTwizz.type ==
+                                      TwizzType.comment,
                                   showToolbar: true,
                                   onLike:
                                       (t) =>

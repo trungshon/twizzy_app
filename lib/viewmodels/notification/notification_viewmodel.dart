@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../models/auth/auth_models.dart';
 import '../../models/notification/notification_models.dart';
 import '../../services/notification_service/notification_service.dart';
 import '../../services/socket_service/socket_service.dart';
@@ -84,7 +85,11 @@ class NotificationViewModel extends ChangeNotifier {
       _notifications = response.result;
       _sortNotifications();
     } catch (e) {
-      _error = e.toString();
+      if (e is ApiErrorResponse) {
+        _error = e.message;
+      } else {
+        _error = e.toString();
+      }
     } finally {
       _isLoading = false;
       notifyListeners();

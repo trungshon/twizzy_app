@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/twizz/twizz_models.dart';
+import '../models/report/report_models.dart';
 import 'route_names.dart';
 import '../views/auth/auth_check_screen.dart';
 import '../views/auth/register_screen.dart';
@@ -22,6 +23,8 @@ import '../views/twizz/twizz_detail_screen.dart';
 import '../views/chat/chat_detail_screen.dart';
 import '../views/chat/new_message_screen.dart';
 import '../views/test/video_test_screen.dart';
+import '../views/reports/reports_list_screen.dart';
+import '../views/reports/report_detail_screen.dart';
 
 /// App Router
 ///
@@ -217,6 +220,21 @@ class AppRouter {
         return MaterialPageRoute(
           builder: (_) => const NewMessageScreen(),
           fullscreenDialog: true,
+        );
+
+      case RouteNames.reportsList:
+        return MaterialPageRoute(
+          builder: (_) => const ReportsListScreen(),
+        );
+
+      case RouteNames.reportDetail:
+        if (args is Report) {
+          return MaterialPageRoute(
+            builder: (_) => ReportDetailScreen(report: args),
+          );
+        }
+        return _errorRoute(
+          'Invalid args for ReportDetailScreen',
         );
 
       default:

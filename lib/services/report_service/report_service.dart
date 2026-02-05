@@ -21,4 +21,26 @@ class ReportService {
       },
     );
   }
+
+  Future<ReportsResponse> getMyReports({
+    int page = 1,
+    int limit = 10,
+  }) async {
+    final response = await _apiClient.get(
+      '/reports/my?page=$page&limit=$limit',
+      includeAuth: true,
+    );
+    return ReportsResponse.fromJson(response);
+  }
+
+  Future<ReportsResponse> getReportsAgainstMe({
+    int page = 1,
+    int limit = 10,
+  }) async {
+    final response = await _apiClient.get(
+      '/reports/against-me?page=$page&limit=$limit',
+      includeAuth: true,
+    );
+    return ReportsResponse.fromJson(response);
+  }
 }

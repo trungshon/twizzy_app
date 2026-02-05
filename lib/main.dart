@@ -32,6 +32,7 @@ import 'viewmodels/search/search_viewmodel.dart';
 import 'viewmodels/main/main_viewmodel.dart';
 import 'viewmodels/chat/chat_viewmodel.dart';
 import 'viewmodels/chat/new_message_viewmodel.dart';
+import 'viewmodels/report/report_viewmodel.dart';
 
 void main() async {
   // Load environment variables
@@ -111,6 +112,7 @@ void main() async {
     socketService,
     localNotificationService,
   );
+  final reportViewModel = ReportViewModel(reportService);
 
   // Link ApiClient callbacks for automatic socket reconnection and logout
   apiClient.onTokenRefreshed = (token) {
@@ -139,6 +141,7 @@ void main() async {
     chatViewModel.clear();
     newMessageViewModel.clear();
     changePasswordViewModel.clear();
+    reportViewModel.clear();
     notificationViewModel.loadNotifications(
       refresh: true,
     ); // Reload or clear notifications
@@ -190,6 +193,7 @@ void main() async {
         ChangeNotifierProvider.value(
           value: notificationViewModel,
         ),
+        ChangeNotifierProvider.value(value: reportViewModel),
       ],
       child: const MyApp(),
     ),

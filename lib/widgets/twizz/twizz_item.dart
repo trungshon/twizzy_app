@@ -28,6 +28,7 @@ class TwizzItem extends StatelessWidget {
 
   final bool isEmbedded;
   final bool showToolbar;
+  final bool isHighlighted;
 
   const TwizzItem({
     super.key,
@@ -42,6 +43,7 @@ class TwizzItem extends StatelessWidget {
     this.onDelete,
     this.isEmbedded = false,
     this.showToolbar = true,
+    this.isHighlighted = false,
   });
 
   @override
@@ -66,9 +68,14 @@ class TwizzItem extends StatelessWidget {
             isEmbedded
                 ? BoxDecoration(
                   border: Border.all(
-                    color: themeData.dividerColor.withValues(
-                      alpha: 0.2,
-                    ),
+                    color:
+                        isHighlighted
+                            ? themeData.colorScheme.primary
+                                .withValues(alpha: 0.5)
+                            : themeData.dividerColor.withValues(
+                              alpha: 0.2,
+                            ),
+                    width: isHighlighted ? 2.0 : 1.0,
                   ),
                   borderRadius: BorderRadius.circular(16),
                 )
@@ -84,7 +91,7 @@ class TwizzItem extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Main content
+            // Header row with avatar and content text
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -94,7 +101,7 @@ class TwizzItem extends StatelessWidget {
                   child: _buildAvatar(themeData, user),
                 ),
                 const SizedBox(width: 12),
-                // Content
+                // Content text only
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -131,169 +138,130 @@ class TwizzItem extends StatelessWidget {
                             }
                           },
                         ),
-                      // Media
-                      if (displayTwizz.medias.isNotEmpty)
-                        Padding(
-                          padding: const EdgeInsets.only(
-                            top: 12,
-                          ),
-                          child: _TwizzMedia(
-                            medias: displayTwizz.medias,
-                          ),
-                        ),
-                      // Embedded parent for quote twizz
-                      if ((isQuoteTwizz ||
-                              displayTwizz.type ==
-                                  TwizzType.twizz) &&
-                          twizz.parentTwizz != null) ...[
-                        if ((twizz.parentTwizz!.audience ==
-                                    TwizzAudience.twizzCircle &&
-                                currentUserId !=
-                                    twizz.parentTwizz!.userId &&
-                                (twizz
-                                            .parentTwizz!
-                                            .user
-                                            ?.twizzCircleIds ==
-                                        null ||
-                                    !twizz
-                                        .parentTwizz!
-                                        .user!
-                                        .twizzCircleIds!
-                                        .contains(
-                                          currentUserId,
-                                        ))) ||
-                            (twizz.parentTwizz!.audience ==
-                                    TwizzAudience.onlyMe &&
-                                currentUserId !=
-                                    twizz.parentTwizz!.userId))
-                          Container(
-                            margin: const EdgeInsets.only(
-                              top: 12,
-                            ),
-                            padding: const EdgeInsets.all(12),
-                            decoration: BoxDecoration(
-                              border: Border.all(
-                                color: themeData.dividerColor
-                                    .withValues(alpha: 0.3),
-                              ),
-                              borderRadius:
-                                  BorderRadius.circular(12),
-                              color: themeData
-                                  .colorScheme
-                                  .surfaceContainerHighest
-                                  .withValues(alpha: 0.3),
-                            ),
-                            width: double.infinity,
-                            child: Column(
-                              mainAxisAlignment:
-                                  MainAxisAlignment.center,
-                              children: [
-                                Text(
-                                  'Bạn không có quyền xem bài viết này',
-                                  style: themeData
-                                      .textTheme
-                                      .bodyMedium
-                                      ?.copyWith(
-                                        color:
-                                            themeData
-                                                .disabledColor,
-                                        fontStyle:
-                                            FontStyle.italic,
-                                      ),
-                                  textAlign: TextAlign.center,
-                                ),
-                              ],
-                            ),
-                          )
-                        else
-                          Padding(
-                            padding: const EdgeInsets.only(
-                              top: 12,
-                            ),
-                            child: TwizzItem(
-                              twizz: twizz.parentTwizz!,
-                              isEmbedded: true,
-                              showToolbar: false,
-                              currentUserId: currentUserId,
-                              onTap: () {
-                                Navigator.pushNamed(
-                                  context,
-                                  RouteNames.twizzDetail,
-                                  arguments:
-                                      TwizzDetailScreenArgs(
-                                        twizz:
-                                            twizz.parentTwizz!,
-                                      ),
-                                );
-                              },
-                              onUserTap: () {
-                                final parentUser =
-                                    twizz.parentTwizz!.user;
-                                if (parentUser == null) return;
-
-                                if (parentUser.id ==
-                                    currentUserId) {
-                                  Navigator.pushNamed(
-                                    context,
-                                    RouteNames.myProfile,
-                                  );
-                                } else if (parentUser.username !=
-                                        null &&
-                                    parentUser
-                                        .username!
-                                        .isNotEmpty) {
-                                  Navigator.pushNamed(
-                                    context,
-                                    RouteNames.userProfile,
-                                    arguments:
-                                        parentUser.username,
-                                  );
-                                }
-                              },
-                            ),
-                          ),
-                      ],
-                      // Toolbar
-                      if (showToolbar) ...[
-                        const SizedBox(height: 12),
-                        _TwizzToolbar(
-                          commentCount:
-                              displayTwizz.commentCount ?? 0,
-                          quoteCount:
-                              displayTwizz.quoteCount ?? 0,
-                          likeCount: displayTwizz.likes ?? 0,
-                          viewCount:
-                              displayTwizz.userViews +
-                              displayTwizz.guestViews,
-                          isLiked: displayTwizz.isLiked,
-                          isBookmarked:
-                              displayTwizz.isBookmarked,
-                          onComment:
-                              () =>
-                                  onComment?.call(displayTwizz),
-                          onQuote:
-                              (twizz.type != TwizzType.comment &&
-                                      (twizz.parentTwizz ==
-                                              null ||
-                                          twizz
-                                                  .parentTwizz!
-                                                  .parentTwizz ==
-                                              null))
-                                  ? () =>
-                                      onQuote?.call(displayTwizz)
-                                  : null,
-                          onLike:
-                              () => onLike?.call(displayTwizz),
-                          onBookmark:
-                              () =>
-                                  onBookmark?.call(displayTwizz),
-                        ),
-                      ],
                     ],
                   ),
                 ),
               ],
             ),
+            // Media - full width outside the avatar row
+            if (displayTwizz.medias.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.only(top: 12),
+                child: _TwizzMedia(medias: displayTwizz.medias),
+              ),
+            // Embedded parent for quote twizz only
+            if (isQuoteTwizz && twizz.parentTwizz != null) ...[
+              if ((twizz.parentTwizz!.audience ==
+                          TwizzAudience.twizzCircle &&
+                      currentUserId !=
+                          twizz.parentTwizz!.userId &&
+                      (twizz.parentTwizz!.user?.twizzCircleIds ==
+                              null ||
+                          !twizz
+                              .parentTwizz!
+                              .user!
+                              .twizzCircleIds!
+                              .contains(currentUserId))) ||
+                  (twizz.parentTwizz!.audience ==
+                          TwizzAudience.onlyMe &&
+                      currentUserId !=
+                          twizz.parentTwizz!.userId))
+                Container(
+                  margin: const EdgeInsets.only(top: 12),
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    border: Border.all(
+                      color: themeData.dividerColor.withValues(
+                        alpha: 0.3,
+                      ),
+                    ),
+                    borderRadius: BorderRadius.circular(12),
+                    color: themeData
+                        .colorScheme
+                        .surfaceContainerHighest
+                        .withValues(alpha: 0.3),
+                  ),
+                  width: double.infinity,
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        'Bạn không có quyền xem bài viết này',
+                        style: themeData.textTheme.bodyMedium
+                            ?.copyWith(
+                              color: themeData.disabledColor,
+                              fontStyle: FontStyle.italic,
+                            ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ],
+                  ),
+                )
+              else
+                Padding(
+                  padding: const EdgeInsets.only(top: 12),
+                  child: TwizzItem(
+                    twizz: twizz.parentTwizz!,
+                    isEmbedded: true,
+                    showToolbar: false,
+                    currentUserId: currentUserId,
+                    onTap: () {
+                      Navigator.pushNamed(
+                        context,
+                        RouteNames.twizzDetail,
+                        arguments: TwizzDetailScreenArgs(
+                          twizz: twizz.parentTwizz!,
+                        ),
+                      );
+                    },
+                    onUserTap: () {
+                      final parentUser = twizz.parentTwizz!.user;
+                      if (parentUser == null) return;
+
+                      if (parentUser.id == currentUserId) {
+                        Navigator.pushNamed(
+                          context,
+                          RouteNames.myProfile,
+                        );
+                      } else if (parentUser.username != null &&
+                          parentUser.username!.isNotEmpty) {
+                        Navigator.pushNamed(
+                          context,
+                          RouteNames.userProfile,
+                          arguments: parentUser.username,
+                        );
+                      }
+                    },
+                  ),
+                ),
+            ],
+            // Toolbar - full width
+            if (showToolbar) ...[
+              const SizedBox(height: 12),
+              _TwizzToolbar(
+                commentCount: displayTwizz.commentCount ?? 0,
+                quoteCount: displayTwizz.quoteCount ?? 0,
+                likeCount: displayTwizz.likes ?? 0,
+                viewCount:
+                    displayTwizz.userViews +
+                    displayTwizz.guestViews,
+                isLiked: displayTwizz.isLiked,
+                isBookmarked: displayTwizz.isBookmarked,
+                onComment: () => onComment?.call(displayTwizz),
+                onQuote:
+                    (twizz.type != TwizzType.comment &&
+                            (twizz
+                                    .parentTwizz
+                                    ?.parentTwizz
+                                    ?.id
+                                    .isEmpty ??
+                                true))
+                        ? () => onQuote?.call(displayTwizz)
+                        : null,
+                onLike: () => onLike?.call(displayTwizz),
+                onBookmark: () => onBookmark?.call(displayTwizz),
+              ),
+            ],
           ],
         ),
       ),

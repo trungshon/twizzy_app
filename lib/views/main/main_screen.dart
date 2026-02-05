@@ -63,8 +63,8 @@ class _MainScreenState extends State<MainScreen> {
         child: BottomNavigationBar(
           currentIndex: mainViewModel.currentIndex,
           onTap: (index) {
-            // Check if user is trying to access messages
-            if (index == 3) {
+            // Check if user is trying to access notifications or messages
+            if (index == 2 || index == 3) {
               final authViewModel =
                   context.read<AuthViewModel>();
               if (!authViewModel.isVerified) {

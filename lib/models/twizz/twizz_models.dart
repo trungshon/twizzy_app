@@ -127,12 +127,47 @@ class Twizz {
   });
 
   factory Twizz.fromJson(Map<String, dynamic> json) {
+    // Helper to extract string from ObjectId or plain string
+    String extractId(dynamic value) {
+      if (value == null) return '';
+      if (value is String) return value;
+      if (value is Map && value['\$oid'] != null) {
+        return value['\$oid'] as String;
+      }
+      return value.toString();
+    }
+
+    // Helper to parse date from various formats
+    DateTime parseDate(dynamic value, DateTime defaultValue) {
+      if (value == null) return defaultValue;
+      if (value is String) {
+        try {
+          return DateTime.parse(value).toLocal();
+        } catch (_) {
+          return defaultValue;
+        }
+      }
+      if (value is Map && value['\$date'] != null) {
+        try {
+          return DateTime.parse(
+            value['\$date'] as String,
+          ).toLocal();
+        } catch (_) {
+          return defaultValue;
+        }
+      }
+      return defaultValue;
+    }
+
+    final now = DateTime.now();
+
     return Twizz(
-      id: json['_id'] as String,
-      userId: json['user_id'] as String,
-      type: TwizzType.values[json['type'] as int],
-      audience: TwizzAudience.values[json['audience'] as int],
-      content: json['content'] as String,
+      id: extractId(json['_id']),
+      userId: extractId(json['user_id']),
+      type: TwizzType.values[json['type'] as int? ?? 0],
+      audience:
+          TwizzAudience.values[json['audience'] as int? ?? 0],
+      content: json['content'] as String? ?? '',
       parentId: json['parent_id'] as String?,
       hashtags: json['hashtags'] as List<dynamic>? ?? [],
       mentions: json['mentions'] as List<dynamic>? ?? [],
@@ -145,10 +180,8 @@ class Twizz {
           [],
       guestViews: json['guest_views'] as int? ?? 0,
       userViews: json['user_views'] as int? ?? 0,
-      createdAt:
-          DateTime.parse(json['created_at'] as String).toLocal(),
-      updatedAt:
-          DateTime.parse(json['updated_at'] as String).toLocal(),
+      createdAt: parseDate(json['created_at'], now),
+      updatedAt: parseDate(json['updated_at'], now),
       user:
           json['user'] != null
               ? User.fromJson(

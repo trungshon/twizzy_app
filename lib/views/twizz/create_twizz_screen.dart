@@ -1341,8 +1341,11 @@ class _QuoteTwizzPreview extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                     ),
                   ],
-                  // Nested parent preview
-                  if (twizz.parentTwizz != null)
+                  // Nested parent preview (only if valid)
+                  if (twizz.parentTwizz != null &&
+                      twizz.parentTwizz!.id.isNotEmpty &&
+                      twizz.parentTwizz!.user != null &&
+                      twizz.parentTwizz!.user!.id.isNotEmpty)
                     _QuoteTwizzPreview(
                       twizz: twizz.parentTwizz!,
                     ),

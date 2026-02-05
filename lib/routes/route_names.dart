@@ -36,6 +36,10 @@ class RouteNames {
   static const String chatDetail = '/chat-detail';
   static const String newMessage = '/new-message';
 
+  // Report Routes
+  static const String reportsList = '/reports-list';
+  static const String reportDetail = '/report-detail';
+
   // Private constructor để prevent instantiation
   RouteNames._();
 }

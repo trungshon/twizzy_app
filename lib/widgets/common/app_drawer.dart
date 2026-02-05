@@ -394,6 +394,17 @@ class AppDrawer extends StatelessWidget {
                       ).pushNamed(RouteNames.changePassword);
                     },
                   ),
+                  _buildMenuItem(
+                    context,
+                    icon: Icons.report_outlined,
+                    title: 'Danh sách báo cáo',
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.of(
+                        context,
+                      ).pushNamed(RouteNames.reportsList);
+                    },
+                  ),
                   _buildThemeItem(context),
 
                   Consumer<AuthViewModel>(

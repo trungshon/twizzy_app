@@ -1,3 +1,6 @@
+import '../twizz/twizz_models.dart';
+import '../auth/auth_models.dart';
+
 enum ReportReason {
   spam,
   harassment,
@@ -40,5 +43,160 @@ extension ReportReasonExtension on ReportReason {
       case ReportReason.other:
         return 'Lý do khác';
     }
+  }
+
+  static ReportReason fromValue(int value) {
+    switch (value) {
+      case 0:
+        return ReportReason.spam;
+      case 1:
+        return ReportReason.harassment;
+      case 2:
+        return ReportReason.hateSpeech;
+      case 3:
+        return ReportReason.violence;
+      case 4:
+        return ReportReason.nudity;
+      default:
+        return ReportReason.other;
+    }
+  }
+}
+
+enum ReportStatus { pending, resolved, ignored }
+
+extension ReportStatusExtension on ReportStatus {
+  int get value {
+    switch (this) {
+      case ReportStatus.pending:
+        return 0;
+      case ReportStatus.resolved:
+        return 1;
+      case ReportStatus.ignored:
+        return 2;
+    }
+  }
+
+  String get label {
+    switch (this) {
+      case ReportStatus.pending:
+        return 'Chờ xử lý';
+      case ReportStatus.resolved:
+        return 'Đã giải quyết';
+      case ReportStatus.ignored:
+        return 'Bỏ qua';
+    }
+  }
+
+  static ReportStatus fromValue(int value) {
+    switch (value) {
+      case 1:
+        return ReportStatus.resolved;
+      case 2:
+        return ReportStatus.ignored;
+      default:
+        return ReportStatus.pending;
+    }
+  }
+}
+
+class Report {
+  final String id;
+  final String userId;
+  final String twizzId;
+  final ReportReason reason;
+  final String description;
+  final ReportStatus status;
+  final String? action;
+  final DateTime createdAt;
+  final Twizz? twizz;
+  final User? reporter;
+
+  Report({
+    required this.id,
+    required this.userId,
+    required this.twizzId,
+    required this.reason,
+    required this.description,
+    required this.status,
+    this.action,
+    required this.createdAt,
+    this.twizz,
+    this.reporter,
+  });
+
+  factory Report.fromJson(Map<String, dynamic> json) {
+    // Helper to extract string from ObjectId or plain string
+    String extractId(dynamic value) {
+      if (value == null) return '';
+      if (value is String) return value;
+      if (value is Map && value['\$oid'] != null) {
+        return value['\$oid'] as String;
+      }
+      return value.toString();
+    }
+
+    return Report(
+      id: extractId(json['_id']),
+      userId: extractId(json['user_id']),
+      twizzId: extractId(json['twizz_id']),
+      reason: ReportReasonExtension.fromValue(
+        json['reason'] as int? ?? 5,
+      ),
+      description: json['description'] as String? ?? '',
+      status: ReportStatusExtension.fromValue(
+        json['status'] as int? ?? 0,
+      ),
+      action: json['action'] as String?,
+      createdAt:
+          DateTime.parse(json['created_at'] as String).toLocal(),
+      twizz:
+          json['twizz'] != null
+              ? Twizz.fromJson(
+                json['twizz'] as Map<String, dynamic>,
+              )
+              : null,
+      reporter:
+          json['reporter'] != null
+              ? User.fromJson(
+                json['reporter'] as Map<String, dynamic>,
+              )
+              : null,
+    );
+  }
+}
+
+class ReportsResponse {
+  final List<Report> reports;
+  final int page;
+  final int limit;
+  final int total;
+  final int totalPages;
+
+  ReportsResponse({
+    required this.reports,
+    required this.page,
+    required this.limit,
+    required this.total,
+    required this.totalPages,
+  });
+
+  factory ReportsResponse.fromJson(Map<String, dynamic> json) {
+    final result = json['result'] as Map<String, dynamic>;
+    final pagination =
+        result['pagination'] as Map<String, dynamic>;
+    return ReportsResponse(
+      reports:
+          (result['reports'] as List<dynamic>)
+              .map(
+                (r) =>
+                    Report.fromJson(r as Map<String, dynamic>),
+              )
+              .toList(),
+      page: pagination['page'] as int,
+      limit: pagination['limit'] as int,
+      total: pagination['total'] as int,
+      totalPages: pagination['total_pages'] as int,
+    );
   }
 }
