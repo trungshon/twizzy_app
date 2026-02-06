@@ -4,6 +4,7 @@ import '../../models/notification/notification_models.dart';
 import '../../services/notification_service/notification_service.dart';
 import '../../services/socket_service/socket_service.dart';
 import '../../services/local_notification_service/local_notification_service.dart';
+import '../../core/utils/snackbar_utils.dart';
 import '../../routes/route_names.dart';
 import '../../views/twizz/twizz_detail_screen.dart';
 
@@ -104,16 +105,8 @@ class NotificationViewModel extends ChangeNotifier {
       );
       if (index != -1 && !_notifications[index].isRead) {
         final oldNotification = _notifications[index];
-        _notifications[index] = NotificationModel(
-          id: oldNotification.id,
-          userId: oldNotification.userId,
-          sender: oldNotification.sender,
-          type: oldNotification.type,
-          twizzId: oldNotification.twizzId,
-          metadata: oldNotification.metadata,
+        _notifications[index] = oldNotification.copyWith(
           isRead: true,
-          createdAt: oldNotification.createdAt,
-          twizz: oldNotification.twizz,
         );
         notifyListeners();
 
@@ -137,17 +130,7 @@ class NotificationViewModel extends ChangeNotifier {
       _notifications =
           _notifications.map((n) {
             if (!n.isRead) {
-              return NotificationModel(
-                id: n.id,
-                userId: n.userId,
-                sender: n.sender,
-                type: n.type,
-                twizzId: n.twizzId,
-                metadata: n.metadata,
-                isRead: true,
-                createdAt: n.createdAt,
-                twizz: n.twizz,
-              );
+              return n.copyWith(isRead: true);
             }
             return n;
           }).toList();
@@ -198,15 +181,53 @@ class NotificationViewModel extends ChangeNotifier {
           arguments: notification.sender.username,
         );
       }
+    } else if (notification.type ==
+            NotificationType.reportResolved ||
+        notification.type == NotificationType.reportIgnored ||
+        notification.type == NotificationType.postDeleted ||
+        notification.type == NotificationType.accountBanned) {
+      // Navigate to report detail if report is present and valid
+      if (notification.report != null &&
+          notification.report!.id.isNotEmpty) {
+        Navigator.pushNamed(
+          context,
+          RouteNames.reportDetail,
+          arguments: notification.report,
+        );
+      } else if (notification.twizz != null &&
+          notification.twizz!.id.isNotEmpty) {
+        // Fallback to twizz detail for post deletion if report session is lost
+        Navigator.pushNamed(
+          context,
+          RouteNames.twizzDetail,
+          arguments: TwizzDetailScreenArgs(
+            twizz: notification.twizz!,
+          ),
+        );
+      } else {
+        // Content (report or twizz) has been deleted
+        SnackBarUtils.showError(
+          context,
+          message: 'Nội dung đã bị xóa',
+        );
+      }
     } else if (notification.twizz != null) {
-      // Navigate to twizz detail
-      Navigator.pushNamed(
-        context,
-        RouteNames.twizzDetail,
-        arguments: TwizzDetailScreenArgs(
-          twizz: notification.twizz!,
-        ),
-      );
+      if (notification.twizz!.id.isNotEmpty) {
+        // Navigate to twizz detail
+        Navigator.pushNamed(
+          context,
+          RouteNames.twizzDetail,
+          arguments: TwizzDetailScreenArgs(
+            twizz: notification.twizz!,
+          ),
+        );
+      } else {
+        // Twizz has been deleted
+        SnackBarUtils.showError(
+          context,
+          message: 'Nội dung đã bị xóa',
+        );
+      }
     }
   }
 

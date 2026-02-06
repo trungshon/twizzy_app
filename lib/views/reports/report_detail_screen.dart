@@ -344,9 +344,38 @@ class ReportDetailScreen extends StatelessWidget {
     String? currentUserId,
   ) {
     final themeData = Theme.of(context);
+
+    // If twizz ID is empty, it means the content was deleted but the object was created with fallbacks
+    if (twizz.id.isEmpty) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24.0),
+          child: Column(
+            children: [
+              Icon(
+                Icons.delete_outline_rounded,
+                size: 48,
+                color: themeData.colorScheme.onSurface
+                    .withValues(alpha: 0.3),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Nội dung đã bị xóa',
+                style: themeData.textTheme.bodyMedium?.copyWith(
+                  color: themeData.colorScheme.onSurface
+                      .withValues(alpha: 0.5),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
     final hasParent =
         twizz.type == TwizzType.comment &&
-        twizz.parentTwizz != null;
+        twizz.parentTwizz != null &&
+        twizz.parentTwizz!.id.isNotEmpty;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -390,41 +419,44 @@ class ReportDetailScreen extends StatelessWidget {
           ),
           // Thread line indicator effect
           Padding(
-            padding: const EdgeInsets.only(left: 37),
+            padding: const EdgeInsets.only(left: 36),
             child: Container(
-              width: 2,
+              width: 4,
               height: 12,
               color: themeData.dividerColor.withValues(
-                alpha: 0.2,
+                alpha: 0.4,
               ),
             ),
           ),
         ],
         // Main twizz (not clickable, no more button, highlighted)
-        TwizzItem(
-          twizz: twizz,
-          currentUserId: currentUserId,
-          isEmbedded: true,
-          showToolbar: false,
-          isHighlighted: true,
-          onUserTap: () {
-            final user = twizz.user;
-            if (user != null) {
-              if (user.id == currentUserId) {
-                Navigator.pushNamed(
-                  context,
-                  RouteNames.myProfile,
-                );
-              } else if (user.username != null &&
-                  user.username!.isNotEmpty) {
-                Navigator.pushNamed(
-                  context,
-                  RouteNames.userProfile,
-                  arguments: user.username,
-                );
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          child: TwizzItem(
+            twizz: twizz,
+            currentUserId: currentUserId,
+            isEmbedded: true,
+            showToolbar: false,
+            isHighlighted: true,
+            onUserTap: () {
+              final user = twizz.user;
+              if (user != null) {
+                if (user.id == currentUserId) {
+                  Navigator.pushNamed(
+                    context,
+                    RouteNames.myProfile,
+                  );
+                } else if (user.username != null &&
+                    user.username!.isNotEmpty) {
+                  Navigator.pushNamed(
+                    context,
+                    RouteNames.userProfile,
+                    arguments: user.username,
+                  );
+                }
               }
-            }
-          },
+            },
+          ),
         ),
       ],
     );

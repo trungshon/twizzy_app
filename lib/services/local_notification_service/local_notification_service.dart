@@ -106,14 +106,7 @@ class LocalNotificationService {
 
     final payload = jsonEncode({
       'type': 'notification',
-      'data': {
-        'id': notification.id,
-        'notificationType': notification.type.index,
-        'senderId': notification.sender.id,
-        'senderUsername': notification.sender.username,
-        'twizzId': notification.twizzId,
-        'twizz': notification.twizz?.toJson(),
-      },
+      'data': notification.toJson(),
     });
 
     await _notificationsPlugin.show(
@@ -212,23 +205,41 @@ class LocalNotificationService {
   }
 
   void _handleNotificationTap(Map<String, dynamic> data) {
-    final notificationType =
-        NotificationType.values[data['notificationType'] as int];
+    final notification = NotificationModel.fromJson(data);
 
-    if (notificationType == NotificationType.follow) {
-      final senderUsername = data['senderUsername'] as String?;
-      if (senderUsername != null) {
+    if (notification.type == NotificationType.follow) {
+      if (notification.sender.username != null) {
         navigatorKey.currentState?.pushNamed(
           RouteNames.userProfile,
-          arguments: senderUsername,
+          arguments: notification.sender.username,
         );
       }
-    } else if (data['twizz'] != null) {
-      final twizzJson = data['twizz'] as Map<String, dynamic>;
+    } else if (notification.type ==
+            NotificationType.reportResolved ||
+        notification.type == NotificationType.reportIgnored ||
+        notification.type == NotificationType.postDeleted ||
+        notification.type == NotificationType.accountBanned) {
+      if (notification.report != null &&
+          notification.report!.id.isNotEmpty) {
+        navigatorKey.currentState?.pushNamed(
+          RouteNames.reportDetail,
+          arguments: notification.report,
+        );
+      } else if (notification.twizz != null &&
+          notification.twizz!.id.isNotEmpty) {
+        navigatorKey.currentState?.pushNamed(
+          RouteNames.twizzDetail,
+          arguments: TwizzDetailScreenArgs(
+            twizz: notification.twizz!,
+          ),
+        );
+      }
+    } else if (notification.twizz != null &&
+        notification.twizz!.id.isNotEmpty) {
       navigatorKey.currentState?.pushNamed(
         RouteNames.twizzDetail,
         arguments: TwizzDetailScreenArgs(
-          twizz: Twizz.fromJson(twizzJson),
+          twizz: notification.twizz!,
         ),
       );
     }

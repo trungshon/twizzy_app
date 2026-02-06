@@ -73,7 +73,7 @@ class TwizzItem extends StatelessWidget {
                             ? themeData.colorScheme.primary
                                 .withValues(alpha: 0.5)
                             : themeData.dividerColor.withValues(
-                              alpha: 0.2,
+                              alpha: 0.3,
                             ),
                     width: isHighlighted ? 2.0 : 1.0,
                   ),
@@ -83,7 +83,7 @@ class TwizzItem extends StatelessWidget {
                   border: Border(
                     bottom: BorderSide(
                       color: themeData.dividerColor.withValues(
-                        alpha: 0.2,
+                        alpha: 0.3,
                       ),
                     ),
                   ),

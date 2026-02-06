@@ -136,6 +136,28 @@ class Report {
       return value.toString();
     }
 
+    // Helper to parse date
+    DateTime parseDate(dynamic value) {
+      if (value == null) return DateTime.now();
+      if (value is String) {
+        try {
+          return DateTime.parse(value).toLocal();
+        } catch (_) {
+          return DateTime.now();
+        }
+      }
+      if (value is Map && value['\$date'] != null) {
+        try {
+          return DateTime.parse(
+            value['\$date'] as String,
+          ).toLocal();
+        } catch (_) {
+          return DateTime.now();
+        }
+      }
+      return DateTime.now();
+    }
+
     return Report(
       id: extractId(json['_id']),
       userId: extractId(json['user_id']),
@@ -148,8 +170,7 @@ class Report {
         json['status'] as int? ?? 0,
       ),
       action: json['action'] as String?,
-      createdAt:
-          DateTime.parse(json['created_at'] as String).toLocal(),
+      createdAt: parseDate(json['created_at']),
       twizz:
           json['twizz'] != null
               ? Twizz.fromJson(
@@ -163,6 +184,21 @@ class Report {
               )
               : null,
     );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      '_id': id,
+      'user_id': userId,
+      'twizz_id': twizzId,
+      'reason': reason.value,
+      'description': description,
+      'status': status.value,
+      'action': action,
+      'created_at': createdAt.toIso8601String(),
+      'twizz': twizz?.toJson(),
+      'reporter': reporter?.toJson(),
+    };
   }
 }
 

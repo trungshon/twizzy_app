@@ -427,53 +427,64 @@ class _TwizzDetailScreenState extends State<TwizzDetailScreen> {
                                   ),
                                   // Thread line indicator effect
                                   Padding(
-                                    padding:
-                                        const EdgeInsets.only(
-                                          left: 37,
-                                        ),
+                                    padding: const EdgeInsets.only(
+                                      left:
+                                          36, // Centered for 4 width (38 - 2)
+                                    ),
                                     child: Container(
-                                      width: 2,
+                                      width: 4,
                                       height: 12,
                                       color: themeData
                                           .dividerColor
                                           .withValues(
-                                            alpha: 0.2,
+                                            alpha: 0.4,
                                           ),
                                     ),
                                   ),
                                 ],
-                                TwizzItem(
-                                  twizz: mainTwizz,
-                                  currentUserId: currentUserId,
-                                  isEmbedded:
+                                Padding(
+                                  padding:
                                       mainTwizz.type ==
-                                      TwizzType.comment,
-                                  isHighlighted:
-                                      mainTwizz.type ==
-                                      TwizzType.comment,
-                                  showToolbar: true,
-                                  onLike:
-                                      (t) =>
-                                          viewModel.toggleLike(),
-                                  onComment: (t) {
-                                    viewModel.clearReplyingTo();
-                                    _replyFocusNode
-                                        .requestFocus();
-                                  },
-                                  onQuote: _handleQuote,
-                                  onBookmark:
-                                      (t) =>
-                                          viewModel
-                                              .toggleBookmark(),
-                                  onDelete:
-                                      (t) => _handleDelete(
-                                        t,
-                                        viewModel,
-                                      ),
-                                  onUserTap:
-                                      () => _navigateToProfile(
-                                        mainTwizz.user,
-                                      ),
+                                              TwizzType.comment
+                                          ? const EdgeInsets.symmetric(
+                                            horizontal: 12,
+                                          )
+                                          : EdgeInsets.zero,
+                                  child: TwizzItem(
+                                    twizz: mainTwizz,
+                                    currentUserId: currentUserId,
+                                    isEmbedded:
+                                        mainTwizz.type ==
+                                        TwizzType.comment,
+                                    isHighlighted:
+                                        mainTwizz.type ==
+                                        TwizzType.comment,
+                                    showToolbar: true,
+                                    onLike:
+                                        (t) =>
+                                            viewModel
+                                                .toggleLike(),
+                                    onComment: (t) {
+                                      viewModel
+                                          .clearReplyingTo();
+                                      _replyFocusNode
+                                          .requestFocus();
+                                    },
+                                    onQuote: _handleQuote,
+                                    onBookmark:
+                                        (t) =>
+                                            viewModel
+                                                .toggleBookmark(),
+                                    onDelete:
+                                        (t) => _handleDelete(
+                                          t,
+                                          viewModel,
+                                        ),
+                                    onUserTap:
+                                        () => _navigateToProfile(
+                                          mainTwizz.user,
+                                        ),
+                                  ),
                                 ),
                                 const Divider(),
                               ],
