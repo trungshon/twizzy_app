@@ -178,6 +178,37 @@ void main() async {
     }
   };
 
+  authViewModel.onConcurrentLogin = () {
+    debugPrint('Concurrent login callback triggered');
+    final context = navigatorKey.currentContext;
+    if (context != null) {
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder:
+            (context) => AlertDialog(
+              title: const Text('Thông báo đăng nhập'),
+              content: const Text(
+                'Tài khoản đang được đăng nhập ở thiết bị khác, vui lòng đăng xuất.',
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                    navigatorKey.currentState
+                        ?.pushNamedAndRemoveUntil(
+                          RouteNames.login,
+                          (route) => false,
+                        );
+                  },
+                  child: const Text('Đồng ý'),
+                ),
+              ],
+            ),
+      );
+    }
+  };
+
   // Link Socket auth errors to token refresh
   socketService.onAuthError = () {
     debugPrint(

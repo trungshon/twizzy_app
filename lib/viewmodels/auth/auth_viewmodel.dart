@@ -14,6 +14,7 @@ class AuthViewModel extends ChangeNotifier {
 
   VoidCallback? onLogout;
   VoidCallback? onBanned;
+  VoidCallback? onConcurrentLogin;
 
   AuthViewModel(this._authService, this._socketService) {
     _initSocketListeners();
@@ -41,6 +42,23 @@ class AuthViewModel extends ChangeNotifier {
       // Refresh token to ensure the new status is encoded in the JWT
       await refreshToken();
     });
+
+    _socketService.on('concurrent_login', (data) {
+      debugPrint('Concurrent login detected from socket...');
+      _handleConcurrentLogin();
+    });
+  }
+
+  void _handleConcurrentLogin() {
+    debugPrint('Forcing logout due to concurrent login...');
+    _error =
+        'Tài khoản đang được đăng nhập ở thiết bị khác, vui lòng đăng xuất';
+    notifyListeners();
+
+    if (onConcurrentLogin != null) {
+      onConcurrentLogin!();
+    }
+    logout();
   }
 
   void _handleBanned() {
