@@ -3,7 +3,10 @@ import '../../../models/report/report_models.dart';
 
 class ReportDialog extends StatefulWidget {
   final String twizzId;
-  final Function(ReportReason reason, String description)
+  final Future<void> Function(
+    ReportReason reason,
+    String description,
+  )
   onReport;
 
   const ReportDialog({
@@ -19,6 +22,7 @@ class ReportDialog extends StatefulWidget {
 class _ReportDialogState extends State<ReportDialog> {
   ReportReason _selectedReason = ReportReason.spam;
   final _descriptionController = TextEditingController();
+  bool _isLoading = false;
 
   @override
   void dispose() {
@@ -47,11 +51,14 @@ class _ReportDialogState extends State<ReportDialog> {
                 title: Text(reason.label),
                 value: reason,
                 groupValue: _selectedReason,
-                onChanged: (value) {
-                  setState(() {
-                    _selectedReason = value!;
-                  });
-                },
+                onChanged:
+                    _isLoading
+                        ? null
+                        : (value) {
+                          setState(() {
+                            _selectedReason = value!;
+                          });
+                        },
                 contentPadding: EdgeInsets.zero,
                 dense: true,
               );
@@ -60,6 +67,7 @@ class _ReportDialogState extends State<ReportDialog> {
               const SizedBox(height: 12),
               TextField(
                 controller: _descriptionController,
+                enabled: !_isLoading,
                 decoration: const InputDecoration(
                   hintText: 'Mô tả chi tiết lý do...',
                   border: OutlineInputBorder(),
@@ -72,21 +80,46 @@ class _ReportDialogState extends State<ReportDialog> {
       ),
       actions: [
         TextButton(
-          onPressed: () => Navigator.pop(context),
+          onPressed:
+              _isLoading ? null : () => Navigator.pop(context),
           child: const Text('Hủy'),
         ),
         ElevatedButton(
-          onPressed: () {
-            widget.onReport(
-              _selectedReason,
-              _descriptionController.text,
-            );
-          },
+          onPressed:
+              _isLoading
+                  ? null
+                  : () async {
+                    setState(() {
+                      _isLoading = true;
+                    });
+                    try {
+                      await widget.onReport(
+                        _selectedReason,
+                        _descriptionController.text,
+                      );
+                    } finally {
+                      if (mounted) {
+                        setState(() {
+                          _isLoading = false;
+                        });
+                      }
+                    }
+                  },
           style: ElevatedButton.styleFrom(
             backgroundColor: theme.colorScheme.error,
             foregroundColor: theme.colorScheme.onError,
           ),
-          child: const Text('Báo cáo'),
+          child:
+              _isLoading
+                  ? const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: Colors.white,
+                    ),
+                  )
+                  : const Text('Báo cáo'),
         ),
       ],
     );

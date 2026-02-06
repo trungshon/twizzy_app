@@ -13,8 +13,46 @@ class AuthViewModel extends ChangeNotifier {
   final AuthService _authService;
 
   VoidCallback? onLogout;
+  VoidCallback? onBanned;
 
-  AuthViewModel(this._authService, this._socketService);
+  AuthViewModel(this._authService, this._socketService) {
+    _initSocketListeners();
+  }
+
+  void _initSocketListeners() {
+    _socketService.on('user_status_changed', (data) async {
+      debugPrint(
+        'User status changed from socket, reloading...',
+      );
+
+      // Check if status is Banned in raw data if available to avoid race with getMe
+      if (data is Map && data['verify'] == 'Banned') {
+        _handleBanned();
+        return;
+      }
+
+      // Reload user info to update status in UI
+      final success = await getMe();
+      if (success && _currentUser?.verify == 'Banned') {
+        _handleBanned();
+        return;
+      }
+
+      // Refresh token to ensure the new status is encoded in the JWT
+      await refreshToken();
+    });
+  }
+
+  void _handleBanned() {
+    debugPrint('User is banned, forcing logout...');
+    _error = 'Tài khoản của bạn đã bị khóa bởi quản trị viên';
+    notifyListeners();
+
+    if (onBanned != null) {
+      onBanned!();
+    }
+    logout();
+  }
 
   // State
   bool _isLoading = false;
@@ -119,6 +157,15 @@ class AuthViewModel extends ChangeNotifier {
 
       // Load user info immediately after login
       await getMe();
+
+      if (_currentUser?.verify == 'Banned') {
+        await logout();
+        _error =
+            'Tài khoản của bạn đã bị khóa bởi quản trị viên';
+        _isLoading = false;
+        notifyListeners();
+        return false;
+      }
 
       debugPrint(
         'Login successful, connecting socket for user...',
@@ -238,6 +285,12 @@ class AuthViewModel extends ChangeNotifier {
     try {
       final response = await _authService.getMe();
       _currentUser = response.result;
+
+      if (_currentUser?.verify == 'Banned') {
+        _handleBanned();
+        return false;
+      }
+
       _accessToken = await _authService.getAccessToken();
       if (_accessToken != null) {
         _socketService.connect(_accessToken!);

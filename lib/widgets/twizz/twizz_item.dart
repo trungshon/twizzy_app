@@ -410,6 +410,7 @@ class TwizzItem extends StatelessWidget {
 
   void _showMoreOptions(BuildContext context, Twizz twizz) {
     final themeData = Theme.of(context);
+    final parentContext = context;
     final isOwner =
         currentUserId != null && currentUserId == twizz.userId;
 
@@ -464,17 +465,16 @@ class TwizzItem extends StatelessWidget {
                   );
                 },
               ),
-              if (!isOwner)
-                ListTile(
-                  leading: const Icon(
-                    Icons.report_problem_outlined,
-                  ),
-                  title: const Text('Báo cáo bài viết'),
-                  onTap: () {
-                    Navigator.pop(context);
-                    _showReportDialog(context);
-                  },
+              ListTile(
+                leading: const Icon(
+                  Icons.report_problem_outlined,
                 ),
+                title: const Text('Báo cáo bài viết'),
+                onTap: () {
+                  Navigator.pop(context);
+                  _showReportDialog(parentContext);
+                },
+              ),
               const SizedBox(height: 8),
             ],
           ),
@@ -516,11 +516,10 @@ class TwizzItem extends StatelessWidget {
   void _showReportDialog(BuildContext context) {
     showDialog(
       context: context,
-      builder: (context) {
+      builder: (dialogContext) {
         return ReportDialog(
           twizzId: twizz.id,
           onReport: (reason, description) async {
-            Navigator.pop(context);
             try {
               final reportService =
                   context.read<ReportService>();
@@ -529,13 +528,28 @@ class TwizzItem extends StatelessWidget {
                 reason: reason,
                 description: description,
               );
+
               if (context.mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text(
-                      'Cảm ơn bạn đã báo cáo. Chúng tôi sẽ xử lý sớm nhất có thể.',
-                    ),
-                  ),
+                // Close report dialog
+                Navigator.pop(dialogContext);
+
+                // Show success dialog
+                showDialog(
+                  context: context,
+                  builder:
+                      (context) => AlertDialog(
+                        title: const Text('Báo cáo thành công'),
+                        content: const Text(
+                          'Cảm ơn bạn đã báo cáo. Chúng tôi sẽ xem xét và xử lý nội dung này sớm nhất có thể.',
+                        ),
+                        actions: [
+                          TextButton(
+                            onPressed:
+                                () => Navigator.pop(context),
+                            child: const Text('Đóng'),
+                          ),
+                        ],
+                      ),
                 );
               }
             } catch (e) {

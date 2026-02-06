@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import '../../models/notification/notification_models.dart';
 import '../../models/auth/auth_models.dart';
-import '../../models/twizz/twizz_models.dart';
 import '../../routes/route_names.dart';
 import '../../views/twizz/twizz_detail_screen.dart';
 import '../../views/chat/chat_detail_screen.dart';

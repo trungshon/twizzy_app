@@ -147,6 +147,37 @@ void main() async {
     ); // Reload or clear notifications
   };
 
+  authViewModel.onBanned = () {
+    debugPrint('User banned callback triggered');
+    final context = navigatorKey.currentContext;
+    if (context != null) {
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder:
+            (context) => AlertDialog(
+              title: const Text('Tài khoản bị khóa'),
+              content: const Text(
+                'Tài khoản của bạn đã bị khóa bởi quản trị viên do vi phạm điều khoản sử dụng.',
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                    navigatorKey.currentState
+                        ?.pushNamedAndRemoveUntil(
+                          RouteNames.login,
+                          (route) => false,
+                        );
+                  },
+                  child: const Text('Đóng'),
+                ),
+              ],
+            ),
+      );
+    }
+  };
+
   // Link Socket auth errors to token refresh
   socketService.onAuthError = () {
     debugPrint(
