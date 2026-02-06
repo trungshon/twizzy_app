@@ -45,6 +45,9 @@ class _SetUsernameScreenState extends State<SetUsernameScreen> {
         authViewModel.currentUser!.username != null) {
       _usernameController.text =
           authViewModel.currentUser!.username!;
+      if (mounted) {
+        setState(() {});
+      }
     }
   }
 

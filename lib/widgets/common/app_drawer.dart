@@ -101,28 +101,30 @@ class AppDrawer extends StatelessWidget {
                               children: [
                                 Row(
                                   children: [
-                                    GestureDetector(
-                                      onTap: () {
-                                        Navigator.of(
-                                          context,
-                                        ).pushNamed(
-                                          RouteNames.myProfile,
-                                        );
-                                      },
-                                      child: Text(
-                                        name,
-                                        style: themeData
-                                            .textTheme
-                                            .titleMedium
-                                            ?.copyWith(
-                                              fontWeight:
-                                                  FontWeight
-                                                      .bold,
-                                            ),
-                                        maxLines: 1,
-                                        overflow:
-                                            TextOverflow
-                                                .ellipsis,
+                                    Flexible(
+                                      child: GestureDetector(
+                                        onTap: () {
+                                          Navigator.of(
+                                            context,
+                                          ).pushNamed(
+                                            RouteNames.myProfile,
+                                          );
+                                        },
+                                        child: Text(
+                                          name,
+                                          style: themeData
+                                              .textTheme
+                                              .titleMedium
+                                              ?.copyWith(
+                                                fontWeight:
+                                                    FontWeight
+                                                        .bold,
+                                              ),
+                                          maxLines: 1,
+                                          overflow:
+                                              TextOverflow
+                                                  .ellipsis,
+                                        ),
                                       ),
                                     ),
                                     if (isVerified) ...[
