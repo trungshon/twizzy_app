@@ -75,6 +75,7 @@ class ApiConstants {
   static const String deleteTwizz = '/twizzs';
   static String getUserTwizzs(String userId) =>
       '/twizzs/users/$userId/twizzs';
+  static String getTwizz(String twizzId) => '/twizzs/$twizzId';
   static String getTwizzChildren(String twizzId) =>
       '/twizzs/$twizzId/children';
 

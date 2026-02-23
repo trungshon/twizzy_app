@@ -201,7 +201,7 @@ class NotificationViewModel extends ChangeNotifier {
           context,
           RouteNames.twizzDetail,
           arguments: TwizzDetailScreenArgs(
-            twizz: notification.twizz!,
+            twizzId: notification.twizz!.id,
           ),
         );
       } else {
@@ -218,7 +218,7 @@ class NotificationViewModel extends ChangeNotifier {
           context,
           RouteNames.twizzDetail,
           arguments: TwizzDetailScreenArgs(
-            twizz: notification.twizz!,
+            twizzId: notification.twizz!.id,
           ),
         );
       } else {

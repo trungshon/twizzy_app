@@ -17,11 +17,11 @@ import '../../widgets/twizz/twizz_text_input_utils.dart';
 import '../../models/auth/auth_models.dart';
 
 class TwizzDetailScreenArgs {
-  final Twizz twizz;
+  final String twizzId;
   final bool focusComment;
 
   TwizzDetailScreenArgs({
-    required this.twizz,
+    required this.twizzId,
     this.focusComment = false,
   });
 }
@@ -59,8 +59,10 @@ class _TwizzDetailScreenState extends State<TwizzDetailScreen> {
     );
     _replyController = HighlightTextController();
     _replyController.addListener(_onTextChanged);
-    _viewModel.setTwizz(widget.args.twizz);
-    _viewModel.loadComments(widget.args.twizz.id, refresh: true);
+
+    // Load fresh detail from API
+    _viewModel.loadTwizzDetail(widget.args.twizzId);
+    _viewModel.loadComments(widget.args.twizzId, refresh: true);
 
     // Auto focus if requested
     if (widget.args.focusComment) {
@@ -203,7 +205,7 @@ class _TwizzDetailScreenState extends State<TwizzDetailScreen> {
 
     // Use replyingTo.id if replying to a comment, otherwise use main twizz id
     final parentId =
-        _viewModel.replyingTo?.id ?? widget.args.twizz.id;
+        _viewModel.replyingTo?.id ?? widget.args.twizzId;
 
     final success = await _viewModel.postComment(
       parentId,
@@ -303,7 +305,9 @@ class _TwizzDetailScreenState extends State<TwizzDetailScreen> {
             Navigator.pushNamed(
               context,
               RouteNames.twizzDetail,
-              arguments: TwizzDetailScreenArgs(twizz: reply),
+              arguments: TwizzDetailScreenArgs(
+                twizzId: reply.id,
+              ),
             );
           },
         ),
@@ -322,7 +326,7 @@ class _TwizzDetailScreenState extends State<TwizzDetailScreen> {
       child: Scaffold(
         appBar: AppBar(
           title: Text(
-            'Chi tiết bài viết',
+            'Chi tiết',
             style: themeData.textTheme.titleMedium?.copyWith(
               fontWeight: FontWeight.bold,
             ),
@@ -344,7 +348,7 @@ class _TwizzDetailScreenState extends State<TwizzDetailScreen> {
                           !viewModel.isLoadingMoreComments &&
                           viewModel.hasMoreComments) {
                         viewModel.loadComments(
-                          widget.args.twizz.id,
+                          widget.args.twizzId,
                         );
                       }
                       return false;
@@ -352,7 +356,7 @@ class _TwizzDetailScreenState extends State<TwizzDetailScreen> {
                     child: RefreshIndicator(
                       onRefresh:
                           () => viewModel.loadComments(
-                            widget.args.twizz.id,
+                            widget.args.twizzId,
                             refresh: true,
                           ),
                       child: ListView.builder(
@@ -362,9 +366,18 @@ class _TwizzDetailScreenState extends State<TwizzDetailScreen> {
                         itemBuilder: (context, index) {
                           if (index == 0) {
                             // Main Twizz Post
-                            final mainTwizz =
-                                viewModel.twizz ??
-                                widget.args.twizz;
+                            final mainTwizz = viewModel.twizz;
+
+                            if (mainTwizz == null) {
+                              return const SizedBox(
+                                height: 200,
+                                child: Center(
+                                  child:
+                                      CircularProgressIndicator(),
+                                ),
+                              );
+                            }
+
                             final hasParent =
                                 mainTwizz.type ==
                                     TwizzType.comment &&
@@ -412,9 +425,10 @@ class _TwizzDetailScreenState extends State<TwizzDetailScreen> {
                                         RouteNames.twizzDetail,
                                         arguments:
                                             TwizzDetailScreenArgs(
-                                              twizz:
+                                              twizzId:
                                                   mainTwizz
-                                                      .parentTwizz!,
+                                                      .parentTwizz!
+                                                      .id,
                                             ),
                                       );
                                     },
@@ -566,7 +580,7 @@ class _TwizzDetailScreenState extends State<TwizzDetailScreen> {
                                     RouteNames.twizzDetail,
                                     arguments:
                                         TwizzDetailScreenArgs(
-                                          twizz: comment,
+                                          twizzId: comment.id,
                                         ),
                                   );
                                 },
@@ -619,7 +633,8 @@ class _TwizzDetailScreenState extends State<TwizzDetailScreen> {
                                         RouteNames.twizzDetail,
                                         arguments:
                                             TwizzDetailScreenArgs(
-                                              twizz: comment,
+                                              twizzId:
+                                                  comment.id,
                                             ),
                                       );
                                     },

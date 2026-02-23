@@ -269,6 +269,26 @@ class Twizz {
   }
 }
 
+/// Get Twizz Response
+class GetTwizzResponse {
+  final String message;
+  final Twizz result;
+
+  GetTwizzResponse({
+    required this.message,
+    required this.result,
+  });
+
+  factory GetTwizzResponse.fromJson(Map<String, dynamic> json) {
+    return GetTwizzResponse(
+      message: json['message'] as String? ?? '',
+      result: Twizz.fromJson(
+        json['result'] as Map<String, dynamic>,
+      ),
+    );
+  }
+}
+
 /// Create Twizz Response
 class CreateTwizzResponse {
   final String message;

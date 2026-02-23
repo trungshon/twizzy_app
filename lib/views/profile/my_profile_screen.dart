@@ -737,7 +737,9 @@ class _MyProfileScreenState extends State<MyProfileScreen>
             Navigator.pushNamed(
               context,
               RouteNames.twizzDetail,
-              arguments: TwizzDetailScreenArgs(twizz: twizz),
+              arguments: TwizzDetailScreenArgs(
+                twizzId: twizz.id,
+              ),
             );
           },
           onLoadMore:
@@ -765,7 +767,8 @@ class _MyProfileScreenState extends State<MyProfileScreen>
               context,
               RouteNames.twizzDetail,
               arguments: TwizzDetailScreenArgs(
-                twizz: twizz,
+                twizzId: twizz.id,
+
                 focusComment: true,
               ),
             );
@@ -849,7 +852,9 @@ class _MyProfileScreenState extends State<MyProfileScreen>
             Navigator.pushNamed(
               context,
               RouteNames.twizzDetail,
-              arguments: TwizzDetailScreenArgs(twizz: twizz),
+              arguments: TwizzDetailScreenArgs(
+                twizzId: twizz.id,
+              ),
             );
           },
           onLoadMore:
@@ -877,7 +882,8 @@ class _MyProfileScreenState extends State<MyProfileScreen>
               context,
               RouteNames.twizzDetail,
               arguments: TwizzDetailScreenArgs(
-                twizz: twizz,
+                twizzId: twizz.id,
+
                 focusComment: true,
               ),
             );
@@ -961,7 +967,9 @@ class _MyProfileScreenState extends State<MyProfileScreen>
             Navigator.pushNamed(
               context,
               RouteNames.twizzDetail,
-              arguments: TwizzDetailScreenArgs(twizz: twizz),
+              arguments: TwizzDetailScreenArgs(
+                twizzId: twizz.id,
+              ),
             );
           },
           onLoadMore:
@@ -1063,7 +1071,9 @@ class _MyProfileScreenState extends State<MyProfileScreen>
             Navigator.pushNamed(
               context,
               RouteNames.twizzDetail,
-              arguments: TwizzDetailScreenArgs(twizz: twizz),
+              arguments: TwizzDetailScreenArgs(
+                twizzId: twizz.id,
+              ),
             );
           },
           onLoadMore:

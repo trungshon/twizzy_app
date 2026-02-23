@@ -87,7 +87,9 @@ class FollowingTabState extends State<FollowingTab> {
             Navigator.pushNamed(
               context,
               RouteNames.twizzDetail,
-              arguments: TwizzDetailScreenArgs(twizz: twizz),
+              arguments: TwizzDetailScreenArgs(
+                twizzId: twizz.id,
+              ),
             );
           },
           onUserTap: (twizz) {
@@ -114,7 +116,7 @@ class FollowingTabState extends State<FollowingTab> {
               context,
               RouteNames.twizzDetail,
               arguments: TwizzDetailScreenArgs(
-                twizz: twizz,
+                twizzId: twizz.id,
                 focusComment: true,
               ),
             );

@@ -325,7 +325,7 @@ class _SearchContentState extends State<SearchContent>
             context,
             RouteNames.twizzDetail,
             arguments: TwizzDetailScreenArgs(
-              twizz: t,
+              twizzId: t.id,
               focusComment: true,
             ),
           ),
@@ -340,7 +340,7 @@ class _SearchContentState extends State<SearchContent>
           (t) => Navigator.pushNamed(
             context,
             RouteNames.twizzDetail,
-            arguments: TwizzDetailScreenArgs(twizz: t),
+            arguments: TwizzDetailScreenArgs(twizzId: t.id),
           ),
       onUserTap:
           (t) =>

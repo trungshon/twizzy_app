@@ -12,6 +12,24 @@ class TwizzService {
 
   TwizzService(this._apiClient);
 
+  /// Get a single Twizz by ID
+  Future<GetTwizzResponse> getTwizz(String twizzId) async {
+    try {
+      final response = await _apiClient.get(
+        ApiConstants.getTwizz(twizzId),
+        includeAuth: true,
+      );
+      return GetTwizzResponse.fromJson(response);
+    } catch (e) {
+      if (e is ApiErrorResponse) {
+        rethrow;
+      }
+      throw ApiErrorResponse(
+        message: 'Lỗi tải chi tiết bài viết: ${e.toString()}',
+      );
+    }
+  }
+
   /// Get NewFeeds
   Future<NewFeedsResponse> getNewFeeds({
     int limit = 10,

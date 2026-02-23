@@ -783,7 +783,9 @@ class _UserProfileViewState extends State<_UserProfileView>
             Navigator.pushNamed(
               context,
               RouteNames.twizzDetail,
-              arguments: TwizzDetailScreenArgs(twizz: twizz),
+              arguments: TwizzDetailScreenArgs(
+                twizzId: twizz.id,
+              ),
             );
           },
           onLoadMore:
@@ -809,7 +811,7 @@ class _UserProfileViewState extends State<_UserProfileView>
               context,
               RouteNames.twizzDetail,
               arguments: TwizzDetailScreenArgs(
-                twizz: twizz,
+                twizzId: twizz.id,
                 focusComment: true,
               ),
             );
@@ -890,7 +892,9 @@ class _UserProfileViewState extends State<_UserProfileView>
             Navigator.pushNamed(
               context,
               RouteNames.twizzDetail,
-              arguments: TwizzDetailScreenArgs(twizz: twizz),
+              arguments: TwizzDetailScreenArgs(
+                twizzId: twizz.id,
+              ),
             );
           },
           onLoadMore:
@@ -916,7 +920,7 @@ class _UserProfileViewState extends State<_UserProfileView>
               context,
               RouteNames.twizzDetail,
               arguments: TwizzDetailScreenArgs(
-                twizz: twizz,
+                twizzId: twizz.id,
                 focusComment: true,
               ),
             );

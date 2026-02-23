@@ -201,7 +201,7 @@ class _TwizzInteractionScreenState
                       context,
                       RouteNames.twizzDetail,
                       arguments: TwizzDetailScreenArgs(
-                        twizz: twizz,
+                        twizzId: twizz.id,
                         focusComment: true,
                       ),
                     );
@@ -211,7 +211,7 @@ class _TwizzInteractionScreenState
                       context,
                       RouteNames.twizzDetail,
                       arguments: TwizzDetailScreenArgs(
-                        twizz: twizz,
+                        twizzId: twizz.id,
                       ),
                     );
                   },

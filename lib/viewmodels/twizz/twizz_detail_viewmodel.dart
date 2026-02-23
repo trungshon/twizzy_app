@@ -275,7 +275,8 @@ class TwizzDetailViewModel extends ChangeNotifier {
     notifyListeners();
 
     try {
-      // Assuming getTwizzDetail exists or will be added if needed.
+      final response = await _twizzService.getTwizz(twizzId);
+      _twizz = response.result;
     } catch (e) {
       _error = e.toString();
     } finally {

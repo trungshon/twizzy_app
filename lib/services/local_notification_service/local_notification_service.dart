@@ -229,7 +229,7 @@ class LocalNotificationService {
         navigatorKey.currentState?.pushNamed(
           RouteNames.twizzDetail,
           arguments: TwizzDetailScreenArgs(
-            twizz: notification.twizz!,
+            twizzId: notification.twizz!.id,
           ),
         );
       }
@@ -238,7 +238,7 @@ class LocalNotificationService {
       navigatorKey.currentState?.pushNamed(
         RouteNames.twizzDetail,
         arguments: TwizzDetailScreenArgs(
-          twizz: notification.twizz!,
+          twizzId: notification.twizz!.id,
         ),
       );
     }
