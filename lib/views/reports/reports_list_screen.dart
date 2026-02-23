@@ -229,22 +229,102 @@ class _ReportsListScreenState extends State<ReportsListScreen>
                 mainAxisAlignment:
                     MainAxisAlignment.spaceBetween,
                 children: [
-                  Row(
-                    children: [
-                      Icon(
-                        Icons.report_outlined,
-                        size: 18,
-                        color: themeData.colorScheme.error,
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        report.reason.label,
-                        style: themeData.textTheme.titleSmall
-                            ?.copyWith(
-                              fontWeight: FontWeight.bold,
+                  Expanded(
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.report_outlined,
+                          size: 18,
+                          color: themeData.colorScheme.error,
+                        ),
+                        const SizedBox(width: 8),
+                        Flexible(
+                          child: InkWell(
+                            onTap: () {
+                              showDialog(
+                                context: context,
+                                builder:
+                                    (context) => AlertDialog(
+                                      title: const Text(
+                                        'Lý do báo cáo',
+                                      ),
+                                      content: Column(
+                                        mainAxisSize:
+                                            MainAxisSize.min,
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment
+                                                .start,
+                                        children: [
+                                          const Text(
+                                            'Danh sách lý do đã được báo cáo:',
+                                            style: TextStyle(
+                                              fontWeight:
+                                                  FontWeight
+                                                      .bold,
+                                              fontSize: 14,
+                                            ),
+                                          ),
+                                          const SizedBox(
+                                            height: 12,
+                                          ),
+                                          ...report.reasons.map(
+                                            (r) => Padding(
+                                              padding:
+                                                  const EdgeInsets.only(
+                                                    bottom: 4,
+                                                  ),
+                                              child: Row(
+                                                children: [
+                                                  Icon(
+                                                    Icons
+                                                        .check_circle_outline,
+                                                    size: 16,
+                                                    color:
+                                                        themeData
+                                                            .colorScheme
+                                                            .error,
+                                                  ),
+                                                  const SizedBox(
+                                                    width: 8,
+                                                  ),
+                                                  Text(r.label),
+                                                ],
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                      actions: [
+                                        TextButton(
+                                          onPressed:
+                                              () =>
+                                                  Navigator.pop(
+                                                    context,
+                                                  ),
+                                          child: const Text(
+                                            'Đóng',
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                              );
+                            },
+                            child: Text(
+                              report.reasons
+                                  .map((r) => r.label)
+                                  .join(', '),
+                              style: themeData
+                                  .textTheme
+                                  .titleSmall
+                                  ?.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                              overflow: TextOverflow.ellipsis,
                             ),
-                      ),
-                    ],
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                   _buildStatusBadge(report.status),
                 ],
@@ -252,12 +332,47 @@ class _ReportsListScreenState extends State<ReportsListScreen>
               const SizedBox(height: 8),
               // Reporter info (for reports against me)
               if (showReporter && report.reporter != null) ...[
-                Text(
-                  'Người báo cáo: ${report.reporter!.name}',
-                  style: themeData.textTheme.bodySmall?.copyWith(
-                    color: themeData.colorScheme.onSurface
-                        .withValues(alpha: 0.7),
-                  ),
+                Row(
+                  children: [
+                    Text(
+                      'Người báo cáo: ${report.reporter!.name}',
+                      style: themeData.textTheme.bodySmall
+                          ?.copyWith(
+                            color: themeData
+                                .colorScheme
+                                .onSurface
+                                .withValues(alpha: 0.7),
+                          ),
+                    ),
+                    if (report.userIds.length > 1) ...[
+                      const SizedBox(width: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 6,
+                          vertical: 2,
+                        ),
+                        decoration: BoxDecoration(
+                          color:
+                              themeData
+                                  .colorScheme
+                                  .errorContainer,
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: Text(
+                          '+${report.userIds.length - 1} khác',
+                          style: themeData.textTheme.labelSmall
+                              ?.copyWith(
+                                color:
+                                    themeData
+                                        .colorScheme
+                                        .onErrorContainer,
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold,
+                              ),
+                        ),
+                      ),
+                    ],
+                  ],
                 ),
                 const SizedBox(height: 4),
               ],
@@ -271,11 +386,11 @@ class _ReportsListScreenState extends State<ReportsListScreen>
                       .withValues(alpha: 0.5),
                 ),
               ),
-              // Description
-              if (report.description.isNotEmpty) ...[
+              // Descriptions
+              if (report.descriptions.isNotEmpty) ...[
                 const SizedBox(height: 8),
                 Text(
-                  report.description,
+                  report.descriptions.join('\n'),
                   style: themeData.textTheme.bodyMedium,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,

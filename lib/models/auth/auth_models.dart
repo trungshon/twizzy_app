@@ -283,6 +283,9 @@ class ApiErrorResponse {
     return errors?[fieldName]?.msg;
   }
 
+  @override
+  String toString() => message;
+
   /// Check if there are validation errors
   bool hasValidationErrors() {
     return errors != null && errors!.isNotEmpty;

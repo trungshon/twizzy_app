@@ -50,16 +50,93 @@ class ReportDetailScreen extends StatelessWidget {
                             ),
                             const SizedBox(width: 8),
                             Flexible(
-                              child: Text(
-                                report.reason.label,
-                                style: themeData
-                                    .textTheme
-                                    .titleMedium
-                                    ?.copyWith(
-                                      fontWeight:
-                                          FontWeight.bold,
-                                    ),
-                                overflow: TextOverflow.ellipsis,
+                              child: InkWell(
+                                onTap: () {
+                                  showDialog(
+                                    context: context,
+                                    builder:
+                                        (context) => AlertDialog(
+                                          title: const Text(
+                                            'Lý do báo cáo',
+                                          ),
+                                          content: Column(
+                                            mainAxisSize:
+                                                MainAxisSize.min,
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment
+                                                    .start,
+                                            children: [
+                                              const Text(
+                                                'Danh sách lý do đã được báo cáo:',
+                                                style: TextStyle(
+                                                  fontWeight:
+                                                      FontWeight
+                                                          .bold,
+                                                  fontSize: 14,
+                                                ),
+                                              ),
+                                              const SizedBox(
+                                                height: 12,
+                                              ),
+                                              ...report.reasons.map(
+                                                (r) => Padding(
+                                                  padding:
+                                                      const EdgeInsets.only(
+                                                        bottom:
+                                                            4,
+                                                      ),
+                                                  child: Row(
+                                                    children: [
+                                                      Icon(
+                                                        Icons
+                                                            .check_circle_outline,
+                                                        size: 16,
+                                                        color:
+                                                            themeData
+                                                                .colorScheme
+                                                                .error,
+                                                      ),
+                                                      const SizedBox(
+                                                        width: 8,
+                                                      ),
+                                                      Text(
+                                                        r.label,
+                                                      ),
+                                                    ],
+                                                  ),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                          actions: [
+                                            TextButton(
+                                              onPressed:
+                                                  () =>
+                                                      Navigator.pop(
+                                                        context,
+                                                      ),
+                                              child: const Text(
+                                                'Đóng',
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                  );
+                                },
+                                child: Text(
+                                  report.reasons
+                                      .map((r) => r.label)
+                                      .join(', '),
+                                  style: themeData
+                                      .textTheme
+                                      .titleMedium
+                                      ?.copyWith(
+                                        fontWeight:
+                                            FontWeight.bold,
+                                      ),
+                                  overflow:
+                                      TextOverflow.ellipsis,
+                                ),
                               ),
                             ),
                           ],
@@ -84,34 +161,73 @@ class ReportDetailScreen extends StatelessWidget {
 
                   // Reporter info (if available)
                   if (report.reporter != null) ...[
-                    _buildInfoRow(
-                      context,
-                      icon: Icons.person_outline,
-                      label: 'Người báo cáo',
-                      value:
-                          '${report.reporter!.name} (@${report.reporter!.username})',
-                      onTap: () {
-                        if (report.reporter!.id ==
-                            currentUserId) {
-                          Navigator.pushNamed(
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _buildInfoRow(
                             context,
-                            RouteNames.myProfile,
-                          );
-                        } else if (report.reporter!.username !=
-                            null) {
-                          Navigator.pushNamed(
-                            context,
-                            RouteNames.userProfile,
-                            arguments: report.reporter!.username,
-                          );
-                        }
-                      },
+                            icon: Icons.person_outline,
+                            label: 'Người báo cáo',
+                            value:
+                                '${report.reporter!.name} (@${report.reporter!.username})',
+                            onTap: () {
+                              if (report.reporter!.id ==
+                                  currentUserId) {
+                                Navigator.pushNamed(
+                                  context,
+                                  RouteNames.myProfile,
+                                );
+                              } else if (report
+                                      .reporter!
+                                      .username !=
+                                  null) {
+                                Navigator.pushNamed(
+                                  context,
+                                  RouteNames.userProfile,
+                                  arguments:
+                                      report.reporter!.username,
+                                );
+                              }
+                            },
+                          ),
+                        ),
+                        if (report.userIds.length > 1) ...[
+                          const SizedBox(width: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 4,
+                            ),
+                            decoration: BoxDecoration(
+                              color:
+                                  themeData
+                                      .colorScheme
+                                      .errorContainer,
+                              borderRadius:
+                                  BorderRadius.circular(8),
+                            ),
+                            child: Text(
+                              '${report.userIds.length} người báo cáo',
+                              style: themeData
+                                  .textTheme
+                                  .labelSmall
+                                  ?.copyWith(
+                                    color:
+                                        themeData
+                                            .colorScheme
+                                            .onErrorContainer,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                            ),
+                          ),
+                        ],
+                      ],
                     ),
                     const SizedBox(height: 8),
                   ],
 
-                  // Description
-                  if (report.description.isNotEmpty) ...[
+                  // Descriptions
+                  if (report.descriptions.isNotEmpty) ...[
                     const SizedBox(height: 8),
                     Text(
                       'Mô tả:',
@@ -133,7 +249,7 @@ class ReportDetailScreen extends StatelessWidget {
                         ),
                       ),
                       child: Text(
-                        report.description,
+                        report.descriptions.join('\n\n'),
                         style: themeData.textTheme.bodyMedium,
                       ),
                     ),

@@ -102,10 +102,10 @@ extension ReportStatusExtension on ReportStatus {
 
 class Report {
   final String id;
-  final String userId;
+  final List<String> userIds;
   final String twizzId;
-  final ReportReason reason;
-  final String description;
+  final List<ReportReason> reasons;
+  final List<String> descriptions;
   final ReportStatus status;
   final String? action;
   final DateTime createdAt;
@@ -114,16 +114,18 @@ class Report {
 
   Report({
     required this.id,
-    required this.userId,
+    required this.userIds,
     required this.twizzId,
-    required this.reason,
-    required this.description,
+    required this.reasons,
+    required this.descriptions,
     required this.status,
     this.action,
     required this.createdAt,
     this.twizz,
     this.reporter,
   });
+
+  int get reporterCount => userIds.length;
 
   factory Report.fromJson(Map<String, dynamic> json) {
     // Helper to extract string from ObjectId or plain string
@@ -134,6 +136,49 @@ class Report {
         return value['\$oid'] as String;
       }
       return value.toString();
+    }
+
+    // Helper to extract list of strings from list of ObjectIds or plain strings
+    List<String> extractIds(dynamic value) {
+      if (value == null) return [];
+      if (value is List) {
+        return value.map((v) => extractId(v)).toList();
+      }
+      return [extractId(value)];
+    }
+
+    // New helper to extract reasons
+    List<ReportReason> extractReasons(
+      Map<String, dynamic> json,
+    ) {
+      if (json['reasons'] != null && json['reasons'] is List) {
+        return (json['reasons'] as List)
+            .map(
+              (v) => ReportReasonExtension.fromValue(v as int),
+            )
+            .toList();
+      }
+      if (json['reason'] != null) {
+        return [
+          ReportReasonExtension.fromValue(json['reason'] as int),
+        ];
+      }
+      return [ReportReason.other];
+    }
+
+    // New helper to extract descriptions
+    List<String> extractDescriptions(Map<String, dynamic> json) {
+      if (json['descriptions'] != null &&
+          json['descriptions'] is List) {
+        return (json['descriptions'] as List)
+            .map((v) => v.toString())
+            .toList();
+      }
+      if (json['description'] != null &&
+          json['description'].toString().isNotEmpty) {
+        return [json['description'].toString()];
+      }
+      return [];
     }
 
     // Helper to parse date
@@ -160,12 +205,10 @@ class Report {
 
     return Report(
       id: extractId(json['_id']),
-      userId: extractId(json['user_id']),
+      userIds: extractIds(json['user_ids'] ?? json['user_id']),
       twizzId: extractId(json['twizz_id']),
-      reason: ReportReasonExtension.fromValue(
-        json['reason'] as int? ?? 5,
-      ),
-      description: json['description'] as String? ?? '',
+      reasons: extractReasons(json),
+      descriptions: extractDescriptions(json),
       status: ReportStatusExtension.fromValue(
         json['status'] as int? ?? 0,
       ),
@@ -189,10 +232,10 @@ class Report {
   Map<String, dynamic> toJson() {
     return {
       '_id': id,
-      'user_id': userId,
+      'user_ids': userIds,
       'twizz_id': twizzId,
-      'reason': reason.value,
-      'description': description,
+      'reasons': reasons.map((r) => r.value).toList(),
+      'descriptions': descriptions,
       'status': status.value,
       'action': action,
       'created_at': createdAt.toIso8601String(),

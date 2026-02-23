@@ -10,6 +10,8 @@ import '../../views/twizz/twizz_detail_screen.dart';
 import '../common/twizz_video_player.dart';
 import 'report_dialog.dart';
 import '../../services/report_service/report_service.dart';
+import '../../core/utils/snackbar_utils.dart';
+import '../../models/auth/auth_models.dart';
 
 /// TwizzItem Widget
 ///
@@ -552,11 +554,15 @@ class TwizzItem extends StatelessWidget {
               }
             } catch (e) {
               if (context.mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text('Lỗi: ${e.toString()}'),
-                  ),
-                );
+                Navigator.pop(dialogContext);
+                if (e is ApiErrorResponse) {
+                  SnackBarUtils.showApiError(context, error: e);
+                } else {
+                  SnackBarUtils.showError(
+                    context,
+                    message: e.toString(),
+                  );
+                }
               }
             }
           },
