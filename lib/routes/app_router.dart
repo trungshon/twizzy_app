@@ -22,7 +22,6 @@ import '../views/twizz/twizz_interaction_screen.dart';
 import '../views/twizz/twizz_detail_screen.dart';
 import '../views/chat/chat_detail_screen.dart';
 import '../views/chat/new_message_screen.dart';
-import '../views/test/video_test_screen.dart';
 import '../views/reports/reports_list_screen.dart';
 import '../views/reports/report_detail_screen.dart';
 
@@ -203,10 +202,6 @@ class AppRouter {
         }
         return _errorRoute('Invalid args for TwizzDetailScreen');
 
-      case RouteNames.videoTest:
-        return MaterialPageRoute(
-          builder: (_) => const VideoTestScreen(),
-        );
 
       case RouteNames.chatDetail:
         if (args is ChatDetailScreenArgs) {

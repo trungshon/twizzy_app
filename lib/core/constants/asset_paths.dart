@@ -24,10 +24,8 @@ class AssetPaths {
       'assets/images/placeholder_image.png';
 
   // Icons
-  // Thêm custom icons ở đây nếu có
+
   static const String googleIcon = 'assets/icons/google.png';
   static const String addMail = 'assets/icons/icon_add_mail.png';
 
-  // Fonts
-  // Thêm font paths ở đây nếu có custom fonts
 }

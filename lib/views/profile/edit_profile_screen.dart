@@ -1,12 +1,17 @@
 import 'dart:io';
+import 'dart:async';
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:http/http.dart' as http;
 import '../../core/utils/snackbar_utils.dart';
 import '../../viewmodels/auth/auth_viewmodel.dart';
 import '../../viewmodels/profile/edit_profile_viewmodel.dart';
 import '../../viewmodels/newsfeed/newsfeed_viewmodel.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:geocoding/geocoding.dart';
 import '../../models/auth/auth_models.dart';
 
 /// Edit Profile Screen
@@ -27,6 +32,12 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   late TextEditingController _websiteController;
   late TextEditingController _usernameController;
   final ImagePicker _imagePicker = ImagePicker();
+
+  // Location search state
+  List<dynamic> _locationSuggestions = [];
+  Timer? _debounceTimer;
+  bool _isSearchingLocation = false;
+  StateSetter? _dialogSetState; // To refresh dialog UI
 
   @override
   void initState() {
@@ -54,6 +65,178 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     });
   }
 
+  Future<void> _getCurrentLocation() async {
+    final editProfileViewModel =
+        context.read<EditProfileViewModel>();
+
+    try {
+      // 1. Check if location services are enabled
+      bool serviceEnabled =
+          await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) {
+        if (mounted) {
+          SnackBarUtils.showWarning(
+            context,
+            message: 'Vui lòng bật dịch vụ vị trí trên thiết bị',
+          );
+        }
+        return;
+      }
+
+      // 2. Check and request permissions
+      LocationPermission permission =
+          await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+        if (permission == LocationPermission.denied) {
+          if (mounted) {
+            SnackBarUtils.showWarning(
+              context,
+              message: 'Quyền vị trí bị từ chối',
+            );
+          }
+          return;
+        }
+      }
+
+      if (permission == LocationPermission.deniedForever) {
+        if (mounted) {
+          SnackBarUtils.showWarning(
+            context,
+            message:
+                'Quyền vị trí bị từ chối vĩnh viễn, vui lòng cài đặt lại',
+          );
+        }
+        return;
+      }
+
+      // 3. Get current position
+      if (mounted) {
+        SnackBarUtils.showInfo(
+          context,
+          message: 'Đang lấy vị trí...',
+        );
+      }
+
+      Position position = await Geolocator.getCurrentPosition(
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.high,
+          timeLimit: Duration(seconds: 10),
+        ),
+      );
+
+      // 4. Get address from coordinates
+      String? locationStr;
+      try {
+        List<Placemark> placemarks =
+            await placemarkFromCoordinates(
+              position.latitude,
+              position.longitude,
+            );
+
+        if (placemarks.isNotEmpty) {
+          Placemark place = placemarks[0];
+          // Format: City, Country
+          String cityStr = '';
+          if (place.locality != null &&
+              place.locality!.isNotEmpty) {
+            cityStr = place.locality!;
+          } else if (place.subAdministrativeArea != null &&
+              place.subAdministrativeArea!.isNotEmpty) {
+            cityStr = place.subAdministrativeArea!;
+          }
+
+          if (place.country != null &&
+              place.country!.isNotEmpty) {
+            locationStr =
+                cityStr.isEmpty
+                    ? place.country!
+                    : '$cityStr, ${place.country}';
+          } else {
+            locationStr = cityStr;
+          }
+        }
+      } catch (e) {
+        debugPrint(
+          'System geocoding failed, trying fallback: $e',
+        );
+        // Fallback to Nominatim
+        locationStr = await _reverseGeocodeNominatim(
+          position.latitude,
+          position.longitude,
+        );
+      }
+
+      if (locationStr != null && locationStr.isNotEmpty) {
+        if (mounted) {
+          _locationController.text = locationStr;
+          editProfileViewModel.updateLocation(locationStr);
+          SnackBarUtils.showSuccess(
+            context,
+            message: 'Đã nhận diện: $locationStr',
+          );
+        }
+      } else {
+        if (mounted) {
+          SnackBarUtils.showError(
+            context,
+            message: 'Không thể xác định địa chỉ từ tọa độ này',
+          );
+        }
+      }
+    } catch (e) {
+      debugPrint('Location error: $e');
+      if (mounted) {
+        SnackBarUtils.showError(
+          context,
+          message: 'Không thể lấy vị trí: ${e.toString()}',
+        );
+      }
+    }
+  }
+
+  Future<String?> _reverseGeocodeNominatim(
+    double lat,
+    double lon,
+  ) async {
+    try {
+      final response = await http.get(
+        Uri.parse(
+          'https://nominatim.openstreetmap.org/reverse?lat=$lat&lon=$lon&format=json&addressdetails=1',
+        ),
+        headers: {'User-Agent': 'TwizzyApp'},
+      );
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> data = jsonDecode(
+          response.body,
+        );
+        final address = data['address'] as Map<String, dynamic>?;
+        if (address != null) {
+          String city =
+              address['city'] ??
+              address['town'] ??
+              address['village'] ??
+              address['suburb'] ??
+              '';
+          String country = address['country'] ?? '';
+
+          if (city.isNotEmpty && country.isNotEmpty) {
+            return '$city, $country';
+          } else if (city.isNotEmpty) {
+            return city;
+          } else if (country.isNotEmpty) {
+            return country;
+          }
+          return data['display_name']; // Fallback to full display name
+        }
+      }
+    } catch (e) {
+      debugPrint('Nominatim reverse geocode error: $e');
+    }
+    return null;
+  }
+
   @override
   void dispose() {
     _nameController.dispose();
@@ -62,6 +245,59 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     _websiteController.dispose();
     _usernameController.dispose();
     super.dispose();
+  }
+
+  void _onLocationChanged(String query) {
+    if (_debounceTimer?.isActive ?? false)
+      _debounceTimer!.cancel();
+    _debounceTimer = Timer(
+      const Duration(milliseconds: 500),
+      () {
+        if (query.trim().length > 2) {
+          _searchLocation(query);
+        } else {
+          if (_dialogSetState != null) {
+            _dialogSetState!(() {
+              _locationSuggestions = [];
+            });
+          }
+        }
+      },
+    );
+  }
+
+  Future<void> _searchLocation(String query) async {
+    if (_dialogSetState != null) {
+      _dialogSetState!(() {
+        _isSearchingLocation = true;
+      });
+    }
+
+    try {
+      final response = await http.get(
+        Uri.parse(
+          'https://nominatim.openstreetmap.org/search?q=${Uri.encodeComponent(query)}&format=json&addressdetails=1&limit=5',
+        ),
+        headers: {'User-Agent': 'TwizzyApp'},
+      );
+
+      if (response.statusCode == 200) {
+        final List<dynamic> data = jsonDecode(response.body);
+        if (_dialogSetState != null) {
+          _dialogSetState!(() {
+            _locationSuggestions = data;
+          });
+        }
+      }
+    } catch (e) {
+      debugPrint('Location search error: $e');
+    } finally {
+      if (_dialogSetState != null) {
+        _dialogSetState!(() {
+          _isSearchingLocation = false;
+        });
+      }
+    }
   }
 
   String _formatDate(DateTime? date) {
@@ -384,52 +620,175 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                               '',
                           hintText: 'Thêm vị trí của bạn',
                           onTap: () {
-                            // TODO: Implement location picker
+                            _locationSuggestions = [];
                             showDialog(
                               context: context,
                               builder:
-                                  (context) => AlertDialog(
-                                    title: const Text(
-                                      'Chọn vị trí',
-                                    ),
-                                    content: TextField(
-                                      controller:
-                                          _locationController,
-                                      decoration:
-                                          const InputDecoration(
-                                            hintText:
-                                                'Nhập vị trí',
-                                          ),
-                                      onChanged: (value) {
-                                        editProfileViewModel
-                                            .updateLocation(
-                                              value,
-                                            );
-                                      },
-                                    ),
-                                    actions: [
-                                      TextButton(
-                                        onPressed:
-                                            () => Navigator.pop(
-                                              context,
-                                            ),
-                                        child: const Text('Hủy'),
-                                      ),
-                                      TextButton(
-                                        onPressed: () {
-                                          editProfileViewModel
-                                              .updateLocation(
-                                                _locationController
-                                                    .text,
-                                              );
-                                          Navigator.pop(context);
-                                        },
-                                        child: const Text(
-                                          'Xong',
+                                  (
+                                    dialogContext,
+                                  ) => StatefulBuilder(
+                                    builder: (
+                                      context,
+                                      setDialogState,
+                                    ) {
+                                      _dialogSetState =
+                                          setDialogState;
+                                      return AlertDialog(
+                                        title: const Text(
+                                          'Chọn vị trí',
                                         ),
-                                      ),
-                                    ],
+                                        content: SizedBox(
+                                          width:
+                                              double.maxFinite,
+                                          child: Column(
+                                            mainAxisSize:
+                                                MainAxisSize.min,
+                                            children: [
+                                              TextField(
+                                                controller:
+                                                    _locationController,
+                                                decoration: InputDecoration(
+                                                  hintText:
+                                                      'Nhập vị trí',
+                                                  prefixIcon:
+                                                      const Icon(
+                                                        Icons
+                                                            .location_on,
+                                                      ),
+                                                  suffixIcon:
+                                                      _isSearchingLocation
+                                                          ? const SizedBox(
+                                                            width:
+                                                                20,
+                                                            height:
+                                                                20,
+                                                            child: Padding(
+                                                              padding: EdgeInsets.all(
+                                                                12.0,
+                                                              ),
+                                                              child: CircularProgressIndicator(
+                                                                strokeWidth:
+                                                                    2,
+                                                              ),
+                                                            ),
+                                                          )
+                                                          : null,
+                                                ),
+                                                onChanged:
+                                                    _onLocationChanged,
+                                              ),
+                                              if (_locationSuggestions
+                                                  .isNotEmpty)
+                                                Container(
+                                                  constraints:
+                                                      const BoxConstraints(
+                                                        maxHeight:
+                                                            200,
+                                                      ),
+                                                  child: ListView.builder(
+                                                    shrinkWrap:
+                                                        true,
+                                                    itemCount:
+                                                        _locationSuggestions
+                                                            .length,
+                                                    itemBuilder: (
+                                                      context,
+                                                      index,
+                                                    ) {
+                                                      final suggestion =
+                                                          _locationSuggestions[index];
+                                                      return ListTile(
+                                                        dense:
+                                                            true,
+                                                        title: Text(
+                                                          suggestion['display_name'],
+                                                          maxLines:
+                                                              2,
+                                                          overflow:
+                                                              TextOverflow.ellipsis,
+                                                          style: const TextStyle(
+                                                            fontSize:
+                                                                13,
+                                                          ),
+                                                        ),
+                                                        onTap: () {
+                                                          _locationController.text =
+                                                              suggestion['display_name'];
+                                                          editProfileViewModel.updateLocation(
+                                                            _locationController
+                                                                .text,
+                                                          );
+                                                          setDialogState(() {
+                                                            _locationSuggestions =
+                                                                [];
+                                                          });
+                                                        },
+                                                      );
+                                                    },
+                                                  ),
+                                                ),
+                                              const SizedBox(
+                                                height: 16,
+                                              ),
+                                              SizedBox(
+                                                width:
+                                                    double
+                                                        .infinity,
+                                                child: OutlinedButton.icon(
+                                                  onPressed: () async {
+                                                    Navigator.pop(
+                                                      dialogContext,
+                                                    );
+                                                    await _getCurrentLocation();
+                                                  },
+                                                  icon: const Icon(
+                                                    Icons
+                                                        .my_location,
+                                                  ),
+                                                  label: const Text(
+                                                    'Lấy vị trí hiện tại',
+                                                  ),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                        actions: [
+                                          TextButton(
+                                            onPressed: () {
+                                              _dialogSetState =
+                                                  null;
+                                              Navigator.pop(
+                                                dialogContext,
+                                              );
+                                            },
+                                            child: const Text(
+                                              'Hủy',
+                                            ),
+                                          ),
+                                          TextButton(
+                                            onPressed: () {
+                                              editProfileViewModel
+                                                  .updateLocation(
+                                                    _locationController
+                                                        .text,
+                                                  );
+                                              _dialogSetState =
+                                                  null;
+                                              Navigator.pop(
+                                                dialogContext,
+                                              );
+                                            },
+                                            child: const Text(
+                                              'Xong',
+                                            ),
+                                          ),
+                                        ],
+                                      );
+                                    },
                                   ),
+                            ).then(
+                              (_) => _dialogSetState = null,
                             );
                           },
                         ),

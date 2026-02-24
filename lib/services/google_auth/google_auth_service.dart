@@ -47,12 +47,6 @@ class GoogleAuthService {
       final GoogleSignInAuthentication auth =
           await account.authentication;
 
-      debugPrint('[GoogleAuth] Sign in successful');
-      debugPrint('[GoogleAuth] Email: ${account.email}');
-      debugPrint(
-        '[GoogleAuth] ID Token: ${auth.idToken?.substring(0, 50)}...',
-      );
-
       return GoogleSignInResult(
         idToken: auth.idToken,
         accessToken: auth.accessToken,
@@ -70,7 +64,6 @@ class GoogleAuthService {
   Future<void> signOut() async {
     try {
       await _googleSignIn.signOut();
-      debugPrint('[GoogleAuth] Sign out successful');
     } catch (e) {
       debugPrint('[GoogleAuth] Sign out error: $e');
     }
