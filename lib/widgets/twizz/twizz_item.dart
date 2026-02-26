@@ -465,16 +465,17 @@ class TwizzItem extends StatelessWidget {
                   );
                 },
               ),
-              ListTile(
-                leading: const Icon(
-                  Icons.report_problem_outlined,
+              if (!isOwner)
+                ListTile(
+                  leading: const Icon(
+                    Icons.report_problem_outlined,
+                  ),
+                  title: const Text('Báo cáo bài viết'),
+                  onTap: () {
+                    Navigator.pop(context);
+                    _showReportDialog(parentContext);
+                  },
                 ),
-                title: const Text('Báo cáo bài viết'),
-                onTap: () {
-                  Navigator.pop(context);
-                  _showReportDialog(parentContext);
-                },
-              ),
               const SizedBox(height: 8),
             ],
           ),

@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "909975467403",
+    "project_id": "twizzy-5b8ec",
+    "storage_bucket": "twizzy-5b8ec.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:909975467403:android:53d626e3b8483654292b8e",
+        "android_client_info": {
+          "package_name": "com.example.twizzy_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAey7NrWZhuvB13UpzDx5G5ne4T6bzmxvQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

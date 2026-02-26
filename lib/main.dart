@@ -1,3 +1,4 @@
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
@@ -33,9 +34,16 @@ import 'viewmodels/main/main_viewmodel.dart';
 import 'viewmodels/chat/chat_viewmodel.dart';
 import 'viewmodels/chat/new_message_viewmodel.dart';
 import 'viewmodels/report/report_viewmodel.dart';
+import 'services/fcm_service/fcm_service.dart';
 
 void main() async {
-  // Load environment variables
+  // Khởi tạo Flutter binding
+  WidgetsFlutterBinding.ensureInitialized();
+
+  // Khởi tạo Firebase
+  await Firebase.initializeApp();
+
+  // Load biến môi trường
   await dotenv.load(fileName: '.env');
 
   // Initialize services
@@ -53,15 +61,21 @@ void main() async {
   final notificationService = NotificationService(apiClient);
   final reportService = ReportService(apiClient);
 
-  // Auto connect socket if already logged in
+  // Khởi tạo local notification service
+  final localNotificationService = LocalNotificationService();
+  await localNotificationService.initialize();
+
+  // Khởi tạo FCM service
+  final fcmService = FcmService(apiClient);
+  await fcmService.initialize();
+
+  // Tự động kết nối socket và đăng ký FCM nếu đã đăng nhập
   final initialAccessToken = await authService.getAccessToken();
   if (initialAccessToken != null) {
     socketService.connect(initialAccessToken);
+    // Đăng ký FCM token lên server
+    fcmService.registerToken();
   }
-
-  // Initialize local notification service
-  final localNotificationService = LocalNotificationService();
-  await localNotificationService.initialize();
 
   // Initialize view models
   final authViewModel = AuthViewModel(
@@ -130,9 +144,11 @@ void main() async {
     searchService: searchService,
   );
 
-  // Link global data clearing to logout
+  // Xóa FCM token và dữ liệu khi logout
   authViewModel.onLogout = () {
     debugPrint('Global clear triggered from logout');
+    // Xóa FCM token khỏi server trước khi clear dữ liệu
+    fcmService.unregisterToken();
     createTwizzViewModel.clear();
     newsFeedViewModel.clear();
     profileViewModel.clear();
@@ -145,6 +161,12 @@ void main() async {
     notificationViewModel.loadNotifications(
       refresh: true,
     ); // Reload or clear notifications
+  };
+
+  // Đăng ký FCM token khi login thành công (bao gồm cả đổi tài khoản)
+  authViewModel.onLoginSuccess = () {
+    debugPrint('Login success, registering FCM token...');
+    fcmService.registerToken();
   };
 
   authViewModel.onBanned = () {

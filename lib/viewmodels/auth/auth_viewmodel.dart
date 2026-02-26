@@ -15,6 +15,8 @@ class AuthViewModel extends ChangeNotifier {
   VoidCallback? onLogout;
   VoidCallback? onBanned;
   VoidCallback? onConcurrentLogin;
+  VoidCallback?
+  onLoginSuccess; // Gọi sau khi login thành công để đăng ký FCM token
 
   AuthViewModel(this._authService, this._socketService) {
     _initSocketListeners();
@@ -192,6 +194,9 @@ class AuthViewModel extends ChangeNotifier {
       _isLoading = false;
       notifyListeners();
 
+      // Đăng ký FCM token cho tài khoản mới
+      onLoginSuccess?.call();
+
       return true;
     } catch (e) {
       _isLoading = false;
@@ -313,6 +318,8 @@ class AuthViewModel extends ChangeNotifier {
       if (_accessToken != null) {
         _socketService.connect(_accessToken!);
       }
+      // Đăng ký FCM token khi auto-login
+      onLoginSuccess?.call();
       _isLoading = false;
       notifyListeners();
       return true;
@@ -438,17 +445,18 @@ class AuthViewModel extends ChangeNotifier {
     notifyListeners();
 
     try {
+      // Xóa FCM token và dữ liệu TRƯỚC khi xóa access token
+      // (vì cần access token để gọi API xóa FCM token)
+      if (onLogout != null) {
+        onLogout!();
+      }
+
       await _authService.logout();
       _socketService.disconnect();
       _currentUser = null;
       _isRegistered = false;
       _registeredEmail = null;
       _accessToken = null;
-
-      // Trigger global data clearing
-      if (onLogout != null) {
-        onLogout!();
-      }
     } catch (e) {
       // Log error but still clear state
       debugPrint('Logout error: $e');
