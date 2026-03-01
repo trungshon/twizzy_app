@@ -1,13 +1,18 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:image_picker/image_picker.dart';
 import '../../models/auth/auth_models.dart';
 import '../../models/chat/chat_models.dart';
+import '../../models/twizz/twizz_models.dart';
 import '../../viewmodels/chat/chat_viewmodel.dart';
 import '../../viewmodels/auth/auth_viewmodel.dart';
 import '../../services/chat_service/chat_service.dart';
+import '../../services/twizz_service/twizz_service.dart';
 import '../../routes/route_names.dart';
 import 'package:intl/intl.dart';
 import '../../widgets/common/divider_with_text.dart';
+import '../../widgets/common/twizz_video_player.dart';
 
 class ChatDetailScreenArgs {
   final User otherUser;
@@ -42,6 +47,8 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
 
   String? _selectedMessageId;
   String? _firstUnreadMessageId;
+  bool _isUploadingMedia = false;
+  final ImagePicker _imagePicker = ImagePicker();
 
   @override
   void initState() {
@@ -196,9 +203,11 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
     }
   }
 
-  void _sendMessage() {
+  void _sendMessage({List<Map<String, dynamic>>? medias}) {
     final content = _messageController.text.trim();
-    if (content.isEmpty) return;
+    if (content.isEmpty && (medias == null || medias.isEmpty)) {
+      return;
+    }
 
     final authViewModel = context.read<AuthViewModel>();
     final chatViewModel = context.read<ChatViewModel>();
@@ -207,12 +216,140 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
       widget.args.otherUser.id,
       authViewModel.currentUser!.id,
       content,
+      medias: medias,
     );
 
     _messageController.clear();
-    // Socket will trigger receive_message which reloads via _onChatUpdate
-    // But let's also trigger a local reload just in case socket is slow
     _loadMessages(quiet: true);
+  }
+
+  /// Hiện bottom sheet chọn ảnh/video
+  void _showMediaPicker() {
+    final themeData = Theme.of(context);
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: themeData.colorScheme.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(
+          top: Radius.circular(16),
+        ),
+      ),
+      builder:
+          (context) => SafeArea(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                ListTile(
+                  leading: Icon(
+                    Icons.photo_library,
+                    color: themeData.colorScheme.secondary,
+                  ),
+                  title: const Text('Chọn ảnh từ thư viện'),
+                  onTap: () {
+                    Navigator.pop(context);
+                    _pickAndSendImage(ImageSource.gallery);
+                  },
+                ),
+                ListTile(
+                  leading: Icon(
+                    Icons.videocam,
+                    color: themeData.colorScheme.secondary,
+                  ),
+                  title: const Text('Chọn video từ thư viện'),
+                  onTap: () {
+                    Navigator.pop(context);
+                    _pickAndSendVideo();
+                  },
+                ),
+                ListTile(
+                  leading: Icon(
+                    Icons.camera_alt,
+                    color: themeData.colorScheme.secondary,
+                  ),
+                  title: const Text('Chụp ảnh'),
+                  onTap: () {
+                    Navigator.pop(context);
+                    _pickAndSendImage(ImageSource.camera);
+                  },
+                ),
+              ],
+            ),
+          ),
+    );
+  }
+
+  /// Chọn ảnh và gửi
+  Future<void> _pickAndSendImage(ImageSource source) async {
+    try {
+      final picked = await _imagePicker.pickImage(
+        source: source,
+        imageQuality: 80,
+      );
+      if (picked == null) return;
+
+      setState(() => _isUploadingMedia = true);
+
+      final twizzService = context.read<TwizzService>();
+      final uploadedMedias = await twizzService.uploadImages([
+        File(picked.path),
+      ]);
+
+      if (uploadedMedias.isNotEmpty) {
+        _sendMessage(
+          medias:
+              uploadedMedias
+                  .map(
+                    (m) => {'url': m.url, 'type': m.type.index},
+                  )
+                  .toList(),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Lỗi gửi ảnh: $e')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isUploadingMedia = false);
+    }
+  }
+
+  /// Chọn video và gửi
+  Future<void> _pickAndSendVideo() async {
+    try {
+      final picked = await _imagePicker.pickVideo(
+        source: ImageSource.gallery,
+        maxDuration: const Duration(minutes: 5),
+      );
+      if (picked == null) return;
+
+      setState(() => _isUploadingMedia = true);
+
+      final twizzService = context.read<TwizzService>();
+      final uploadedMedias = await twizzService.uploadVideo(
+        File(picked.path),
+      );
+
+      if (uploadedMedias.isNotEmpty) {
+        _sendMessage(
+          medias:
+              uploadedMedias
+                  .map(
+                    (m) => {'url': m.url, 'type': m.type.index},
+                  )
+                  .toList(),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Lỗi gửi video: $e')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isUploadingMedia = false);
+    }
   }
 
   @override
@@ -530,30 +667,123 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
                     : Alignment.centerLeft,
             child: Container(
               margin: const EdgeInsets.symmetric(vertical: 2),
-              padding: const EdgeInsets.symmetric(
-                horizontal: 18,
-                vertical: 10,
-              ),
-              decoration: BoxDecoration(
-                color:
-                    isMe
-                        ? themeData.colorScheme.secondary
-                        : Colors.grey[900],
-                borderRadius: BorderRadius.only(
-                  topLeft: const Radius.circular(20),
-                  topRight: const Radius.circular(20),
-                  bottomLeft: Radius.circular(isMe ? 20 : 0),
-                  bottomRight: Radius.circular(isMe ? 0 : 20),
-                ),
-              ),
+              padding:
+                  message.hasMedia && message.content.isEmpty
+                      ? EdgeInsets.zero
+                      : const EdgeInsets.symmetric(
+                        horizontal: 18,
+                        vertical: 10,
+                      ),
+              decoration:
+                  message.hasMedia && message.content.isEmpty
+                      ? null
+                      : BoxDecoration(
+                        color:
+                            isMe
+                                ? themeData.colorScheme.secondary
+                                : Colors.grey[900],
+                        borderRadius: BorderRadius.only(
+                          topLeft: const Radius.circular(20),
+                          topRight: const Radius.circular(20),
+                          bottomLeft: Radius.circular(
+                            isMe ? 20 : 0,
+                          ),
+                          bottomRight: Radius.circular(
+                            isMe ? 0 : 20,
+                          ),
+                        ),
+                      ),
               child: Stack(
                 clipBehavior: Clip.none,
                 children: [
-                  Text(
-                    message.content,
-                    style: TextStyle(
-                      color: themeData.colorScheme.onSecondary,
-                    ),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      // Hiển thị media (ảnh/video)
+                      if (message.hasMedia)
+                        ...message.medias.map((media) {
+                          if (media.type == MediaType.image) {
+                            return Padding(
+                              padding: const EdgeInsets.only(
+                                bottom: 4,
+                              ),
+                              child: ClipRRect(
+                                borderRadius:
+                                    BorderRadius.circular(12),
+                                child: Image.network(
+                                  media.url,
+                                  width: 200,
+                                  fit: BoxFit.cover,
+                                  loadingBuilder: (
+                                    context,
+                                    child,
+                                    progress,
+                                  ) {
+                                    if (progress == null)
+                                      return child;
+                                    return SizedBox(
+                                      width: 200,
+                                      height: 150,
+                                      child: Center(
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                          color:
+                                              themeData
+                                                  .colorScheme
+                                                  .onSecondary,
+                                        ),
+                                      ),
+                                    );
+                                  },
+                                  errorBuilder: (
+                                    context,
+                                    error,
+                                    stack,
+                                  ) {
+                                    return Container(
+                                      width: 200,
+                                      height: 150,
+                                      color: Colors.grey[800],
+                                      child: const Icon(
+                                        Icons.broken_image,
+                                        color: Colors.white54,
+                                      ),
+                                    );
+                                  },
+                                ),
+                              ),
+                            );
+                          } else {
+                            // Video player
+                            return Padding(
+                              padding: const EdgeInsets.only(
+                                bottom: 4,
+                              ),
+                              child: SizedBox(
+                                width: 220,
+                                child: TwizzVideoPlayer(
+                                  url: media.url,
+                                  height: 180,
+                                  showControls: true,
+                                  showDuration: true,
+                                ),
+                              ),
+                            );
+                          }
+                        }),
+                      // Hiển thị text content (nếu có)
+                      if (message.content.isNotEmpty)
+                        Text(
+                          message.content,
+                          style: TextStyle(
+                            color:
+                                themeData
+                                    .colorScheme
+                                    .onSecondary,
+                          ),
+                        ),
+                    ],
                   ),
                   if (isMe &&
                       index == _getLatestMyMessageIndex())
@@ -609,44 +839,86 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
           ),
         ),
       ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          // IconButton(
-          //   icon: Icon(
-          //     Icons.add,
-          //     color: themeData.colorScheme.secondary,
-          //   ),
-          //   onPressed: () {},
-          // ),
-          Expanded(
-            child: Container(
-              padding: const EdgeInsets.only(left: 16),
-              child: TextField(
-                controller: _messageController,
-                style: themeData.textTheme.bodyMedium?.copyWith(
-                  color: themeData.colorScheme.onSurface,
-                ),
-                decoration: InputDecoration(
-                  fillColor: themeData.colorScheme.surface,
-                  hintText: 'Tin nhắn',
-                  hintStyle: themeData.textTheme.bodyMedium
-                      ?.copyWith(
-                        color: themeData.colorScheme.onSurface
-                            .withValues(alpha: 0.5),
-                      ),
-                  border: InputBorder.none,
-                ),
-                onSubmitted: (_) => _sendMessage(),
+          // Upload progress indicator
+          if (_isUploadingMedia)
+            Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 4,
+              ),
+              child: Row(
+                children: [
+                  SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: themeData.colorScheme.secondary,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    'Đang tải lên...',
+                    style: themeData.textTheme.bodySmall
+                        ?.copyWith(
+                          color: themeData.colorScheme.onSurface
+                              .withValues(alpha: 0.6),
+                        ),
+                  ),
+                ],
               ),
             ),
-          ),
-          IconButton(
-            icon: Icon(
-              Icons.send,
-              color: themeData.colorScheme.secondary,
-            ),
-            onPressed: _sendMessage,
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              // Nút đính kèm media
+              IconButton(
+                icon: Icon(
+                  Icons.add_circle_outline,
+                  color:
+                      _isUploadingMedia
+                          ? Colors.grey
+                          : themeData.colorScheme.secondary,
+                ),
+                onPressed:
+                    _isUploadingMedia ? null : _showMediaPicker,
+              ),
+              Expanded(
+                child: Container(
+                  padding: const EdgeInsets.only(left: 8),
+                  child: TextField(
+                    controller: _messageController,
+                    style: themeData.textTheme.bodyMedium
+                        ?.copyWith(
+                          color: themeData.colorScheme.onSurface,
+                        ),
+                    decoration: InputDecoration(
+                      fillColor: themeData.colorScheme.surface,
+                      hintText: 'Tin nhắn',
+                      hintStyle: themeData.textTheme.bodyMedium
+                          ?.copyWith(
+                            color: themeData
+                                .colorScheme
+                                .onSurface
+                                .withValues(alpha: 0.5),
+                          ),
+                      border: InputBorder.none,
+                    ),
+                    onSubmitted: (_) => _sendMessage(),
+                  ),
+                ),
+              ),
+              IconButton(
+                icon: Icon(
+                  Icons.send,
+                  color: themeData.colorScheme.secondary,
+                ),
+                onPressed: _sendMessage,
+              ),
+            ],
           ),
         ],
       ),

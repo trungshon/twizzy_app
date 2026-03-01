@@ -299,7 +299,7 @@ class _ChatContentState extends State<ChatContent> {
 
           return _buildChatItem(
             thread.otherUser.name,
-            latest.content,
+            latest.displayContent,
             _formatTime(latest.createdAt),
             isUnread,
             thread.otherUser.avatar,
@@ -479,7 +479,7 @@ class _ChatContentState extends State<ChatContent> {
 
           return _buildChatItem(
             thread.otherUser.name,
-            latest.content,
+            latest.displayContent,
             _formatTime(latest.createdAt),
             isUnread,
             thread.otherUser.avatar,

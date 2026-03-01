@@ -92,14 +92,24 @@ class ChatViewModel extends ChangeNotifier {
               data['payload'] as Map<String, dynamic>?;
           if (payload != null) {
             final senderId = payload['sender_id'] as String?;
-            final content = payload['content'] as String?;
+            final content = payload['content'] as String? ?? '';
+            final medias = payload['medias'] as List<dynamic>?;
             final senderInfo =
                 payload['sender'] as Map<String, dynamic>?;
 
             // Only show notification if we're not the sender
             if (senderId != null &&
                 senderId != _lastUserId &&
-                content != null) {
+                (content.isNotEmpty ||
+                    (medias != null && medias.isNotEmpty))) {
+              // Determine notification text
+              final notifContent =
+                  content.isNotEmpty
+                      ? content
+                      : (medias != null && medias.isNotEmpty
+                          ? 'Đã gửi ảnh/video'
+                          : 'Tin nhắn mới');
+
               // Create a minimal user from sender info if available
               final sender =
                   senderInfo != null
@@ -119,7 +129,7 @@ class ChatViewModel extends ChangeNotifier {
 
               _localNotificationService.showMessageNotification(
                 sender: sender,
-                messageContent: content,
+                messageContent: notifContent,
                 conversationId: senderId,
               );
             }
@@ -204,16 +214,18 @@ class ChatViewModel extends ChangeNotifier {
   void sendMessage(
     String receiverId,
     String senderId,
-    String content,
-  ) {
+    String content, {
+    List<Map<String, dynamic>>? medias,
+  }) {
     _socketService.emit('send_message', {
       'payload': {
         'receiver_id': receiverId,
         'sender_id': senderId,
         'content': content,
+        if (medias != null && medias.isNotEmpty)
+          'medias': medias,
       },
     });
-    // Optimistic update would be nice, but for now we wait for socket/API
   }
 
   void connect(String token) {
