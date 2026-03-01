@@ -18,9 +18,25 @@ class MediaUrlHelper {
       return '$baseUrl$url';
     }
 
-    // Nếu là full URL, extract path và rebuild với baseUrl hiện tại
+    // Nếu là URL bên ngoài (Cloudinary, CDN, ...) → giữ nguyên
+    // Chỉ normalize URL từ backend local (localhost, 10.0.2.2, ...)
     try {
       final uri = Uri.parse(url);
+      final host = uri.host.toLowerCase();
+
+      // Kiểm tra có phải URL backend local không
+      final isLocalUrl =
+          host == 'localhost' ||
+          host == '10.0.2.2' ||
+          host == '127.0.0.1' ||
+          host.startsWith('192.168.');
+
+      // Nếu KHÔNG phải local → URL bên ngoài (Cloudinary, CDN) → giữ nguyên
+      if (!isLocalUrl) {
+        return url;
+      }
+
+      // Nếu là local URL → rebuild với baseUrl hiện tại
       final path = uri.path;
 
       // Nếu không có path, trả về URL gốc
