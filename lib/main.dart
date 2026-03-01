@@ -282,6 +282,12 @@ void main() async {
       child: const MyApp(),
     ),
   );
+
+  // Xử lý FCM pending message sau khi app đã build xong
+  // (khi app mở từ trạng thái tắt hẳn bởi notification)
+  WidgetsBinding.instance.addPostFrameCallback((_) {
+    fcmService.processPendingMessage();
+  });
 }
 
 class MyApp extends StatelessWidget {
