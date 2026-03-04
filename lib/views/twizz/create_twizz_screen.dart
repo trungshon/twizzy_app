@@ -721,15 +721,40 @@ class _CreateTwizzScreenState extends State<CreateTwizzScreen> {
                   ),
                   child:
                       viewModel.isLoading
-                          ? SizedBox(
-                            width: 20,
-                            height: 20,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              valueColor: AlwaysStoppedAnimation<
-                                Color
-                              >(themeData.colorScheme.onPrimary),
-                            ),
+                          ? Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              SizedBox(
+                                width: 14,
+                                height: 14,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  valueColor:
+                                      AlwaysStoppedAnimation<
+                                        Color
+                                      >(
+                                        themeData
+                                            .colorScheme
+                                            .onSurface
+                                            .withValues(
+                                              alpha: 0.5,
+                                            ),
+                                      ),
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                'Đang duyệt...',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 15,
+                                  color: themeData
+                                      .colorScheme
+                                      .onSurface
+                                      .withValues(alpha: 0.5),
+                                ),
+                              ),
+                            ],
                           )
                           : const Text(
                             'Đăng',

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import '../../models/auth/auth_models.dart';
 
@@ -9,6 +10,7 @@ enum SnackBarType { success, error, warning, info }
 /// Utility class để hiển thị SnackBar trong toàn bộ app
 class SnackBarUtils {
   /// Show a SnackBar with custom type
+  /// Hỗ trợ nhấn giữ để giữ snackbar hiện trên màn hình
   static void show(
     BuildContext context, {
     required String message,
@@ -17,63 +19,150 @@ class SnackBarUtils {
     String? actionLabel,
     VoidCallback? onAction,
   }) {
-    // Capture the ScaffoldMessengerState before showing
-    final scaffoldMessenger = ScaffoldMessenger.of(context);
-
     // Clear any existing SnackBar first
-    scaffoldMessenger.clearSnackBars();
+    ScaffoldMessenger.of(context).clearSnackBars();
+    _removeCurrentOverlay();
 
+    final overlay = Overlay.of(context);
     final themeData = Theme.of(context);
     final config = _getConfig(type, themeData);
+    final bottomPadding = MediaQuery.of(context).padding.bottom;
 
-    scaffoldMessenger.showSnackBar(
-      SnackBar(
-        content: Row(
-          children: [
-            Icon(
-              config.icon,
-              color:
-                  type == SnackBarType.error
-                      ? Colors.white
-                      : themeData.colorScheme.onPrimary,
-              size: 20,
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Text(
-                message,
-                style: TextStyle(
-                  color:
-                      type == SnackBarType.error
-                          ? Colors.white
-                          : themeData.colorScheme.onPrimary,
-                  fontSize: 14,
+    late OverlayEntry entry;
+    int remainingMs = duration.inMilliseconds;
+    DateTime? timerStartedAt;
+    Timer? dismissTimer;
+
+    void startTimer() {
+      timerStartedAt = DateTime.now();
+      dismissTimer = Timer(
+        Duration(milliseconds: remainingMs),
+        () {
+          if (entry.mounted) {
+            entry.remove();
+            _currentOverlay = null;
+          }
+        },
+      );
+    }
+
+    void pauseTimer() {
+      dismissTimer?.cancel();
+      if (timerStartedAt != null) {
+        final elapsed =
+            DateTime.now()
+                .difference(timerStartedAt!)
+                .inMilliseconds;
+        remainingMs = (remainingMs - elapsed).clamp(
+          500,
+          duration.inMilliseconds,
+        );
+      }
+    }
+
+    entry = OverlayEntry(
+      builder:
+          (context) => Positioned(
+            bottom: bottomPadding + 16,
+            left: 16,
+            right: 16,
+            child: Material(
+              color: Colors.transparent,
+              child: GestureDetector(
+                // Nhấn giữ → cancel timer
+                onLongPressStart: (_) => pauseTimer(),
+                // Thả ra → timer mới với thời gian còn lại
+                onLongPressEnd: (_) => startTimer(),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 14,
+                  ),
+                  decoration: BoxDecoration(
+                    color: config.backgroundColor,
+                    borderRadius: BorderRadius.circular(10),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(
+                          alpha: 0.3,
+                        ),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        config.icon,
+                        color:
+                            type == SnackBarType.error
+                                ? Colors.white
+                                : themeData
+                                    .colorScheme
+                                    .onPrimary,
+                        size: 20,
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          message,
+                          style: TextStyle(
+                            color:
+                                type == SnackBarType.error
+                                    ? Colors.white
+                                    : themeData
+                                        .colorScheme
+                                        .onPrimary,
+                            fontSize: 14,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      GestureDetector(
+                        onTap: () {
+                          if (entry.mounted) {
+                            entry.remove();
+                            _currentOverlay = null;
+                          }
+                          if (onAction != null) onAction();
+                        },
+                        child: Text(
+                          actionLabel ?? 'Đóng',
+                          style: TextStyle(
+                            color:
+                                type == SnackBarType.error
+                                    ? Colors.white
+                                    : themeData
+                                        .colorScheme
+                                        .onPrimary,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 14,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),
-          ],
-        ),
-        backgroundColor: config.backgroundColor,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(10),
-        ),
-        margin: const EdgeInsets.all(16),
-        duration: duration,
-        action: SnackBarAction(
-          label: actionLabel ?? 'Đóng',
-          textColor:
-              type == SnackBarType.error
-                  ? Colors.white
-                  : themeData.colorScheme.onPrimary,
-          onPressed:
-              onAction ??
-              () {
-                scaffoldMessenger.hideCurrentSnackBar();
-              },
-        ),
-      ),
+          ),
     );
+
+    _currentOverlay = entry;
+    overlay.insert(entry);
+    startTimer();
+  }
+
+  /// Track current overlay and timer
+  static OverlayEntry? _currentOverlay;
+
+  /// Remove current overlay snackbar
+  static void _removeCurrentOverlay() {
+    if (_currentOverlay != null && _currentOverlay!.mounted) {
+      _currentOverlay!.remove();
+    }
+    _currentOverlay = null;
   }
 
   /// Show success SnackBar

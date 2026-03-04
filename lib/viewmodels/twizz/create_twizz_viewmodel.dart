@@ -76,13 +76,11 @@ class CreateTwizzViewModel extends ChangeNotifier {
   /// Check if can post
   bool get canPost {
     final hasContent = _content.trim().isNotEmpty;
-    final hasMedia =
-        _selectedImages.isNotEmpty || _selectedVideo != null;
-    // Quote twizz can have empty content (the quoted post is the content)
-    final isValidQuote = isQuoteMode;
-    return (hasContent || hasMedia || isValidQuote) &&
-        !_isLoading &&
-        !_isUploading;
+    // Bắt buộc phải có text đối với Twizz thường
+    // Đối với Quote Twizz thì cho phép content trống
+    final isContentValid = hasContent || isQuoteMode;
+
+    return isContentValid && !_isLoading && !_isUploading;
   }
 
   /// Get audience display text
@@ -383,9 +381,19 @@ class CreateTwizzViewModel extends ChangeNotifier {
       if (e is ApiErrorResponse) {
         _apiError = e;
         _error = e.message;
+        // Log chi tiết lỗi kiểm duyệt lên Flutter console
+        debugPrint('[CreateTwizz] Lỗi: ${e.message}');
+        if (e.errors != null) {
+          e.errors!.forEach((key, value) {
+            debugPrint(
+              '[CreateTwizz] Field: $key → ${value.msg}',
+            );
+          });
+        }
       } else {
         _apiError = null;
         _error = 'Lỗi đăng bài: ${e.toString()}';
+        debugPrint('[CreateTwizz] Lỗi không xác định: $e');
       }
       notifyListeners();
       return null;
