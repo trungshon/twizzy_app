@@ -204,9 +204,6 @@ class _CreateTwizzScreenState extends State<CreateTwizzScreen> {
     try {
       final video = await _imagePicker.pickVideo(
         source: ImageSource.gallery,
-        maxDuration: const Duration(
-          minutes: CreateTwizzViewModel.maxVideoDurationMinutes,
-        ),
       );
 
       if (video != null) {

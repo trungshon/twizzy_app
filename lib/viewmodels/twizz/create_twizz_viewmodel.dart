@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter/foundation.dart';
+import 'package:video_player/video_player.dart';
 import '../../models/auth/auth_models.dart';
 import '../../models/twizz/twizz_models.dart';
 import '../../services/twizz_service/twizz_service.dart';
@@ -26,7 +27,8 @@ class CreateTwizzViewModel extends ChangeNotifier {
   static const int maxTotalImageSizeBytes =
       300 * 1024 * 4; // 1.2MB
   static const int maxVideoSizeBytes = 50 * 1024 * 1024; // 50MB
-  static const int maxVideoDurationMinutes = 5;
+  static const int maxVideoDurationSeconds =
+      60; // 60 giây (giới hạn Sightengine sync)
 
   // State
   bool _isLoading = false;
@@ -215,6 +217,23 @@ class CreateTwizzViewModel extends ChangeNotifier {
           'Video vượt quá ${maxSizeMB}MB (hiện tại: ${fileSizeMB}MB)';
       notifyListeners();
       return;
+    }
+
+    // Kiểm tra độ dài video (tối đa 60 giây)
+    try {
+      final controller = VideoPlayerController.file(video);
+      await controller.initialize();
+      final duration = controller.value.duration;
+      await controller.dispose();
+
+      if (duration.inSeconds > maxVideoDurationSeconds) {
+        _error =
+            'Video không được dài quá $maxVideoDurationSeconds giây (hiện tại: ${duration.inSeconds}s)';
+        notifyListeners();
+        return;
+      }
+    } catch (_) {
+      // Không đọc được duration → bỏ qua validation này
     }
 
     _selectedVideo = video;
