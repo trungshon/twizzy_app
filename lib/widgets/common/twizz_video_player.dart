@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
 
@@ -5,18 +6,25 @@ import 'package:video_player/video_player.dart';
 ///
 /// Used for playing videos in twizz items, quote previews, etc.
 class TwizzVideoPlayer extends StatefulWidget {
-  final String url;
+  final String? url;
+  final File? file;
   final double? height;
   final bool showDuration;
   final bool showControls;
+  final bool isFullScreen;
 
   const TwizzVideoPlayer({
     super.key,
-    required this.url,
+    this.url,
+    this.file,
     this.height,
     this.showDuration = true,
     this.showControls = true,
-  });
+    this.isFullScreen = false,
+  }) : assert(
+         url != null || file != null,
+         'Either url or file must be provided',
+       );
 
   @override
   State<TwizzVideoPlayer> createState() =>
@@ -37,9 +45,13 @@ class _TwizzVideoPlayerState extends State<TwizzVideoPlayer> {
   }
 
   Future<void> _initializeVideo() async {
-    _controller = VideoPlayerController.networkUrl(
-      Uri.parse(widget.url),
-    );
+    if (widget.file != null) {
+      _controller = VideoPlayerController.file(widget.file!);
+    } else {
+      _controller = VideoPlayerController.networkUrl(
+        Uri.parse(widget.url!),
+      );
+    }
     try {
       await _controller.initialize();
       _controller.setLooping(true);
@@ -320,6 +332,10 @@ class _TwizzVideoPlayerState extends State<TwizzVideoPlayer> {
         ],
       ),
     );
+
+    if (widget.isFullScreen) {
+      return content;
+    }
 
     if (widget.height != null) {
       return ClipRRect(

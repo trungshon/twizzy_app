@@ -8,6 +8,8 @@ import '../../services/like_service/like_service.dart';
 import '../../services/bookmark_service/bookmark_service.dart';
 import '../../services/twizz_service/twizz_sync_service.dart';
 import 'package:twizzy_app/widgets/twizz/twizz_list.dart';
+import '../../models/twizz/twizz_models.dart';
+import '../../widgets/media/fullscreen_media_viewer.dart';
 import '../twizz/twizz_detail_screen.dart';
 import '../../core/utils/number_formatter.dart';
 import '../../routes/route_names.dart';
@@ -220,18 +222,42 @@ class _UserProfileViewState extends State<_UserProfileView>
                   flexibleSpace: FlexibleSpaceBar(
                     background:
                         coverPhoto != null
-                            ? Image.network(
-                              coverPhoto,
-                              fit: BoxFit.cover,
-                              errorBuilder: (
-                                context,
-                                error,
-                                stackTrace,
-                              ) {
-                                return Container(
-                                  color: const Color(0xFF5C7A7A),
+                            ? GestureDetector(
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder:
+                                        (context) =>
+                                            FullscreenMediaViewer(
+                                              medias: [
+                                                Media(
+                                                  url:
+                                                      coverPhoto,
+                                                  type:
+                                                      MediaType
+                                                          .image,
+                                                ),
+                                              ],
+                                            ),
+                                  ),
                                 );
                               },
+                              child: Image.network(
+                                coverPhoto,
+                                fit: BoxFit.cover,
+                                errorBuilder: (
+                                  context,
+                                  error,
+                                  stackTrace,
+                                ) {
+                                  return Container(
+                                    color: const Color(
+                                      0xFF5C7A7A,
+                                    ),
+                                  );
+                                },
+                              ),
                             )
                             : Container(
                               color: const Color(0xFF5C7A7A),
@@ -263,12 +289,37 @@ class _UserProfileViewState extends State<_UserProfileView>
                               ),
                               child:
                                   avatar != null
-                                      ? CircleAvatar(
-                                        radius: 40,
-                                        backgroundImage:
-                                            NetworkImage(avatar),
-                                        onBackgroundImageError:
-                                            (e, s) {},
+                                      ? GestureDetector(
+                                        onTap: () {
+                                          Navigator.push(
+                                            context,
+                                            MaterialPageRoute(
+                                              builder:
+                                                  (
+                                                    context,
+                                                  ) => FullscreenMediaViewer(
+                                                    medias: [
+                                                      Media(
+                                                        url:
+                                                            avatar,
+                                                        type:
+                                                            MediaType
+                                                                .image,
+                                                      ),
+                                                    ],
+                                                  ),
+                                            ),
+                                          );
+                                        },
+                                        child: CircleAvatar(
+                                          radius: 40,
+                                          backgroundImage:
+                                              NetworkImage(
+                                                avatar,
+                                              ),
+                                          onBackgroundImageError:
+                                              (e, s) {},
+                                        ),
                                       )
                                       : CircleAvatar(
                                         radius: 40,

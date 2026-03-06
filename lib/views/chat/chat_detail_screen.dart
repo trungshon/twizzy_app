@@ -13,6 +13,7 @@ import '../../routes/route_names.dart';
 import 'package:intl/intl.dart';
 import '../../widgets/common/divider_with_text.dart';
 import '../../widgets/common/twizz_video_player.dart';
+import '../../widgets/media/fullscreen_media_viewer.dart';
 
 class ChatDetailScreenArgs {
   final User otherUser;
@@ -642,7 +643,8 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
     int index,
   ) {
     final themeData = Theme.of(context);
-    final showTime = _selectedMessageId == message.id;
+    final showTime =
+        message.hasMedia || _selectedMessageId == message.id;
 
     return GestureDetector(
       onTap: () {
@@ -702,55 +704,78 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
                     children: [
                       // Hiển thị media (ảnh/video)
                       if (message.hasMedia)
-                        ...message.medias.map((media) {
+                        ...message.medias.asMap().entries.map((
+                          entry,
+                        ) {
+                          final index = entry.key;
+                          final media = entry.value;
+
                           if (media.type == MediaType.image) {
                             return Padding(
                               padding: const EdgeInsets.only(
                                 bottom: 4,
                               ),
-                              child: ClipRRect(
-                                borderRadius:
-                                    BorderRadius.circular(12),
-                                child: Image.network(
-                                  media.url,
-                                  width: 200,
-                                  fit: BoxFit.cover,
-                                  loadingBuilder: (
+                              child: GestureDetector(
+                                onTap: () {
+                                  Navigator.push(
                                     context,
-                                    child,
-                                    progress,
-                                  ) {
-                                    if (progress == null)
-                                      return child;
-                                    return SizedBox(
-                                      width: 200,
-                                      height: 150,
-                                      child: Center(
-                                        child: CircularProgressIndicator(
-                                          strokeWidth: 2,
-                                          color:
-                                              themeData
-                                                  .colorScheme
-                                                  .onSecondary,
+                                    MaterialPageRoute(
+                                      builder:
+                                          (context) =>
+                                              FullscreenMediaViewer(
+                                                medias:
+                                                    message
+                                                        .medias,
+                                                initialIndex:
+                                                    index,
+                                              ),
+                                    ),
+                                  );
+                                },
+                                child: ClipRRect(
+                                  borderRadius:
+                                      BorderRadius.circular(12),
+                                  child: Image.network(
+                                    media.url,
+                                    width: 200,
+                                    fit: BoxFit.cover,
+                                    loadingBuilder: (
+                                      context,
+                                      child,
+                                      progress,
+                                    ) {
+                                      if (progress == null)
+                                        return child;
+                                      return SizedBox(
+                                        width: 200,
+                                        height: 150,
+                                        child: Center(
+                                          child: CircularProgressIndicator(
+                                            strokeWidth: 2,
+                                            color:
+                                                themeData
+                                                    .colorScheme
+                                                    .onSecondary,
+                                          ),
                                         ),
-                                      ),
-                                    );
-                                  },
-                                  errorBuilder: (
-                                    context,
-                                    error,
-                                    stack,
-                                  ) {
-                                    return Container(
-                                      width: 200,
-                                      height: 150,
-                                      color: Colors.grey[800],
-                                      child: const Icon(
-                                        Icons.broken_image,
-                                        color: Colors.white54,
-                                      ),
-                                    );
-                                  },
+                                      );
+                                    },
+                                    errorBuilder: (
+                                      context,
+                                      error,
+                                      stack,
+                                    ) {
+                                      return Container(
+                                        width: 200,
+                                        height: 150,
+                                        color: Colors.grey[800],
+                                        child: const Icon(
+                                          Icons.broken_image,
+                                          color: Colors.white54,
+                                        ),
+                                      );
+                                    },
+                                  ),
                                 ),
                               ),
                             );
@@ -760,13 +785,61 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
                               padding: const EdgeInsets.only(
                                 bottom: 4,
                               ),
-                              child: SizedBox(
-                                width: 220,
-                                child: TwizzVideoPlayer(
-                                  url: media.url,
-                                  height: 180,
-                                  showControls: true,
-                                  showDuration: true,
+                              child: GestureDetector(
+                                onTap: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder:
+                                          (context) =>
+                                              FullscreenMediaViewer(
+                                                medias:
+                                                    message
+                                                        .medias,
+                                                initialIndex:
+                                                    index,
+                                              ),
+                                    ),
+                                  );
+                                },
+                                child: AbsorbPointer(
+                                  child: SizedBox(
+                                    width: 220,
+                                    child: Stack(
+                                      alignment:
+                                          Alignment.center,
+                                      children: [
+                                        TwizzVideoPlayer(
+                                          url: media.url,
+                                          height: 180,
+                                          showControls: false,
+                                          showDuration: true,
+                                        ),
+                                        Container(
+                                          padding:
+                                              const EdgeInsets.all(
+                                                8,
+                                              ),
+                                          decoration:
+                                              BoxDecoration(
+                                                color: Colors
+                                                    .black
+                                                    .withValues(
+                                                      alpha: 0.5,
+                                                    ),
+                                                shape:
+                                                    BoxShape
+                                                        .circle,
+                                              ),
+                                          child: const Icon(
+                                            Icons.play_arrow,
+                                            color: Colors.white,
+                                            size: 32,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
                                 ),
                               ),
                             );

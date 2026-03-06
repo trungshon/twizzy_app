@@ -1,6 +1,8 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:video_player/video_player.dart';
+import '../common/twizz_video_player.dart';
+import '../media/fullscreen_media_viewer.dart';
+import '../../models/twizz/twizz_models.dart';
 
 /// Media preview widget - Horizontal scrollable images
 /// Reused from CreateTwizzScreen
@@ -44,7 +46,6 @@ class TwizzCreateMediaPreview extends StatelessWidget {
     );
   }
 
-  /// Build single image (larger display)
   Widget _buildSingleImage(
     BuildContext context,
     File file,
@@ -52,13 +53,38 @@ class TwizzCreateMediaPreview extends StatelessWidget {
   ) {
     return Stack(
       children: [
-        ClipRRect(
-          borderRadius: BorderRadius.circular(16),
-          child: Image.file(
-            file,
+        GestureDetector(
+          onTap: () {
+            // Chuyển danh sách File thành Media objects (dùng chung cho Viewer)
+            final mediaList =
+                images
+                    .map(
+                      (f) => Media(
+                        url: f.path,
+                        type: MediaType.image,
+                      ),
+                    )
+                    .toList();
+
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder:
+                    (context) => FullscreenMediaViewer(
+                      medias: mediaList,
+                      initialIndex: index,
+                      isFile: true,
+                    ),
+              ),
+            );
+          },
+          child: Container(
+            constraints: const BoxConstraints(maxHeight: 400),
             width: double.infinity,
-            height: 220,
-            fit: BoxFit.cover,
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(16),
+              child: Image.file(file, fit: BoxFit.cover),
+            ),
           ),
         ),
         if (!isLoading)
@@ -79,13 +105,40 @@ class TwizzCreateMediaPreview extends StatelessWidget {
   ) {
     return Stack(
       children: [
-        ClipRRect(
-          borderRadius: BorderRadius.circular(16),
-          child: Image.file(
-            file,
-            width: 140,
-            height: 180,
-            fit: BoxFit.cover,
+        GestureDetector(
+          onTap: () {
+            final mediaList =
+                images
+                    .map(
+                      (f) => Media(
+                        url: f.path,
+                        type: MediaType.image,
+                      ),
+                    )
+                    .toList();
+
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder:
+                    (context) => FullscreenMediaViewer(
+                      medias: mediaList,
+                      initialIndex: index,
+                      isFile: true,
+                    ),
+              ),
+            );
+          },
+          child: Container(
+            constraints: const BoxConstraints(maxWidth: 250),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(16),
+              child: Image.file(
+                file,
+                height: 180,
+                fit: BoxFit.cover,
+              ),
+            ),
           ),
         ),
         if (!isLoading)
@@ -121,7 +174,7 @@ class TwizzCreateMediaPreview extends StatelessWidget {
 
 /// Video preview widget with playback
 /// Reused from CreateTwizzScreen
-class TwizzCreateVideoPreview extends StatefulWidget {
+class TwizzCreateVideoPreview extends StatelessWidget {
   final File video;
   final VoidCallback onRemove;
   final bool isLoading;
@@ -134,116 +187,60 @@ class TwizzCreateVideoPreview extends StatefulWidget {
   });
 
   @override
-  State<TwizzCreateVideoPreview> createState() =>
-      _TwizzCreateVideoPreviewState();
-}
-
-class _TwizzCreateVideoPreviewState
-    extends State<TwizzCreateVideoPreview> {
-  late VideoPlayerController _controller;
-  bool _isInitialized = false;
-  bool _hasError = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _initializeVideo();
-  }
-
-  Future<void> _initializeVideo() async {
-    _controller = VideoPlayerController.file(widget.video);
-    try {
-      await _controller.initialize();
-      _controller.setLooping(true);
-      if (mounted) {
-        setState(() {
-          _isInitialized = true;
-        });
-      }
-    } catch (e) {
-      debugPrint('Video init error: $e');
-      if (mounted) {
-        setState(() {
-          _hasError = true;
-        });
-      }
-    }
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  void _togglePlay() {
-    if (_controller.value.isPlaying) {
-      _controller.pause();
-    } else {
-      _controller.play();
-    }
-    setState(() {});
-  }
-
-  @override
   Widget build(BuildContext context) {
-    final themeData = Theme.of(context);
-
     return Container(
       margin: const EdgeInsets.only(top: 16),
       child: Stack(
         children: [
-          // Video container
-          ClipRRect(
-            borderRadius: BorderRadius.circular(16),
-            child: Container(
-              width: double.infinity,
-              height: 280,
-              color: Colors.black,
-              child: _buildVideoContent(themeData),
-            ),
-          ),
-          // Play/Pause overlay
-          if (_isInitialized && !widget.isLoading)
-            Positioned.fill(
-              child: GestureDetector(
-                onTap: _togglePlay,
-                child: Container(
-                  color: Colors.transparent,
-                  child: Center(
-                    child: AnimatedOpacity(
-                      opacity:
-                          _controller.value.isPlaying
-                              ? 0.0
-                              : 1.0,
-                      duration: const Duration(
-                        milliseconds: 200,
+          // Video container using the shared TwizzVideoPlayer
+          GestureDetector(
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder:
+                      (context) => FullscreenMediaViewer(
+                        medias: [
+                          Media(
+                            url: video.path,
+                            type: MediaType.video,
+                          ),
+                        ],
+                        initialIndex: 0,
+                        isFile: true,
                       ),
-                      child: Container(
-                        width: 56,
-                        height: 56,
-                        decoration: BoxDecoration(
-                          color: Colors.black.withValues(alpha: 0.6),
-                          shape: BoxShape.circle,
-                        ),
-                        child: const Icon(
-                          Icons.play_arrow_rounded,
-                          color: Colors.white,
-                          size: 36,
-                        ),
-                      ),
+                ),
+              );
+            },
+            child: Stack(
+              children: [
+                TwizzVideoPlayer(file: video, height: 280),
+                Positioned(
+                  top: 8,
+                  left: 8,
+                  child: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: const BoxDecoration(
+                      color: Colors.black54,
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.fullscreen,
+                      color: Colors.white,
+                      size: 20,
                     ),
                   ),
                 ),
-              ),
+              ],
             ),
+          ),
           // Remove button
-          if (!widget.isLoading)
+          if (!isLoading)
             Positioned(
               top: 8,
               right: 8,
               child: GestureDetector(
-                onTap: widget.onRemove,
+                onTap: onRemove,
                 child: Container(
                   width: 28,
                   height: 28,
@@ -259,88 +256,8 @@ class _TwizzCreateVideoPreviewState
                 ),
               ),
             ),
-          // Duration indicator
-          if (_isInitialized)
-            Positioned(
-              bottom: 8,
-              left: 8,
-              child: Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 8,
-                  vertical: 4,
-                ),
-                decoration: BoxDecoration(
-                  color: Colors.black.withValues(alpha: 0.7),
-                  borderRadius: BorderRadius.circular(4),
-                ),
-                child: Text(
-                  _formatDuration(_controller.value.duration),
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ),
-            ),
         ],
       ),
     );
-  }
-
-  Widget _buildVideoContent(ThemeData themeData) {
-    if (_hasError) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.error_outline,
-              size: 48,
-              color: themeData.colorScheme.error,
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Không thể tải video',
-              style: TextStyle(
-                color: themeData.colorScheme.error,
-                fontSize: 14,
-              ),
-            ),
-          ],
-        ),
-      );
-    }
-
-    if (!_isInitialized) {
-      return Center(
-        child: CircularProgressIndicator(
-          strokeWidth: 2,
-          valueColor: AlwaysStoppedAnimation<Color>(
-            themeData.colorScheme.primary,
-          ),
-        ),
-      );
-    }
-
-    return FittedBox(
-      fit: BoxFit.cover,
-      child: SizedBox(
-        width: _controller.value.size.width,
-        height: _controller.value.size.height,
-        child: VideoPlayer(_controller),
-      ),
-    );
-  }
-
-  String _formatDuration(Duration duration) {
-    String twoDigits(int n) => n.toString().padLeft(2, '0');
-    final minutes = twoDigits(duration.inMinutes.remainder(60));
-    final seconds = twoDigits(duration.inSeconds.remainder(60));
-    if (duration.inHours > 0) {
-      final hours = twoDigits(duration.inHours);
-      return '$hours:$minutes:$seconds';
-    }
-    return '$minutes:$seconds';
   }
 }

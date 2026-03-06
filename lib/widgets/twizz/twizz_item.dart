@@ -8,6 +8,7 @@ import '../../viewmodels/search/search_viewmodel.dart';
 import '../../views/twizz/twizz_interaction_screen.dart';
 import '../../views/twizz/twizz_detail_screen.dart';
 import '../common/twizz_video_player.dart';
+import '../media/fullscreen_media_viewer.dart';
 import 'report_dialog.dart';
 import '../../services/report_service/report_service.dart';
 import '../../core/utils/snackbar_utils.dart';
@@ -760,9 +761,40 @@ class _TwizzMedia extends StatelessWidget {
     // Check if it's a video
     if (medias.length == 1 &&
         medias.first.type == MediaType.video) {
-      return TwizzVideoPlayer(
-        url: medias.first.url,
-        height: 200,
+      return Stack(
+        children: [
+          TwizzVideoPlayer(url: medias.first.url, height: 200),
+          Positioned(
+            top: 8,
+            right: 8,
+            child: GestureDetector(
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder:
+                        (context) => FullscreenMediaViewer(
+                          medias: medias,
+                          initialIndex: 0,
+                        ),
+                  ),
+                );
+              },
+              child: Container(
+                padding: const EdgeInsets.all(8),
+                decoration: const BoxDecoration(
+                  color: Colors.black54,
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.fullscreen,
+                  color: Colors.white,
+                  size: 20,
+                ),
+              ),
+            ),
+          ),
+        ],
       );
     }
 
@@ -771,154 +803,88 @@ class _TwizzMedia extends StatelessWidget {
   }
 
   Widget _buildImageGrid(BuildContext context) {
-    final count = medias.length;
-
-    if (count == 1) {
-      return _buildSingleImage(medias.first);
-    } else if (count == 2) {
-      return SizedBox(
-        height: 200,
-        child: Row(
-          children: [
-            Expanded(
-              child: _buildGridImage(
-                medias[0],
-                const BorderRadius.only(
-                  topLeft: Radius.circular(16),
-                  bottomLeft: Radius.circular(16),
-                ),
-              ),
-            ),
-            const SizedBox(width: 4),
-            Expanded(
-              child: _buildGridImage(
-                medias[1],
-                const BorderRadius.only(
-                  topRight: Radius.circular(16),
-                  bottomRight: Radius.circular(16),
-                ),
-              ),
-            ),
-          ],
-        ),
-      );
-    } else if (count == 3) {
-      return SizedBox(
-        height: 200,
-        child: Row(
-          children: [
-            Expanded(
-              child: _buildGridImage(
-                medias[0],
-                const BorderRadius.only(
-                  topLeft: Radius.circular(16),
-                  bottomLeft: Radius.circular(16),
-                ),
-              ),
-            ),
-            const SizedBox(width: 4),
-            Expanded(
-              child: Column(
-                children: [
-                  Expanded(
-                    child: _buildGridImage(
-                      medias[1],
-                      const BorderRadius.only(
-                        topRight: Radius.circular(16),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Expanded(
-                    child: _buildGridImage(
-                      medias[2],
-                      const BorderRadius.only(
-                        bottomRight: Radius.circular(16),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      );
-    } else {
-      // 4 images
-      return SizedBox(
-        height: 200,
-        child: Column(
-          children: [
-            Expanded(
-              child: Row(
-                children: [
-                  Expanded(
-                    child: _buildGridImage(
-                      medias[0],
-                      const BorderRadius.only(
-                        topLeft: Radius.circular(16),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 4),
-                  Expanded(
-                    child: _buildGridImage(
-                      medias[1],
-                      const BorderRadius.only(
-                        topRight: Radius.circular(16),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 4),
-            Expanded(
-              child: Row(
-                children: [
-                  Expanded(
-                    child: _buildGridImage(
-                      medias[2],
-                      const BorderRadius.only(
-                        bottomLeft: Radius.circular(16),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 4),
-                  Expanded(
-                    child: _buildGridImage(
-                      medias[3],
-                      const BorderRadius.only(
-                        bottomRight: Radius.circular(16),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      );
+    if (medias.length == 1) {
+      return _buildSingleImage(context, medias.first);
     }
-  }
 
-  Widget _buildSingleImage(Media media) {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(16),
-      child: Image.network(
-        media.url, // Backend returns full URL
-        fit: BoxFit.cover,
-        height: 200,
-        width: double.infinity,
-        errorBuilder: (context, error, stackTrace) {
+    // Horizontal scrolling list for multiple images (matching create preview)
+    return SizedBox(
+      height: 250, // Decent height for feed images
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        itemCount: medias.length,
+        separatorBuilder:
+            (context, index) => const SizedBox(width: 8),
+        itemBuilder: (context, index) {
           return Container(
-            height: 200,
-            color: Colors.grey[800],
-            child: const Center(
-              child: Icon(
-                Icons.broken_image,
-                color: Colors.white54,
-              ),
+            constraints: const BoxConstraints(
+              maxWidth: 320,
+            ), // Max width to avoid ultra-wides taking over
+            child: Stack(
+              children: [
+                GestureDetector(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder:
+                            (context) => FullscreenMediaViewer(
+                              medias: medias,
+                              initialIndex: index,
+                            ),
+                      ),
+                    );
+                  },
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(16),
+                    child: Image.network(
+                      medias[index]
+                          .url, // Backend returns full URL
+                      height: 250,
+                      fit: BoxFit.cover,
+                      errorBuilder: (
+                        context,
+                        error,
+                        stackTrace,
+                      ) {
+                        return Container(
+                          height: 250,
+                          width: 200,
+                          color: Colors.grey[800],
+                          child: const Center(
+                            child: Icon(
+                              Icons.broken_image,
+                              color: Colors.white54,
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ),
+                Positioned(
+                  top: 8,
+                  right: 8,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.black.withValues(alpha: 0.6),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      '${index + 1}/${medias.length}',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ),
           );
         },
@@ -926,31 +892,47 @@ class _TwizzMedia extends StatelessWidget {
     );
   }
 
-  Widget _buildGridImage(
-    Media media,
-    BorderRadius borderRadius,
-  ) {
-    return ClipRRect(
-      borderRadius: borderRadius,
-      child: Image.network(
-        media.url, // Backend returns full URL
-        fit: BoxFit.cover,
+  Widget _buildSingleImage(BuildContext context, Media media) {
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder:
+                (context) => FullscreenMediaViewer(
+                  medias: [media],
+                  initialIndex: 0,
+                ),
+          ),
+        );
+      },
+      child: Container(
+        constraints: const BoxConstraints(maxHeight: 400),
         width: double.infinity,
-        height: double.infinity,
-        errorBuilder: (context, error, stackTrace) {
-          return Container(
-            color: Colors.grey[800],
-            child: const Center(
-              child: Icon(
-                Icons.broken_image,
-                color: Colors.white54,
-              ),
-            ),
-          );
-        },
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(16),
+          child: Image.network(
+            media.url, // Backend returns full URL
+            fit: BoxFit.cover,
+            errorBuilder: (context, error, stackTrace) {
+              return Container(
+                height: 200,
+                color: Colors.grey[800],
+                child: const Center(
+                  child: Icon(
+                    Icons.broken_image,
+                    color: Colors.white54,
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
       ),
     );
   }
+
+  // _buildGridImage method removed since grid layout is no longer used
 }
 
 /// Twizz Action Toolbar

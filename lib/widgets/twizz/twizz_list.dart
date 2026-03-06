@@ -100,6 +100,7 @@ class TwizzList extends StatelessWidget {
 
           final twizz = twizzs[index];
           return TwizzItem(
+            key: ValueKey(twizz.id),
             twizz: twizz,
             currentUserId: currentUserId,
             onTap:
@@ -230,6 +231,7 @@ class SliverTwizzList extends StatelessWidget {
 
             final twizz = twizzs[index];
             return TwizzItem(
+              key: ValueKey(twizz.id),
               twizz: twizz,
               currentUserId: currentUserId,
               onTap:

@@ -1,6 +1,7 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:twizzy_app/viewmodels/auth/change_password_viewmodel.dart';
@@ -243,6 +244,12 @@ void main() async {
   // Web Client ID (dùng cho serverClientId để lấy idToken) - lấy từ env
   final googleWebClientId = dotenv.get('GOOGLE_WEB_CLIENT_ID');
   GoogleAuthService().initialize(webClientId: googleWebClientId);
+
+  // Lock the application to portrait mode globally
+  await SystemChrome.setPreferredOrientations([
+    DeviceOrientation.portraitUp,
+    DeviceOrientation.portraitDown,
+  ]);
 
   runApp(
     MultiProvider(
