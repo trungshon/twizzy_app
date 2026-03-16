@@ -15,6 +15,7 @@ import '../../services/twizz_service/twizz_sync_service.dart';
 import '../../services/search_service/search_service.dart';
 import '../../widgets/twizz/twizz_text_input_utils.dart';
 import '../../models/auth/auth_models.dart';
+import '../../core/utils/snackbar_utils.dart';
 
 class TwizzDetailScreenArgs {
   final String twizzId;
@@ -217,9 +218,24 @@ class _TwizzDetailScreenState extends State<TwizzDetailScreen> {
       _replyFocusNode.unfocus();
       _viewModel.clearReplyingTo();
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Đã đăng câu trả lời')),
+        SnackBarUtils.showSuccess(
+          context,
+          message: 'Đã đăng câu trả lời',
         );
+      }
+    } else {
+      if (mounted) {
+        if (_viewModel.apiError != null) {
+          SnackBarUtils.showApiError(
+            context,
+            error: _viewModel.apiError!,
+          );
+        } else if (_viewModel.error != null) {
+          SnackBarUtils.showError(
+            context,
+            message: _viewModel.error!,
+          );
+        }
       }
     }
   }

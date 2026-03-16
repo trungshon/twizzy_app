@@ -386,11 +386,17 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         }
       }
     } else if (mounted) {
-      // Show error
-      SnackBarUtils.showError(
-        context,
-        message: editProfileViewModel.error ?? 'Có lỗi xảy ra',
-      );
+      if (editProfileViewModel.apiError != null) {
+        SnackBarUtils.showApiError(
+          context,
+          error: editProfileViewModel.apiError!,
+        );
+      } else {
+        SnackBarUtils.showError(
+          context,
+          message: editProfileViewModel.error ?? 'Có lỗi xảy ra',
+        );
+      }
     }
   }
 
@@ -1119,20 +1125,19 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         }
 
         if (imageUrl != null && mounted) {
-          SnackBarUtils.showSuccess(
-            this.context,
-            message:
-                isAvatar
-                    ? 'Đã cập nhật ảnh đại diện'
-                    : 'Đã cập nhật ảnh bìa',
-          );
-        } else if (mounted &&
-            editProfileViewModel.error != null) {
-          SnackBarUtils.showError(
-            this.context,
-            message:
-                editProfileViewModel.error ?? 'Có lỗi xảy ra',
-          );
+          // Ảnh tải lên thành công, cập nhật preview tự động
+        } else if (mounted) {
+          if (editProfileViewModel.apiError != null) {
+            SnackBarUtils.showApiError(
+              this.context,
+              error: editProfileViewModel.apiError!,
+            );
+          } else if (editProfileViewModel.error != null) {
+            SnackBarUtils.showError(
+              this.context,
+              message: editProfileViewModel.error!,
+            );
+          }
         }
       }
     } catch (e) {

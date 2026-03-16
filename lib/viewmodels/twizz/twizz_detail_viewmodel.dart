@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:flutter/foundation.dart';
 import '../../models/twizz/twizz_models.dart';
+import '../../models/auth/auth_models.dart';
 import '../../services/twizz_service/twizz_service.dart';
 import '../../services/like_service/like_service.dart';
 import '../../services/bookmark_service/bookmark_service.dart';
@@ -114,7 +115,8 @@ class TwizzDetailViewModel extends ChangeNotifier {
   bool _isLoadingComments = false;
   bool _isLoadingMoreComments = false;
   bool _isPostingComment = false;
-  String? _error;
+  String? _error = null;
+  ApiErrorResponse? _apiError;
   int _commentsPage = 1;
   bool _hasMoreComments = true;
 
@@ -138,6 +140,19 @@ class TwizzDetailViewModel extends ChangeNotifier {
   bool get isLoadingMoreComments => _isLoadingMoreComments;
   bool get isPostingComment => _isPostingComment;
   String? get error => _error;
+  ApiErrorResponse? get apiError => _apiError;
+
+  String get detailedErrorMessage {
+    if (_apiError == null) return _error ?? 'Có lỗi xảy ra';
+
+    if (_apiError!.hasValidationErrors()) {
+      final firstError = _apiError!.errors!.values.first;
+      return firstError.msg;
+    }
+
+    return _apiError!.message;
+  }
+
   bool get hasMoreComments => _hasMoreComments;
 
   Map<String, List<Twizz>> get repliesMap => _repliesMap;
@@ -266,6 +281,7 @@ class TwizzDetailViewModel extends ChangeNotifier {
 
   void clearError() {
     _error = null;
+    _apiError = null;
     notifyListeners();
   }
 
@@ -374,6 +390,7 @@ class TwizzDetailViewModel extends ChangeNotifier {
     _isPostingComment = true;
     _isUploading = true;
     _error = null;
+    _apiError = null;
     notifyListeners();
 
     try {
@@ -448,7 +465,15 @@ class TwizzDetailViewModel extends ChangeNotifier {
 
       return true;
     } catch (e) {
-      _error = e.toString();
+      if (e is ApiErrorResponse) {
+        _apiError = e;
+        _error = e.message;
+        debugPrint('[PostComment] Lỗi: ${e.message}');
+      } else {
+        _apiError = null;
+        _error = e.toString();
+        debugPrint('[PostComment] Lỗi khác: $e');
+      }
       return false;
     } finally {
       _isPostingComment = false;
