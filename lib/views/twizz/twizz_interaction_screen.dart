@@ -42,7 +42,7 @@ class _TwizzInteractionScreenState
   void initState() {
     super.initState();
     _tabController = TabController(
-      length: 3,
+      length: 2,
       vsync: this,
       initialIndex: widget.args.initialTab,
     );
@@ -58,10 +58,6 @@ class _TwizzInteractionScreenState
   void _loadInitialData() {
     _viewModel.loadQuotes(widget.args.twizzId, refresh: true);
     _viewModel.loadLikedByUsers(
-      widget.args.twizzId,
-      refresh: true,
-    );
-    _viewModel.loadBookmarkedByUsers(
       widget.args.twizzId,
       refresh: true,
     );
@@ -99,7 +95,6 @@ class _TwizzInteractionScreenState
             tabs: const [
               Tab(text: 'Trích dẫn'),
               Tab(text: 'Đã thích'),
-              Tab(text: 'Đã đánh dấu'),
             ],
             labelStyle: themeData.textTheme.titleSmall?.copyWith(
               fontWeight: FontWeight.bold,
@@ -117,7 +112,6 @@ class _TwizzInteractionScreenState
           children: [
             _buildQuotesTab(currentUserId),
             _buildLikesTab(currentUserId),
-            _buildBookmarksTab(currentUserId),
           ],
         ),
       ),
@@ -295,100 +289,6 @@ class _TwizzInteractionScreenState
                   );
                 }
                 final user = viewModel.likedByUsers[index];
-                final isCurrentUser = user.id == currentUserId;
-                return UserListItem(
-                  user: user,
-                  isFollowing: user.isFollowing ?? false,
-                  onFollow:
-                      isCurrentUser
-                          ? null
-                          : () => viewModel.followUser(user),
-                  onUnfollow:
-                      isCurrentUser
-                          ? null
-                          : () => viewModel.unfollowUser(user),
-                  onTap: () => _navigateToProfile(user),
-                );
-              },
-            ),
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _buildBookmarksTab(String? currentUserId) {
-    return Consumer<TwizzInteractionViewModel>(
-      builder: (context, viewModel, child) {
-        if (viewModel.isLoadingBookmarks &&
-            viewModel.bookmarkedByUsers.isEmpty) {
-          return const Center(
-            child: CircularProgressIndicator(),
-          );
-        }
-
-        if (viewModel.bookmarksError != null &&
-            viewModel.bookmarkedByUsers.isEmpty) {
-          return Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(viewModel.bookmarksError!),
-                ElevatedButton(
-                  onPressed:
-                      () => viewModel.loadBookmarkedByUsers(
-                        widget.args.twizzId,
-                        refresh: true,
-                      ),
-                  child: const Text('Thử lại'),
-                ),
-              ],
-            ),
-          );
-        }
-
-        if (viewModel.bookmarkedByUsers.isEmpty) {
-          return const Center(
-            child: Text('Chưa có ai đánh dấu bài viết này'),
-          );
-        }
-
-        return RefreshIndicator(
-          onRefresh: () async {
-            await viewModel.loadBookmarkedByUsers(
-              widget.args.twizzId,
-              refresh: true,
-            );
-          },
-          child: NotificationListener<ScrollNotification>(
-            onNotification: (ScrollNotification scrollInfo) {
-              if (scrollInfo.metrics.pixels ==
-                      scrollInfo.metrics.maxScrollExtent &&
-                  !viewModel.isLoadingMoreBookmarks &&
-                  viewModel.hasMoreBookmarks) {
-                Future.microtask(
-                  () => viewModel.loadBookmarkedByUsers(
-                    widget.args.twizzId,
-                  ),
-                );
-              }
-              return false;
-            },
-            child: ListView.builder(
-              itemCount:
-                  viewModel.bookmarkedByUsers.length +
-                  (viewModel.isLoadingMoreBookmarks ? 1 : 0),
-              itemBuilder: (context, index) {
-                if (index ==
-                    viewModel.bookmarkedByUsers.length) {
-                  return const Padding(
-                    padding: EdgeInsets.all(8.0),
-                    child: Center(
-                      child: CircularProgressIndicator(),
-                    ),
-                  );
-                }
-                final user = viewModel.bookmarkedByUsers[index];
                 final isCurrentUser = user.id == currentUserId;
                 return UserListItem(
                   user: user,
