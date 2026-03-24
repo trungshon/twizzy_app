@@ -192,6 +192,7 @@ class CreateTwizzViewModel extends ChangeNotifier {
   void removeImage(int index) {
     if (index >= 0 && index < _selectedImages.length) {
       _selectedImages.removeAt(index);
+      _uploadedMedias.clear();
       notifyListeners();
     }
   }
@@ -243,6 +244,7 @@ class CreateTwizzViewModel extends ChangeNotifier {
   /// Remove video
   void removeVideo() {
     _selectedVideo = null;
+    _uploadedMedias.clear();
     notifyListeners();
   }
 

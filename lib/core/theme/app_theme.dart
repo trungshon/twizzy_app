@@ -116,7 +116,7 @@ class AppTheme {
       dividerColor: AppColors.lightDivider,
 
       // Card
-      cardTheme: CardTheme(
+      cardTheme: CardThemeData(
         color: AppColors.lightSurface,
         elevation: 0,
         shape: RoundedRectangleBorder(
@@ -269,7 +269,7 @@ class AppTheme {
       dividerColor: AppColors.darkDivider,
 
       // Card
-      cardTheme: CardTheme(
+      cardTheme: CardThemeData(
         color: AppColors.darkSurface,
         elevation: 0,
         shape: RoundedRectangleBorder(
