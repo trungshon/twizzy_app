@@ -12,6 +12,27 @@ class TwizzService {
 
   TwizzService(this._apiClient);
 
+  /// Moderate text content
+  Future<Map<String, dynamic>> moderateText(
+    String content,
+  ) async {
+    try {
+      final response = await _apiClient.post(
+        ApiConstants.moderateText,
+        body: {'content': content},
+        includeAuth: true,
+      );
+      return response['result'];
+    } catch (e) {
+      if (e is ApiErrorResponse) {
+        rethrow;
+      }
+      throw ApiErrorResponse(
+        message: 'Lỗi kiểm duyệt văn bản: ${e.toString()}',
+      );
+    }
+  }
+
   /// Get a single Twizz by ID
   Future<GetTwizzResponse> getTwizz(String twizzId) async {
     try {
@@ -125,7 +146,10 @@ class TwizzService {
   }
 
   /// Upload images (with auto refresh token)
-  Future<List<Media>> uploadImages(List<File> files) async {
+  Future<List<Media>> uploadImages(
+    List<File> files, {
+    bool moderate = true,
+  }) async {
     try {
       final multipartFiles =
           files.map((file) {
@@ -138,8 +162,13 @@ class TwizzService {
             );
           }).toList();
 
+      String url = ApiConstants.uploadImage;
+      if (!moderate) {
+        url += '?moderation=false';
+      }
+
       final response = await _apiClient.uploadFiles(
-        ApiConstants.uploadImage,
+        url,
         files: multipartFiles,
       );
 
@@ -158,7 +187,10 @@ class TwizzService {
   }
 
   /// Upload video (with auto refresh token)
-  Future<List<Media>> uploadVideo(File file) async {
+  Future<List<Media>> uploadVideo(
+    File file, {
+    bool moderate = true,
+  }) async {
     try {
       final extension = file.path.split('.').last.toLowerCase();
       final multipartFile = MultipartFile(
@@ -167,8 +199,13 @@ class TwizzService {
         mimeType: _getVideoMimeType(extension),
       );
 
+      String url = ApiConstants.uploadVideo;
+      if (!moderate) {
+        url += '?moderation=false';
+      }
+
       final response = await _apiClient.uploadFiles(
-        ApiConstants.uploadVideo,
+        url,
         files: [multipartFile],
       );
 

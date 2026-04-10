@@ -16,6 +16,7 @@ class EditProfileViewModel extends ChangeNotifier {
   // State
   bool _isLoading = false;
   bool _isUploadingImage = false;
+  String? _loadingMessage;
   String? _error;
   ApiErrorResponse? _apiError;
 
@@ -32,6 +33,7 @@ class EditProfileViewModel extends ChangeNotifier {
   // Getters
   bool get isLoading => _isLoading;
   bool get isUploadingImage => _isUploadingImage;
+  String? get loadingMessage => _loadingMessage;
   String? get error => _error;
   ApiErrorResponse? get apiError => _apiError;
   String? get name => _name;
@@ -109,6 +111,7 @@ class EditProfileViewModel extends ChangeNotifier {
   /// Upload avatar image
   Future<String?> uploadAvatar(File imageFile) async {
     _isUploadingImage = true;
+    _loadingMessage = 'Đang kiểm duyệt ảnh...';
     _error = null;
     _apiError = null;
     notifyListeners();
@@ -121,14 +124,17 @@ class EditProfileViewModel extends ChangeNotifier {
         final imageUrl = medias.first.url;
         _avatar = imageUrl;
         _isUploadingImage = false;
+        _loadingMessage = null;
         notifyListeners();
         return imageUrl;
       }
       _isUploadingImage = false;
+      _loadingMessage = null;
       notifyListeners();
       return null;
     } catch (e) {
       _isUploadingImage = false;
+      _loadingMessage = null;
       if (e is ApiErrorResponse) {
         _apiError = e;
         _error = e.message;
@@ -143,6 +149,7 @@ class EditProfileViewModel extends ChangeNotifier {
   /// Upload cover photo image
   Future<String?> uploadCoverPhoto(File imageFile) async {
     _isUploadingImage = true;
+    _loadingMessage = 'Đang kiểm duyệt ảnh...';
     _error = null;
     _apiError = null;
     notifyListeners();
@@ -155,14 +162,17 @@ class EditProfileViewModel extends ChangeNotifier {
         final imageUrl = medias.first.url;
         _coverPhoto = imageUrl;
         _isUploadingImage = false;
+        _loadingMessage = null;
         notifyListeners();
         return imageUrl;
       }
       _isUploadingImage = false;
+      _loadingMessage = null;
       notifyListeners();
       return null;
     } catch (e) {
       _isUploadingImage = false;
+      _loadingMessage = null;
       if (e is ApiErrorResponse) {
         _apiError = e;
         _error = e.message;
@@ -196,6 +206,7 @@ class EditProfileViewModel extends ChangeNotifier {
   /// Update profile - only send changed fields
   Future<User?> updateProfile(User originalUser) async {
     _isLoading = true;
+    _loadingMessage = 'Đang lưu hồ sơ...';
     _error = null;
     _apiError = null;
     notifyListeners();
@@ -270,10 +281,12 @@ class EditProfileViewModel extends ChangeNotifier {
 
       final response = await _authService.updateMe(request);
       _isLoading = false;
+      _loadingMessage = null;
       notifyListeners();
       return response.result;
     } catch (e) {
       _isLoading = false;
+      _loadingMessage = null;
       if (e is ApiErrorResponse) {
         _apiError = e;
         // If it's a validation error, use the first field error message
@@ -304,6 +317,7 @@ class EditProfileViewModel extends ChangeNotifier {
     _avatar = null;
     _coverPhoto = null;
     _username = null;
+    _loadingMessage = null;
     notifyListeners();
   }
 }

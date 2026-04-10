@@ -31,6 +31,7 @@ class CreateTwizzViewModel extends ChangeNotifier {
   // State
   bool _isLoading = false;
   bool _isUploading = false;
+  String? _loadingMessage;
   bool _isSearchingUsers = false;
   String? _error;
   ApiErrorResponse? _apiError;
@@ -42,10 +43,12 @@ class CreateTwizzViewModel extends ChangeNotifier {
   final List<SearchUserResult> _mentionedUsers = [];
   List<SearchUserResult> _searchResults = [];
   Twizz? _parentTwizz; // For quote twizz
+  String? _moderationSignature;
 
   // Getters
   bool get isLoading => _isLoading;
   bool get isUploading => _isUploading;
+  String? get loadingMessage => _loadingMessage;
   bool get isSearchingUsers => _isSearchingUsers;
   String? get error => _error;
   ApiErrorResponse? get apiError => _apiError;
@@ -304,9 +307,30 @@ class CreateTwizzViewModel extends ChangeNotifier {
     return matches.map((m) => m.group(1)!).toList();
   }
 
+  /// Moderate text content independently
+  Future<void> _moderateText() async {
+    if (_content.trim().isEmpty) return;
+
+    _loadingMessage = 'Đang kiểm tra nội dung...';
+    notifyListeners();
+
+    final result = await _twizzService.moderateText(_content);
+    if (result['passed'] == false) {
+      _moderationSignature = null;
+      throw ApiErrorResponse(
+        message:
+            result['violations'][0]['reason'] ??
+            'Văn bản vi phạm tiêu chuẩn cộng đồng',
+      );
+    }
+    _moderationSignature = result['signature'] as String?;
+  }
+
   /// Upload all media files
-  Future<bool> _uploadMedias() async {
+  Future<void> _uploadMedias() async {
     _uploadedMedias.clear();
+    _loadingMessage = 'Đang kiểm duyệt...';
+    notifyListeners();
 
     try {
       // Upload images
@@ -324,8 +348,6 @@ class CreateTwizzViewModel extends ChangeNotifier {
         );
         _uploadedMedias.addAll(uploadedVideos);
       }
-
-      return true;
     } catch (e) {
       if (e is ApiErrorResponse) {
         _apiError = e;
@@ -334,7 +356,8 @@ class CreateTwizzViewModel extends ChangeNotifier {
         _apiError = null;
         _error = 'Lỗi tải media: ${e.toString()}';
       }
-      return false;
+      notifyListeners();
+      rethrow; // Rethrow để Future.wait nhận ra lỗi và dừng lại
     }
   }
 
@@ -348,20 +371,24 @@ class CreateTwizzViewModel extends ChangeNotifier {
     notifyListeners();
 
     try {
-      // Upload media first
-      if (_selectedImages.isNotEmpty || _selectedVideo != null) {
+      // BƯỚC 1: Duyệt Text trước (Cực nhanh và rẻ) - Fail-fast
+      // Nếu vi phạm, sẽ ném lỗi và dừng ngay tại đây, không bao giờ tốn phí duyệt Media.
+      await _moderateText();
+
+      // BƯỚC 2: Chỉ khi nội dung sạch, mới tiến hành xử lý Media (nếu có)
+      bool hasMedia =
+          _selectedImages.isNotEmpty || _selectedVideo != null;
+      if (hasMedia) {
         _isUploading = true;
         notifyListeners();
+        await _uploadMedias();
 
-        final uploadSuccess = await _uploadMedias();
         _isUploading = false;
+        _loadingMessage = 'Đã duyệt xong, đang đăng...';
         notifyListeners();
-
-        if (!uploadSuccess) {
-          _isLoading = false;
-          notifyListeners();
-          return null;
-        }
+      } else {
+        _loadingMessage = 'Đang đăng bài...';
+        notifyListeners();
       }
 
       // Extract hashtags
@@ -383,11 +410,13 @@ class CreateTwizzViewModel extends ChangeNotifier {
         hashtags: hashtags,
         mentions: mentionIds,
         medias: _uploadedMedias,
+        moderationSignature: _moderationSignature,
       );
 
       final response = await _twizzService.createTwizz(request);
 
       _isLoading = false;
+      _loadingMessage = null;
       notifyListeners();
 
       // Reset state
@@ -399,6 +428,8 @@ class CreateTwizzViewModel extends ChangeNotifier {
       return response.result;
     } catch (e) {
       _isLoading = false;
+      _isUploading = false;
+      _loadingMessage = null;
       if (e is ApiErrorResponse) {
         _apiError = e;
         _error = e.message;
@@ -429,8 +460,10 @@ class CreateTwizzViewModel extends ChangeNotifier {
     _uploadedMedias.clear();
     _mentionedUsers.clear();
     _searchResults.clear();
+    _loadingMessage = null;
     _audience = TwizzAudience.everyone;
     _parentTwizz = null;
+    _moderationSignature = null;
   }
 
   /// Dispose and reset

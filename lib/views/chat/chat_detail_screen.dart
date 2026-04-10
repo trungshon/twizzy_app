@@ -49,6 +49,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
   String? _selectedMessageId;
   String? _firstUnreadMessageId;
   bool _isUploadingMedia = false;
+  String? _uploadStatus;
   final ImagePicker _imagePicker = ImagePicker();
 
   @override
@@ -288,14 +289,18 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
       );
       if (picked == null) return;
 
-      setState(() => _isUploadingMedia = true);
+      setState(() {
+        _isUploadingMedia = true;
+        _uploadStatus = 'Đang chuẩn bị ảnh...';
+      });
 
       final twizzService = context.read<TwizzService>();
       final uploadedMedias = await twizzService.uploadImages([
         File(picked.path),
-      ]);
+      ], moderate: false);
 
       if (uploadedMedias.isNotEmpty) {
+        setState(() => _uploadStatus = 'Đang gửi...');
         _sendMessage(
           medias:
               uploadedMedias
@@ -312,7 +317,12 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
         );
       }
     } finally {
-      if (mounted) setState(() => _isUploadingMedia = false);
+      if (mounted) {
+        setState(() {
+          _isUploadingMedia = false;
+          _uploadStatus = null;
+        });
+      }
     }
   }
 
@@ -325,14 +335,19 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
       );
       if (picked == null) return;
 
-      setState(() => _isUploadingMedia = true);
+      setState(() {
+        _isUploadingMedia = true;
+        _uploadStatus = 'Đang chuẩn bị video...';
+      });
 
       final twizzService = context.read<TwizzService>();
       final uploadedMedias = await twizzService.uploadVideo(
         File(picked.path),
+        moderate: false,
       );
 
       if (uploadedMedias.isNotEmpty) {
+        setState(() => _uploadStatus = 'Đang gửi...');
         _sendMessage(
           medias:
               uploadedMedias
@@ -349,7 +364,12 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
         );
       }
     } finally {
-      if (mounted) setState(() => _isUploadingMedia = false);
+      if (mounted) {
+        setState(() {
+          _isUploadingMedia = false;
+          _uploadStatus = null;
+        });
+      }
     }
   }
 
@@ -934,7 +954,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
                   ),
                   const SizedBox(width: 8),
                   Text(
-                    'Đang tải lên...',
+                    _uploadStatus ?? 'Đang tải lên...',
                     style: themeData.textTheme.bodySmall
                         ?.copyWith(
                           color: themeData.colorScheme.onSurface

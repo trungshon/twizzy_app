@@ -31,8 +31,30 @@ class MediaUrlHelper {
           host == '127.0.0.1' ||
           host.startsWith('192.168.');
 
-      // Nếu KHÔNG phải local → URL bên ngoài (Cloudinary, CDN) → giữ nguyên
+      // Nếu KHÔNG phải local → URL bên ngoài (Cloudinary, CDN) → tối ưu hóa nếu là Cloudinary
       if (!isLocalUrl) {
+        // Nếu là URL Cloudinary
+        if (host.contains('res.cloudinary.com')) {
+          // Xử lý chung cho cả ảnh và video
+          if (url.contains('/upload/')) {
+            // Nếu là video, thêm vc_auto
+            if (url.contains('/video/')) {
+              if (!url.contains('/f_auto,q_auto,vc_auto/')) {
+                return url.replaceFirst(
+                  '/upload/',
+                  '/upload/f_auto,q_auto,vc_auto/',
+                );
+              }
+            }
+            // Nếu là ảnh, chỉ cần f_auto,q_auto
+            else if (!url.contains('/f_auto,q_auto/')) {
+              return url.replaceFirst(
+                '/upload/',
+                '/upload/f_auto,q_auto/',
+              );
+            }
+          }
+        }
         return url;
       }
 
@@ -55,8 +77,35 @@ class MediaUrlHelper {
     return normalizeUrl(url);
   }
 
-  /// Normalize video URL
+  /// Normalize video URL with HLS (Adaptive Bitrate Streaming)
   static String normalizeVideoUrl(String url) {
+    if (url.isEmpty || !url.contains('res.cloudinary.com')) {
+      return normalizeUrl(url);
+    }
+
+    // Chuyển sang định dạng HLS (.m3u8) với streaming profile auto (sp_auto)
+    // Điều này cho phép tự động điều chỉnh chất lượng theo băng thông người dùng
+    if (url.contains('/video/upload/')) {
+      // Bỏ qua nếu đã là m3u8
+      if (url.endsWith('.m3u8')) return url;
+
+      // Xóa các transformations cũ và thay bằng sp_auto
+      String baseUrl = url.split('/upload/')[0];
+      String pathAfterUpload = url.split('/upload/')[1];
+
+      // Bỏ qua version (v123456) nếu có
+      if (pathAfterUpload.startsWith('v') &&
+          pathAfterUpload.contains('/')) {
+        pathAfterUpload = pathAfterUpload.substring(
+          pathAfterUpload.indexOf('/') + 1,
+        );
+      }
+
+      // Đổi extension sang .m3u8
+      String publicId = pathAfterUpload.split('.').first;
+      return '$baseUrl/upload/sp_auto/$publicId.m3u8';
+    }
+
     return normalizeUrl(url);
   }
 }

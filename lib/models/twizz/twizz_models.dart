@@ -54,6 +54,7 @@ class CreateTwizzRequest {
   final List<String> hashtags;
   final List<String> mentions; // User IDs
   final List<Media> medias;
+  final String? moderationSignature;
 
   CreateTwizzRequest({
     this.type = TwizzType.twizz,
@@ -63,6 +64,7 @@ class CreateTwizzRequest {
     this.hashtags = const [],
     this.mentions = const [],
     this.medias = const [],
+    this.moderationSignature,
   });
 
   Map<String, dynamic> toJson() {
@@ -74,6 +76,7 @@ class CreateTwizzRequest {
       'hashtags': hashtags,
       'mentions': mentions,
       'medias': medias.map((m) => m.toJson()).toList(),
+      'moderation_signature': moderationSignature,
     };
   }
 }

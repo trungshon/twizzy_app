@@ -83,6 +83,9 @@ class ApiConstants {
   static const String uploadImage = '/medias/upload-image';
   static const String uploadVideo = '/medias/upload-video';
 
+  // Moderation
+  static const String moderateText = '/moderation/text';
+
   // Search
   static const String search = '/search';
 

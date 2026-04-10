@@ -741,7 +741,8 @@ class _CreateTwizzScreenState extends State<CreateTwizzScreen> {
                               ),
                               const SizedBox(width: 8),
                               Text(
-                                'Đang duyệt...',
+                                viewModel.loadingMessage ??
+                                    'Đang xử lý...',
                                 style: TextStyle(
                                   fontWeight: FontWeight.bold,
                                   fontSize: 15,

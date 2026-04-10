@@ -442,12 +442,27 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                         : _handleSave,
                 child:
                     editProfileViewModel.isLoading
-                        ? const SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                          ),
+                        ? Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const SizedBox(
+                              width: 14,
+                              height: 14,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              editProfileViewModel
+                                      .loadingMessage ??
+                                  'Đang lưu...',
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 15,
+                              ),
+                            ),
+                          ],
                         )
                         : Text(
                           'Lưu',
@@ -565,8 +580,13 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                                           Icons
                                               .camera_alt_outlined,
                                         ),
-                                label: const Text(
-                                  'Đổi ảnh đại diện',
+                                label: Text(
+                                  editProfileViewModel
+                                          .isUploadingImage
+                                      ? (editProfileViewModel
+                                              .loadingMessage ??
+                                          'Đang tải...')
+                                      : 'Đổi ảnh đại diện',
                                 ),
                               ),
                             ),
@@ -1037,13 +1057,26 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   foregroundColor: Colors.white,
                   side: const BorderSide(color: Colors.white),
                 ),
-                icon: const Icon(
-                  Icons.camera_alt_outlined,
-                  size: 18,
-                ),
-                label: const Text(
-                  'Đổi ảnh bìa',
-                  style: TextStyle(fontSize: 12),
+                icon:
+                    editProfileViewModel.isUploadingImage
+                        ? const SizedBox(
+                          width: 14,
+                          height: 14,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        )
+                        : const Icon(
+                          Icons.camera_alt_outlined,
+                          size: 18,
+                        ),
+                label: Text(
+                  editProfileViewModel.isUploadingImage
+                      ? (editProfileViewModel.loadingMessage ??
+                          'Đang tải...')
+                      : 'Đổi ảnh bìa',
+                  style: const TextStyle(fontSize: 12),
                 ),
               ),
             ),
