@@ -51,6 +51,27 @@ class TwizzService {
     }
   }
 
+  /// Get Recommendations (tab Đề xuất)
+  Future<NewFeedsResponse> getRecommendations({
+    int limit = 20,
+    int page = 1,
+  }) async {
+    try {
+      final response = await _apiClient.get(
+        '${ApiConstants.getRecommendations}?limit=$limit&page=$page',
+        includeAuth: true,
+      );
+      return NewFeedsResponse.fromJson(response);
+    } catch (e) {
+      if (e is ApiErrorResponse) {
+        rethrow;
+      }
+      throw ApiErrorResponse(
+        message: 'Lỗi tải bài viết đề xuất: ${e.toString()}',
+      );
+    }
+  }
+
   /// Get NewFeeds
   Future<NewFeedsResponse> getNewFeeds({
     int limit = 10,

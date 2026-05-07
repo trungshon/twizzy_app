@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:twizzy_app/widgets/common/app_drawer.dart';
 import '../../viewmodels/auth/auth_viewmodel.dart';
+import '../../viewmodels/recommendations/recommendations_viewmodel.dart';
 import '../../widgets/common/app_logo.dart';
 import '../../routes/route_names.dart';
 import 'for_you_tab.dart';
@@ -21,6 +22,7 @@ class HomeContent extends StatefulWidget {
 class HomeContentState extends State<HomeContent>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
+  final GlobalKey<ForYouTabState> _forYouTabKey = GlobalKey<ForYouTabState>();
   final GlobalKey<FollowingTabState> _followingTabKey =
       GlobalKey<FollowingTabState>();
 
@@ -28,18 +30,26 @@ class HomeContentState extends State<HomeContent>
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
-    // Load user info khi màn hình được khởi tạo
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final authViewModel = context.read<AuthViewModel>();
       if (authViewModel.currentUser == null) {
         authViewModel.getMe();
       }
+      // Load recommendations khi vào app
+      final recommendationsViewModel = context.read<RecommendationsViewModel>();
+      if (recommendationsViewModel.twizzs.isEmpty) {
+        recommendationsViewModel.loadRecommendations();
+      }
     });
   }
 
-  /// Scroll to top of newsfeed
+  /// Scroll to top — phụ thuộc vào tab đang active
   void scrollToTop() {
-    _followingTabKey.currentState?.scrollToTop();
+    if (_tabController.index == 0) {
+      _forYouTabKey.currentState?.scrollToTop();
+    } else {
+      _followingTabKey.currentState?.scrollToTop();
+    }
   }
 
   @override
@@ -93,7 +103,7 @@ class HomeContentState extends State<HomeContent>
         body: TabBarView(
           controller: _tabController,
           children: [
-            const ForYouTab(),
+            ForYouTab(key: _forYouTabKey),
             FollowingTab(key: _followingTabKey),
           ],
         ),

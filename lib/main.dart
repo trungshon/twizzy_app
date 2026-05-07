@@ -35,6 +35,7 @@ import 'viewmodels/main/main_viewmodel.dart';
 import 'viewmodels/chat/chat_viewmodel.dart';
 import 'viewmodels/chat/new_message_viewmodel.dart';
 import 'viewmodels/report/report_viewmodel.dart';
+import 'viewmodels/recommendations/recommendations_viewmodel.dart';
 import 'services/fcm_service/fcm_service.dart';
 
 void main() async {
@@ -89,6 +90,12 @@ void main() async {
     twizzSyncService,
   );
   final newsFeedViewModel = NewsFeedViewModel(
+    twizzService,
+    likeService,
+    bookmarkService,
+    twizzSyncService,
+  );
+  final recommendationsViewModel = RecommendationsViewModel(
     twizzService,
     likeService,
     bookmarkService,
@@ -152,6 +159,7 @@ void main() async {
     fcmService.unregisterToken();
     createTwizzViewModel.clear();
     newsFeedViewModel.clear();
+    recommendationsViewModel.clear();
     profileViewModel.clear();
     editProfileViewModel.clear();
     searchViewModel.clear();
@@ -269,6 +277,7 @@ void main() async {
           value: createTwizzViewModel,
         ),
         ChangeNotifierProvider.value(value: newsFeedViewModel),
+        ChangeNotifierProvider.value(value: recommendationsViewModel),
         ChangeNotifierProvider.value(value: profileViewModel),
         ChangeNotifierProvider.value(
           value: editProfileViewModel,
