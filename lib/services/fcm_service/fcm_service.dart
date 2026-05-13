@@ -1,6 +1,5 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 import '../api/api_client.dart';
 import '../local_notification_service/local_notification_service.dart';

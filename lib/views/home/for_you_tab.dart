@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:twizzy_app/widgets/twizz/twizz_list.dart';
@@ -79,7 +80,16 @@ class ForYouTabState extends State<ForYouTab> {
           onLoadMore: viewModel.loadMore,
           onRefresh: viewModel.refresh,
           scrollController: _scrollController,
+          emptyWidget: viewModel.globalTotal > 0
+              ? _buildCaughtUpCard(context, viewModel)
+              : _buildEmptyState(context),
+          endOfListWidget: viewModel.globalTotal > 0
+              ? _buildCaughtUpCard(context, viewModel)
+              : _buildEmptyState(context),
           currentUserId: currentUserId,
+          onVisibilityChanged: (twizz, fraction) {
+            viewModel.reportVisibility(twizz.id, fraction);
+          },
           onTwizzTap: (twizz) {
             Navigator.pushNamed(
               context,
@@ -126,43 +136,8 @@ class ForYouTabState extends State<ForYouTab> {
           onDelete: (twizz) {
             viewModel.deleteTwizz(twizz);
           },
-          emptyWidget: _buildEmptyState(context),
         );
       },
-    );
-  }
-
-  Widget _buildEmptyState(BuildContext context) {
-    final themeData = Theme.of(context);
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            Icons.explore_outlined,
-            size: 64,
-            color: themeData.colorScheme.onSurface.withValues(alpha: 0.3),
-          ),
-          const SizedBox(height: 16),
-          Text(
-            'Chưa có bài viết đề xuất',
-            style: themeData.textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 32),
-            child: Text(
-              'Hãy tương tác với một vài bài viết để nhận được gợi ý phù hợp',
-              style: themeData.textTheme.bodyMedium?.copyWith(
-                color: themeData.colorScheme.onSurface.withValues(alpha: 0.6),
-              ),
-              textAlign: TextAlign.center,
-            ),
-          ),
-        ],
-      ),
     );
   }
 
@@ -201,6 +176,161 @@ class ForYouTabState extends State<ForYouTab> {
             child: const Text('Thử lại'),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildEmptyState(BuildContext context) {
+    final themeData = Theme.of(context);
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.explore_outlined,
+            size: 64,
+            color: themeData.colorScheme.onSurface.withValues(alpha: 0.3),
+          ),
+          const SizedBox(height: 16),
+          Text(
+            'Chưa có bài viết đề xuất',
+            style: themeData.textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 32),
+            child: Text(
+              'Các bài viết đề xuất sẽ hiển thị ở đây khi hệ thống có dữ liệu.',
+              style: themeData.textTheme.bodyMedium?.copyWith(
+                color: themeData.colorScheme.onSurface.withValues(alpha: 0.6),
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Build "Caught up" card with Glassmorphism
+  Widget _buildCaughtUpCard(
+    BuildContext context,
+    RecommendationsViewModel viewModel,
+  ) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(
+        horizontal: 20,
+        vertical: 10,
+      ),
+      child: Center(
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(20),
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+            child: Container(
+              padding: const EdgeInsets.symmetric(
+                horizontal: 20,
+                vertical: 20,
+              ),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(
+                  color: (isDark ? Colors.white : Colors.black)
+                      .withValues(alpha: 0.1),
+                  width: 1.5,
+                ),
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    (isDark ? Colors.white : Colors.black)
+                        .withValues(alpha: 0.02),
+                    (isDark ? Colors.white : Colors.black)
+                        .withValues(alpha: 0.02),
+                  ],
+                ),
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    Icons.check_circle_rounded,
+                    color: theme.colorScheme.secondary,
+                    size: 60,
+                  ),
+                  const SizedBox(height: 20),
+                  Text(
+                    'Đã xem hết bài viết!',
+                    style: theme.textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    'Bạn đã bắt kịp tất cả nội dung đề xuất dành cho bạn hiện có trên hệ thống.',
+                    textAlign: TextAlign.center,
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: theme.textTheme.bodyMedium?.color
+                          ?.withValues(alpha: 0.7),
+                      height: 1.5,
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed:
+                          viewModel.isLoading
+                              ? null
+                              : () => viewModel.resetAllViews(),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor:
+                            theme.colorScheme.primary,
+                        foregroundColor:
+                            theme.colorScheme.onPrimary,
+                        padding: const EdgeInsets.symmetric(
+                          vertical: 12,
+                        ),
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(
+                            16,
+                          ),
+                        ),
+                      ),
+                      child:
+                          viewModel.isLoading
+                              ? const SizedBox(
+                                height: 20,
+                                width: 20,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  valueColor:
+                                      AlwaysStoppedAnimation<
+                                        Color
+                                      >(Colors.white),
+                                ),
+                              )
+                              : const Text(
+                                'Xem lại các bài đã xem',
+                                style: TextStyle(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }

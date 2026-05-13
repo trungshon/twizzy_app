@@ -410,6 +410,7 @@ class NewFeedsResponse {
   final int limit;
   final int page;
   final int totalPage;
+  final int globalTotal;
 
   NewFeedsResponse({
     required this.message,
@@ -417,6 +418,7 @@ class NewFeedsResponse {
     required this.limit,
     required this.page,
     required this.totalPage,
+    this.globalTotal = 0,
   });
 
   factory NewFeedsResponse.fromJson(Map<String, dynamic> json) {
@@ -432,6 +434,7 @@ class NewFeedsResponse {
       limit: result['limit'] as int? ?? 10,
       page: result['page'] as int? ?? 1,
       totalPage: result['total_page'] as int? ?? 0,
+      globalTotal: result['global_total'] as int? ?? 0,
     );
   }
 }

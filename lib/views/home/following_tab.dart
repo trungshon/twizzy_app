@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:twizzy_app/widgets/twizz/twizz_list.dart';
@@ -83,6 +84,14 @@ class FollowingTabState extends State<FollowingTab> {
           onRefresh: viewModel.refresh,
           scrollController: _scrollController,
           currentUserId: currentUserId,
+          onVisibilityChanged: (twizz, fraction) {
+            viewModel.reportVisibility(twizz.id, fraction);
+          },
+
+          endOfListWidget: _buildCaughtUpCard(
+            context,
+            viewModel,
+          ),
           onTwizzTap: (twizz) {
             Navigator.pushNamed(
               context,
@@ -135,7 +144,13 @@ class FollowingTabState extends State<FollowingTab> {
           onDelete: (twizz) {
             viewModel.deleteTwizz(twizz);
           },
-          emptyWidget: _buildEmptyState(context),
+          emptyWidget:
+              (authViewModel.currentUser?.followingCount ?? 0) >
+                      0
+                  ? (viewModel.globalTotal > 0
+                      ? _buildCaughtUpCard(context, viewModel)
+                      : _buildEmptyState(context))
+                  : _buildEmptyState(context),
         );
       },
     );
@@ -216,6 +231,129 @@ class FollowingTabState extends State<FollowingTab> {
             child: const Text('Thử lại'),
           ),
         ],
+      ),
+    );
+  }
+
+  /// Build "Caught up" card with Glassmorphism
+  Widget _buildCaughtUpCard(
+    BuildContext context,
+    NewsFeedViewModel viewModel,
+  ) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(
+        horizontal: 20,
+        vertical: 10,
+      ),
+      child: Center(
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(20),
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+            child: Container(
+              padding: const EdgeInsets.symmetric(
+                horizontal: 20,
+                vertical: 20,
+              ),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(
+                  color: (isDark ? Colors.white : Colors.black)
+                      .withValues(alpha: 0.1),
+                  width: 1.5,
+                ),
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    (isDark ? Colors.white : Colors.black)
+                        .withValues(alpha: 0.02),
+                    (isDark ? Colors.white : Colors.black)
+                        .withValues(alpha: 0.02),
+                  ],
+                ),
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    Icons.check_circle_rounded,
+                    color: theme.colorScheme.secondary,
+                    size: 60,
+                  ),
+                  const SizedBox(height: 20),
+                  Text(
+                    'Đã xem hết bài viết!',
+                    style: theme.textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    'Bạn đã xem hết tất cả bài viết mới từ những người đang theo dõi trong 30 ngày qua.',
+                    textAlign: TextAlign.center,
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: theme.textTheme.bodyMedium?.color
+                          ?.withValues(alpha: 0.7),
+                      height: 1.5,
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed:
+                          viewModel.isLoading
+                              ? null
+                              : () =>
+                                  viewModel
+                                      .resetFollowingViews(),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor:
+                            theme.colorScheme.primary,
+                        foregroundColor:
+                            theme.colorScheme.onPrimary,
+                        padding: const EdgeInsets.symmetric(
+                          vertical: 12,
+                        ),
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(
+                            16,
+                          ),
+                        ),
+                      ),
+                      child:
+                          viewModel.isLoading
+                              ? const SizedBox(
+                                height: 20,
+                                width: 20,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  valueColor:
+                                      AlwaysStoppedAnimation<
+                                        Color
+                                      >(Colors.white),
+                                ),
+                              )
+                              : const Text(
+                                'Xem lại các bài đã xem',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }

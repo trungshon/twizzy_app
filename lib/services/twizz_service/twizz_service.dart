@@ -72,14 +72,71 @@ class TwizzService {
     }
   }
 
+  /// Đánh dấu danh sách bài viết đã xem
+  Future<void> markTwizzsAsViewed(List<String> twizzIds) async {
+    try {
+      await _apiClient.post(
+        ApiConstants.markRecommendationViews,
+        body: {'twizz_ids': twizzIds},
+        includeAuth: true,
+      );
+    } catch (e) {
+      if (e is ApiErrorResponse) {
+        rethrow;
+      }
+      throw ApiErrorResponse(
+        message: 'Lỗi đánh dấu bài viết đã xem: ${e.toString()}',
+      );
+    }
+  }
+
+  /// Reset lịch sử đã xem cho tab Following
+  Future<void> resetFollowingViews() async {
+    try {
+      await _apiClient.delete(
+        ApiConstants.resetRecommendationViews,
+        includeAuth: true,
+      );
+    } catch (e) {
+      if (e is ApiErrorResponse) {
+        rethrow;
+      }
+      throw ApiErrorResponse(
+        message: 'Lỗi reset lịch sử xem: ${e.toString()}',
+      );
+    }
+  }
+
+  /// Reset TOÀN BỘ lịch sử đã xem (tab For You)
+  Future<void> resetAllViews() async {
+    try {
+      await _apiClient.delete(
+        ApiConstants.resetAllRecommendationViews,
+        includeAuth: true,
+      );
+    } catch (e) {
+      if (e is ApiErrorResponse) {
+        rethrow;
+      }
+      throw ApiErrorResponse(
+        message: 'Lỗi reset toàn bộ lịch sử đã xem: ${e.toString()}',
+      );
+    }
+  }
+
   /// Get NewFeeds
   Future<NewFeedsResponse> getNewFeeds({
     int limit = 10,
     int page = 1,
+    String? sessionStart,
   }) async {
     try {
+      String url = '${ApiConstants.getNewFeeds}?limit=$limit&page=$page';
+      if (sessionStart != null) {
+        url += '&session_start=$sessionStart';
+      }
       final response = await _apiClient.get(
-        '${ApiConstants.getNewFeeds}?limit=$limit&page=$page',
+        url,
         includeAuth: true,
       );
       return NewFeedsResponse.fromJson(response);

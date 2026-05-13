@@ -37,6 +37,7 @@ import 'viewmodels/chat/new_message_viewmodel.dart';
 import 'viewmodels/report/report_viewmodel.dart';
 import 'viewmodels/recommendations/recommendations_viewmodel.dart';
 import 'services/fcm_service/fcm_service.dart';
+import 'services/view_tracker/view_tracker_service.dart';
 
 void main() async {
   // Khởi tạo Flutter binding
@@ -62,6 +63,9 @@ void main() async {
   final chatService = ChatService(apiClient);
   final notificationService = NotificationService(apiClient);
   final reportService = ReportService(apiClient);
+
+  // View Tracker Service
+  final viewTrackerService = ViewTrackerService(twizzService);
 
   // Khởi tạo local notification service
   final localNotificationService = LocalNotificationService();
@@ -94,12 +98,14 @@ void main() async {
     likeService,
     bookmarkService,
     twizzSyncService,
+    viewTrackerService,
   );
   final recommendationsViewModel = RecommendationsViewModel(
     twizzService,
     likeService,
     bookmarkService,
     twizzSyncService,
+    viewTrackerService,
   );
   final profileViewModel = ProfileViewModel(
     twizzService,

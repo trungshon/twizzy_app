@@ -115,7 +115,7 @@ class TwizzDetailViewModel extends ChangeNotifier {
   bool _isLoadingComments = false;
   bool _isLoadingMoreComments = false;
   bool _isPostingComment = false;
-  String? _error = null;
+  String? _error;
   ApiErrorResponse? _apiError;
   int _commentsPage = 1;
   bool _hasMoreComments = true;

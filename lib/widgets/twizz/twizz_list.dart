@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:visibility_detector/visibility_detector.dart';
 import '../../models/twizz/twizz_models.dart';
 import 'twizz_item.dart';
 
@@ -22,6 +23,9 @@ class TwizzList extends StatelessWidget {
   final ScrollController? scrollController;
   final EdgeInsetsGeometry? padding;
   final String? currentUserId;
+  final void Function(Twizz twizz, double fraction)?
+  onVisibilityChanged;
+  final Widget? endOfListWidget;
 
   const TwizzList({
     super.key,
@@ -41,6 +45,8 @@ class TwizzList extends StatelessWidget {
     this.scrollController,
     this.padding,
     this.currentUserId,
+    this.onVisibilityChanged,
+    this.endOfListWidget,
   });
 
   @override
@@ -91,15 +97,25 @@ class TwizzList extends StatelessWidget {
         padding: (padding ?? EdgeInsets.zero).add(
           const EdgeInsets.only(bottom: 80),
         ),
-        itemCount: twizzs.length + (isLoading ? 1 : 0),
+        itemCount:
+            twizzs.length +
+            (isLoading || (!hasMore && endOfListWidget != null)
+                ? 1
+                : 0),
         itemBuilder: (context, index) {
           // Loading indicator at bottom
           if (index == twizzs.length) {
-            return _buildLoadingIndicator(context);
+            if (isLoading) {
+              return _buildLoadingIndicator(context);
+            }
+            if (!hasMore && endOfListWidget != null) {
+              return endOfListWidget!;
+            }
+            return const SizedBox.shrink();
           }
 
           final twizz = twizzs[index];
-          return TwizzItem(
+          Widget item = TwizzItem(
             key: ValueKey(twizz.id),
             twizz: twizz,
             currentUserId: currentUserId,
@@ -117,6 +133,21 @@ class TwizzList extends StatelessWidget {
             onBookmark: onBookmark,
             onDelete: onDelete,
           );
+
+          if (onVisibilityChanged != null) {
+            return VisibilityDetector(
+              key: Key('twizz_list_${twizz.id}'),
+              onVisibilityChanged: (info) {
+                onVisibilityChanged!(
+                  twizz,
+                  info.visibleFraction,
+                );
+              },
+              child: item,
+            );
+          }
+
+          return item;
         },
       ),
     );
@@ -191,6 +222,9 @@ class SliverTwizzList extends StatelessWidget {
   final void Function(Twizz)? onDelete;
   final Widget? emptyWidget;
   final String? currentUserId;
+  final void Function(Twizz twizz, double fraction)?
+  onVisibilityChanged;
+  final Widget? endOfListWidget;
 
   const SliverTwizzList({
     super.key,
@@ -207,6 +241,8 @@ class SliverTwizzList extends StatelessWidget {
     this.onDelete,
     this.emptyWidget,
     this.currentUserId,
+    this.onVisibilityChanged,
+    this.endOfListWidget,
   });
 
   @override
@@ -226,11 +262,17 @@ class SliverTwizzList extends StatelessWidget {
           (context, index) {
             // Loading indicator at bottom
             if (index == twizzs.length) {
-              return _buildLoadingIndicator(context);
+              if (isLoading) {
+                return _buildLoadingIndicator(context);
+              }
+              if (!hasMore && endOfListWidget != null) {
+                return endOfListWidget!;
+              }
+              return const SizedBox.shrink();
             }
 
             final twizz = twizzs[index];
-            return TwizzItem(
+            Widget item = TwizzItem(
               key: ValueKey(twizz.id),
               twizz: twizz,
               currentUserId: currentUserId,
@@ -248,9 +290,27 @@ class SliverTwizzList extends StatelessWidget {
               onBookmark: onBookmark,
               onDelete: onDelete,
             );
+
+            if (onVisibilityChanged != null) {
+              return VisibilityDetector(
+                key: Key('sliver_twizz_${twizz.id}'),
+                onVisibilityChanged: (info) {
+                  onVisibilityChanged!(
+                    twizz,
+                    info.visibleFraction,
+                  );
+                },
+                child: item,
+              );
+            }
+
+            return item;
           },
           childCount:
-              twizzs.length + (isLoading || hasMore ? 1 : 0),
+              twizzs.length +
+              (isLoading || hasMore || endOfListWidget != null
+                  ? 1
+                  : 0),
         ),
       ),
     );

@@ -764,8 +764,9 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
                                       child,
                                       progress,
                                     ) {
-                                      if (progress == null)
+                                      if (progress == null) {
                                         return child;
+                                      }
                                       return SizedBox(
                                         width: 200,
                                         height: 150,

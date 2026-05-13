@@ -5,6 +5,7 @@ import '../../services/twizz_service/twizz_service.dart';
 import '../../services/like_service/like_service.dart';
 import '../../services/bookmark_service/bookmark_service.dart';
 import '../../services/twizz_service/twizz_sync_service.dart';
+import '../../services/view_tracker/view_tracker_service.dart';
 
 /// Recommendations ViewModel
 ///
@@ -14,12 +15,14 @@ class RecommendationsViewModel extends ChangeNotifier {
   final LikeService _likeService;
   final BookmarkService _bookmarkService;
   final TwizzSyncService _syncService;
+  final ViewTrackerService _viewTracker;
 
   RecommendationsViewModel(
     this._twizzService,
     this._likeService,
     this._bookmarkService,
     this._syncService,
+    this._viewTracker,
   ) {
     _syncService.eventStream.listen(_handleSyncEvent);
   }
@@ -54,7 +57,8 @@ class RecommendationsViewModel extends ChangeNotifier {
   ApiErrorResponse? _apiError;
   final List<Twizz> _twizzs = [];
   int _currentPage = 1;
-  int _totalPage = 0;
+  int _globalTotal = 0;
+  bool _hasMore = true;
   static const int _limit = 20;
 
   // Getters
@@ -63,16 +67,18 @@ class RecommendationsViewModel extends ChangeNotifier {
   String? get error => _error;
   ApiErrorResponse? get apiError => _apiError;
   List<Twizz> get twizzs => _twizzs;
-  // Gợi ý luôn có thêm bài (khi lướt hết pool backend sẽ tự reset và trả về trang 1 của pool mới)
-  bool get hasMore => true;
+  int get globalTotal => _globalTotal;
+  bool get hasMore => _hasMore;
 
   /// Load trang đầu tiên
   Future<void> loadRecommendations({bool refresh = false}) async {
     if (_isLoading) return;
 
     if (refresh) {
+      await _viewTracker.flushNow();
       _currentPage = 1;
-      _totalPage = 0;
+      _globalTotal = 0;
+      _hasMore = true;
       _twizzs.clear();
     }
 
@@ -88,7 +94,13 @@ class RecommendationsViewModel extends ChangeNotifier {
       );
 
       _twizzs.addAll(response.twizzs);
-      _totalPage = response.totalPage;
+      _globalTotal = response.globalTotal;
+      
+      // Nếu API trả về rỗng, tức là đã xem hết toàn bộ DB
+      if (response.twizzs.isEmpty) {
+        _hasMore = false;
+      }
+      
       // Dùng page thực tế từ server để tránh lệch khi pool bị làm mới
       _currentPage = response.page + 1;
     } catch (e) {
@@ -116,13 +128,21 @@ class RecommendationsViewModel extends ChangeNotifier {
     notifyListeners();
 
     try {
+      // Ép gửi danh sách bài đã xem lên Backend trước khi load thêm
+      // để Backend biết đường mà loại trừ, tránh lặp lại bài vừa xem
+      await _viewTracker.flushNow();
+
       final response = await _twizzService.getRecommendations(
         limit: _limit,
         page: _currentPage,
       );
 
       _twizzs.addAll(response.twizzs);
-      _totalPage = response.totalPage;
+      
+      if (response.twizzs.isEmpty) {
+        _hasMore = false;
+      }
+
       // Nếu server trả pool mới (response.page < _currentPage),
       // reset _currentPage theo page thực tế để đồng bộ
       _currentPage = response.page + 1;
@@ -137,6 +157,37 @@ class RecommendationsViewModel extends ChangeNotifier {
   /// Refresh
   Future<void> refresh() async {
     await loadRecommendations(refresh: true);
+  }
+
+  /// Reset toàn bộ lịch sử đã xem
+  Future<void> resetAllViews() async {
+    if (_isLoading) return;
+
+    _isLoading = true;
+    _error = null;
+    notifyListeners();
+
+    try {
+      await _twizzService.resetAllViews();
+      // Xóa bộ đệm cục bộ
+      await _viewTracker.flushNow();
+
+      _isLoading = false;
+      await refresh();
+    } catch (e) {
+      if (e is ApiErrorResponse) {
+        _error = e.message;
+      } else {
+        _error = 'Lỗi làm mới danh sách: ${e.toString()}';
+      }
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  /// Report visibility for view tracking
+  void reportVisibility(String twizzId, double fraction) {
+    _viewTracker.reportVisibility(twizzId, fraction);
   }
 
   /// Like
@@ -217,9 +268,10 @@ class RecommendationsViewModel extends ChangeNotifier {
 
   /// Clear tất cả state (khi logout)
   void clear() {
+    _viewTracker.flushNow();
     _twizzs.clear();
     _currentPage = 1;
-    _totalPage = 0;
+    _globalTotal = 0;
     _error = null;
     _apiError = null;
     _isLoading = false;

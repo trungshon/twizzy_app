@@ -248,8 +248,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   }
 
   void _onLocationChanged(String query) {
-    if (_debounceTimer?.isActive ?? false)
+    if (_debounceTimer?.isActive ?? false) {
       _debounceTimer!.cancel();
+    }
     _debounceTimer = Timer(
       const Duration(milliseconds: 500),
       () {

@@ -5,6 +5,7 @@ import '../../services/twizz_service/twizz_service.dart';
 import '../../services/like_service/like_service.dart';
 import '../../services/bookmark_service/bookmark_service.dart';
 import '../../services/twizz_service/twizz_sync_service.dart';
+import '../../services/view_tracker/view_tracker_service.dart';
 
 /// NewsFeed ViewModel
 ///
@@ -14,12 +15,14 @@ class NewsFeedViewModel extends ChangeNotifier {
   final LikeService _likeService;
   final BookmarkService _bookmarkService;
   final TwizzSyncService _syncService;
+  final ViewTrackerService _viewTracker;
 
   NewsFeedViewModel(
     this._twizzService,
     this._likeService,
     this._bookmarkService,
     this._syncService,
+    this._viewTracker,
   ) {
     // Listen for sync events
     _syncService.eventStream.listen(_handleSyncEvent);
@@ -69,6 +72,7 @@ class NewsFeedViewModel extends ChangeNotifier {
   final List<Twizz> _twizzs = [];
   int _currentPage = 1;
   int _totalPage = 0;
+  int _globalTotal = 0;
   static const int _limit = 10;
 
   // Getters
@@ -78,15 +82,23 @@ class NewsFeedViewModel extends ChangeNotifier {
   ApiErrorResponse? get apiError => _apiError;
   List<Twizz> get twizzs => _twizzs;
   bool get hasMore => _currentPage <= _totalPage;
+  int get globalTotal => _globalTotal;
+
+  String? _sessionStart;
 
   /// Load initial newsfeed
   Future<void> loadNewsFeed({bool refresh = false}) async {
     if (_isLoading) return;
 
     if (refresh) {
+      await _viewTracker.flushNow();
       _currentPage = 1;
       _totalPage = 0;
+      _globalTotal = 0;
       _twizzs.clear();
+      _sessionStart = DateTime.now().toUtc().toIso8601String();
+    } else {
+      _sessionStart ??= DateTime.now().toUtc().toIso8601String();
     }
 
     _isLoading = true;
@@ -98,10 +110,12 @@ class NewsFeedViewModel extends ChangeNotifier {
       final response = await _twizzService.getNewFeeds(
         limit: _limit,
         page: _currentPage,
+        sessionStart: _sessionStart,
       );
 
       _twizzs.addAll(response.twizzs);
       _totalPage = response.totalPage;
+      _globalTotal = response.globalTotal;
       _currentPage++;
     } catch (e) {
       if (e is ApiErrorResponse) {
@@ -124,13 +138,18 @@ class NewsFeedViewModel extends ChangeNotifier {
     notifyListeners();
 
     try {
+      // Ép gửi danh sách bài đã xem lên Backend trước khi load thêm
+      await _viewTracker.flushNow();
+
       final response = await _twizzService.getNewFeeds(
         limit: _limit,
         page: _currentPage,
+        sessionStart: _sessionStart,
       );
 
       _twizzs.addAll(response.twizzs);
       _totalPage = response.totalPage;
+      _globalTotal = response.globalTotal;
       _currentPage++;
     } catch (e) {
       debugPrint('Load more error: $e');
@@ -143,6 +162,40 @@ class NewsFeedViewModel extends ChangeNotifier {
   /// Refresh newsfeed
   Future<void> refresh() async {
     await loadNewsFeed(refresh: true);
+  }
+
+  /// Report visibility for view tracking
+  void reportVisibility(String twizzId, double fraction) {
+    _viewTracker.reportVisibility(twizzId, fraction);
+  }
+
+  /// Reset viewed history and refresh
+  Future<void> resetFollowingViews() async {
+    if (_isLoading) return;
+
+    _isLoading = true;
+    _error = null;
+    notifyListeners();
+
+    try {
+      await _twizzService.resetFollowingViews();
+      // Clear local buffer as well
+      await _viewTracker.flushNow();
+
+      // Reset loading state so that refresh() can proceed
+      _isLoading = false;
+
+      // Reload feed
+      await refresh();
+    } catch (e) {
+      if (e is ApiErrorResponse) {
+        _error = e.message;
+      } else {
+        _error = 'Lỗi làm mới danh sách: ${e.toString()}';
+      }
+      _isLoading = false;
+      notifyListeners();
+    }
   }
 
   /// Add new twizz to top of list
@@ -305,6 +358,7 @@ class NewsFeedViewModel extends ChangeNotifier {
 
   /// Clear all state
   void clear() {
+    _viewTracker.flushNow();
     _twizzs.clear();
     _currentPage = 1;
     _totalPage = 0;
