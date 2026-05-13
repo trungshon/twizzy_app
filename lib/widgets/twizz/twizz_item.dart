@@ -316,7 +316,6 @@ class TwizzItem extends StatelessWidget {
               Row(
                 children: [
                   Flexible(
-                    flex: 1,
                     child: GestureDetector(
                       onTap: onUserTap,
                       child: Text(
@@ -339,23 +338,16 @@ class TwizzItem extends StatelessWidget {
                       color: Color(0xFF1DA1F2),
                     ),
                   ],
-                  const SizedBox(width: 4),
 
-                  // Dot separator & Time combined and made flexible
-                  Flexible(
-                    flex: 1,
-                    child: Text(
-                      ' · $timeAgo',
-                      style: themeData.textTheme.bodyMedium
-                          ?.copyWith(
-                            color: themeData
-                                .colorScheme
-                                .onSurface
-                                .withValues(alpha: 0.6),
-                          ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
+                  // Dot separator & Time - intrinsic width only
+                  Text(
+                    ' · $timeAgo',
+                    style: themeData.textTheme.bodyMedium
+                        ?.copyWith(
+                          color: themeData.colorScheme.onSurface
+                              .withValues(alpha: 0.6),
+                        ),
+                    maxLines: 1,
                   ),
                   // Audience icon - Only show for non-embedded posts
                   if (!isEmbedded) ...[

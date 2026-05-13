@@ -63,7 +63,8 @@ class RecommendationsViewModel extends ChangeNotifier {
   String? get error => _error;
   ApiErrorResponse? get apiError => _apiError;
   List<Twizz> get twizzs => _twizzs;
-  bool get hasMore => _currentPage <= _totalPage;
+  // Gợi ý luôn có thêm bài (khi lướt hết pool backend sẽ tự reset và trả về trang 1 của pool mới)
+  bool get hasMore => true;
 
   /// Load trang đầu tiên
   Future<void> loadRecommendations({bool refresh = false}) async {
