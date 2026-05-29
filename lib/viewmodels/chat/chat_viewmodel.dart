@@ -16,6 +16,20 @@ class ChatViewModel extends ChangeNotifier {
   bool _isLoadingList = false;
   String? _lastUserId;
   String _searchQuery = '';
+  final List<String> _activeChatUserIds = [];
+
+  String? get activeChatUserId =>
+      _activeChatUserIds.isNotEmpty ? _activeChatUserIds.last : null;
+
+  void pushActiveChatUser(String userId) {
+    if (!_activeChatUserIds.contains(userId)) {
+      _activeChatUserIds.add(userId);
+    }
+  }
+
+  void popActiveChatUser(String userId) {
+    _activeChatUserIds.remove(userId);
+  }
 
   ChatViewModel(
     this._socketService,
@@ -97,9 +111,10 @@ class ChatViewModel extends ChangeNotifier {
             final senderInfo =
                 payload['sender'] as Map<String, dynamic>?;
 
-            // Only show notification if we're not the sender
+            // Only show notification if we're not the sender and not chatting with them
             if (senderId != null &&
                 senderId != _lastUserId &&
+                senderId != activeChatUserId &&
                 (content.isNotEmpty ||
                     (medias != null && medias.isNotEmpty))) {
               // Determine notification text

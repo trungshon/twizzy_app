@@ -25,6 +25,8 @@ import '../views/chat/new_message_screen.dart';
 import '../views/reports/reports_list_screen.dart';
 import '../views/reports/report_detail_screen.dart';
 
+final RouteObserver<ModalRoute<void>> routeObserver = RouteObserver<ModalRoute<void>>();
+
 /// App Router
 ///
 /// Quản lý navigation và routing trong ứng dụng

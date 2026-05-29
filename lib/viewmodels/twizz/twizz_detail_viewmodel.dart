@@ -132,6 +132,7 @@ class TwizzDetailViewModel extends ChangeNotifier {
   File? _selectedVideo;
   bool _isUploading = false;
   static const int maxImages = 4;
+  String? _moderationSignature;
 
   Twizz? get twizz => _twizz;
   List<Twizz> get comments => _comments;
@@ -383,28 +384,55 @@ class TwizzDetailViewModel extends ChangeNotifier {
     }
   }
 
+  /// Moderate text content independently
+  Future<void> _moderateText(String content) async {
+    if (content.trim().isEmpty) return;
+
+    final result = await _twizzService.moderateText(content);
+    if (result['passed'] == false) {
+      _moderationSignature = null;
+      throw ApiErrorResponse(
+        message: result['violations'][0]['reason'] ??
+            'Văn bản vi phạm tiêu chuẩn cộng đồng',
+      );
+    }
+    _moderationSignature = result['signature'] as String?;
+  }
+
   Future<bool> postComment(
     String parentId,
     String content,
   ) async {
     _isPostingComment = true;
-    _isUploading = true;
+    _isUploading = false;
     _error = null;
     _apiError = null;
     notifyListeners();
 
     try {
+      // BƯỚC 1: Duyệt Text trước (Cực nhanh và rẻ) - Fail-fast
+      // Nếu vi phạm, sẽ ném lỗi và dừng ngay tại đây, không bao giờ tốn phí duyệt Media.
+      await _moderateText(content);
+
       List<Media> uploadedMedias = [];
 
-      // Upload media if any
-      if (_selectedImages.isNotEmpty) {
-        uploadedMedias = await _twizzService.uploadImages(
-          _selectedImages,
-        );
-      } else if (_selectedVideo != null) {
-        uploadedMedias = await _twizzService.uploadVideo(
-          _selectedVideo!,
-        );
+      // BƯỚC 2: Chỉ khi nội dung sạch, mới tiến hành xử lý Media (nếu có)
+      bool hasMedia = _selectedImages.isNotEmpty || _selectedVideo != null;
+      if (hasMedia) {
+        _isUploading = true;
+        notifyListeners();
+
+        if (_selectedImages.isNotEmpty) {
+          uploadedMedias = await _twizzService.uploadImages(
+            _selectedImages,
+          );
+        } else if (_selectedVideo != null) {
+          uploadedMedias = await _twizzService.uploadVideo(
+            _selectedVideo!,
+          );
+        }
+        _isUploading = false;
+        notifyListeners();
       }
 
       // Extract hashtags
@@ -422,6 +450,7 @@ class TwizzDetailViewModel extends ChangeNotifier {
         medias: uploadedMedias,
         hashtags: hashtags,
         mentions: mentionIds,
+        moderationSignature: _moderationSignature,
       );
 
       final response = await _twizzService.createTwizz(request);
@@ -462,6 +491,7 @@ class TwizzDetailViewModel extends ChangeNotifier {
       _selectedVideo = null;
       _mentionedUsers.clear();
       _searchResults.clear();
+      _moderationSignature = null;
 
       return true;
     } catch (e) {

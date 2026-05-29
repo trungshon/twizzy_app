@@ -278,6 +278,7 @@ void main() async {
         Provider.value(value: socketService),
         Provider.value(value: chatService),
         Provider.value(value: reportService),
+        Provider.value(value: fcmService),
         ChangeNotifierProvider.value(value: authViewModel),
         ChangeNotifierProvider.value(
           value: createTwizzViewModel,
@@ -304,12 +305,6 @@ void main() async {
       child: const MyApp(),
     ),
   );
-
-  // Xử lý FCM pending message sau khi app đã build xong
-  // (khi app mở từ trạng thái tắt hẳn bởi notification)
-  WidgetsBinding.instance.addPostFrameCallback((_) {
-    fcmService.processPendingMessage();
-  });
 }
 
 class MyApp extends StatelessWidget {
@@ -321,6 +316,7 @@ class MyApp extends StatelessWidget {
 
     return MaterialApp(
       navigatorKey: navigatorKey,
+      navigatorObservers: [routeObserver],
       title: 'Twizzy',
       // Theme tự động theo theme của thiết bị
       theme: AppTheme.lightTheme,

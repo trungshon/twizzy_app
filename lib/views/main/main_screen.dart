@@ -10,6 +10,7 @@ import '../../viewmodels/chat/chat_viewmodel.dart';
 import '../../viewmodels/notification/notification_viewmodel.dart';
 import '../../viewmodels/auth/auth_viewmodel.dart';
 import '../../core/utils/verification_utils.dart';
+import '../../services/fcm_service/fcm_service.dart';
 
 /// Main Screen
 ///
@@ -37,10 +38,11 @@ class _MainScreenState extends State<MainScreen> {
       const NotificationsContent(),
       const ChatContent(),
     ]);
-    // Luôn load lại newsfeed khi vào app
+    // Luôn load lại newsfeed khi vào app và xử lý pending message nếu có
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final viewModel = context.read<NewsFeedViewModel>();
       viewModel.loadNewsFeed(refresh: true);
+      context.read<FcmService>().processPendingMessage();
     });
   }
 

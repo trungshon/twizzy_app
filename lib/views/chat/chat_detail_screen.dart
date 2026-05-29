@@ -10,6 +10,7 @@ import '../../viewmodels/auth/auth_viewmodel.dart';
 import '../../services/chat_service/chat_service.dart';
 import '../../services/twizz_service/twizz_service.dart';
 import '../../routes/route_names.dart';
+import '../../routes/app_router.dart';
 import 'package:intl/intl.dart';
 import '../../widgets/common/divider_with_text.dart';
 import '../../widgets/common/twizz_video_player.dart';
@@ -31,7 +32,7 @@ class ChatDetailScreen extends StatefulWidget {
       _ChatDetailScreenState();
 }
 
-class _ChatDetailScreenState extends State<ChatDetailScreen> {
+class _ChatDetailScreenState extends State<ChatDetailScreen> with RouteAware {
   final TextEditingController _messageController =
       TextEditingController();
   final ScrollController _scrollController = ScrollController();
@@ -64,6 +65,12 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
     _chatViewModel?.addListener(_onChatUpdate);
   }
 
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    routeObserver.subscribe(this, ModalRoute.of(context)!);
+  }
+
   void _onScroll() {
     if (_scrollController.position.pixels >=
             _scrollController.position.maxScrollExtent - 200 &&
@@ -76,11 +83,33 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
 
   @override
   void dispose() {
+    routeObserver.unsubscribe(this);
     _messageController.dispose();
     _scrollController.dispose();
     // Remove listener to prevent memory leaks
     _chatViewModel?.removeListener(_onChatUpdate);
+    _chatViewModel?.popActiveChatUser(widget.args.otherUser.id);
     super.dispose();
+  }
+
+  @override
+  void didPush() {
+    _chatViewModel?.pushActiveChatUser(widget.args.otherUser.id);
+  }
+
+  @override
+  void didPushNext() {
+    _chatViewModel?.popActiveChatUser(widget.args.otherUser.id);
+  }
+
+  @override
+  void didPopNext() {
+    _chatViewModel?.pushActiveChatUser(widget.args.otherUser.id);
+  }
+
+  @override
+  void didPop() {
+    _chatViewModel?.popActiveChatUser(widget.args.otherUser.id);
   }
 
   void _onChatUpdate() {
