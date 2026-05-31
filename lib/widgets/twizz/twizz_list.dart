@@ -115,6 +115,18 @@ class TwizzList extends StatelessWidget {
           }
 
           final twizz = twizzs[index];
+          final currentAlgo = twizz.recommendationInfo?.algorithm;
+
+          bool isHeaderOfSection = false;
+          if (index == 0 && currentAlgo != null && currentAlgo.isNotEmpty) {
+            isHeaderOfSection = true;
+          } else if (index > 0 && currentAlgo != null && currentAlgo.isNotEmpty) {
+            final prevAlgo = twizzs[index - 1].recommendationInfo?.algorithm;
+            if (currentAlgo != prevAlgo) {
+              isHeaderOfSection = true;
+            }
+          }
+
           Widget item = TwizzItem(
             key: ValueKey(twizz.id),
             twizz: twizz,
@@ -135,7 +147,7 @@ class TwizzList extends StatelessWidget {
           );
 
           if (onVisibilityChanged != null) {
-            return VisibilityDetector(
+            item = VisibilityDetector(
               key: Key('twizz_list_${twizz.id}'),
               onVisibilityChanged: (info) {
                 onVisibilityChanged!(
@@ -144,6 +156,17 @@ class TwizzList extends StatelessWidget {
                 );
               },
               child: item,
+            );
+          }
+
+          if (isHeaderOfSection) {
+            item = Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                _buildSectionHeader(context, currentAlgo!),
+                item,
+              ],
             );
           }
 
@@ -272,6 +295,18 @@ class SliverTwizzList extends StatelessWidget {
             }
 
             final twizz = twizzs[index];
+            final currentAlgo = twizz.recommendationInfo?.algorithm;
+
+            bool isHeaderOfSection = false;
+            if (index == 0 && currentAlgo != null && currentAlgo.isNotEmpty) {
+              isHeaderOfSection = true;
+            } else if (index > 0 && currentAlgo != null && currentAlgo.isNotEmpty) {
+              final prevAlgo = twizzs[index - 1].recommendationInfo?.algorithm;
+              if (currentAlgo != prevAlgo) {
+                isHeaderOfSection = true;
+              }
+            }
+
             Widget item = TwizzItem(
               key: ValueKey(twizz.id),
               twizz: twizz,
@@ -292,7 +327,7 @@ class SliverTwizzList extends StatelessWidget {
             );
 
             if (onVisibilityChanged != null) {
-              return VisibilityDetector(
+              item = VisibilityDetector(
                 key: Key('sliver_twizz_${twizz.id}'),
                 onVisibilityChanged: (info) {
                   onVisibilityChanged!(
@@ -301,6 +336,17 @@ class SliverTwizzList extends StatelessWidget {
                   );
                 },
                 child: item,
+              );
+            }
+
+            if (isHeaderOfSection) {
+              item = Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  _buildSectionHeader(context, currentAlgo!),
+                  item,
+                ],
               );
             }
 
@@ -368,4 +414,60 @@ class SliverTwizzList extends StatelessWidget {
       ),
     );
   }
+}
+
+/// Helper to build a styled header for feed sections
+Widget _buildSectionHeader(BuildContext context, String algorithm) {
+  final theme = Theme.of(context);
+  final isDark = theme.brightness == Brightness.dark;
+
+  String text = '';
+  IconData icon = Icons.star;
+  Color color = theme.colorScheme.primary;
+
+  switch (algorithm) {
+    case 'content':
+      text = 'Có thể bạn thích';
+      icon = Icons.auto_awesome_rounded;
+      color = isDark ? Colors.purpleAccent : Colors.purple;
+      break;
+    case 'trending':
+      text = 'Bài viết nổi bật';
+      icon = Icons.local_fire_department_rounded;
+      color = isDark ? Colors.orangeAccent : Colors.orange;
+      break;
+    case 'following':
+      text = 'Từ những người bạn theo dõi';
+      icon = Icons.people_outline_rounded;
+      color = isDark ? Colors.greenAccent : Colors.green;
+      break;
+    default:
+      return const SizedBox.shrink();
+  }
+
+  return Padding(
+    padding: const EdgeInsets.only(left: 16, right: 16, top: 20, bottom: 8),
+    child: Row(
+      children: [
+        Icon(icon, size: 16, color: color),
+        const SizedBox(width: 8),
+        Text(
+          text.toUpperCase(),
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.bold,
+            color: color.withValues(alpha: 0.8),
+            letterSpacing: 1.0,
+          ),
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Divider(
+            color: color.withValues(alpha: 0.2),
+            thickness: 1,
+          ),
+        ),
+      ],
+    ),
+  );
 }

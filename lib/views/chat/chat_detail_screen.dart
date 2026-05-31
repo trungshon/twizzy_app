@@ -433,11 +433,15 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> with RouteAware {
                         : null,
               ),
               const SizedBox(width: 12),
-              Text(
-                otherUser.name,
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
+              Expanded(
+                child: Text(
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  otherUser.name,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
             ],

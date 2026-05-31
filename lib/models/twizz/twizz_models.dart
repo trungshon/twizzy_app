@@ -104,6 +104,7 @@ class Twizz {
   final bool isLiked;
   final bool isBookmarked;
   final Twizz? parentTwizz; // Parent twizz for quote/comment
+  final RecommendationInfo? recommendationInfo;
 
   Twizz({
     required this.id,
@@ -127,6 +128,7 @@ class Twizz {
     this.isLiked = false,
     this.isBookmarked = false,
     this.parentTwizz,
+    this.recommendationInfo,
   });
 
   factory Twizz.fromJson(Map<String, dynamic> json) {
@@ -203,6 +205,11 @@ class Twizz {
                 json['parent_twizz'] as Map<String, dynamic>,
               )
               : null,
+      recommendationInfo: json['recommendation_info'] != null
+          ? RecommendationInfo.fromJson(
+              json['recommendation_info'] as Map<String, dynamic>,
+            )
+          : null,
     );
   }
 
@@ -218,6 +225,7 @@ class Twizz {
     int? userViews,
     int? guestViews,
     User? user,
+    RecommendationInfo? recommendationInfo,
   }) {
     return Twizz(
       id: id,
@@ -241,6 +249,7 @@ class Twizz {
       isLiked: isLiked ?? this.isLiked,
       isBookmarked: isBookmarked ?? this.isBookmarked,
       parentTwizz: parentTwizz ?? this.parentTwizz,
+      recommendationInfo: recommendationInfo ?? this.recommendationInfo,
     );
   }
 
@@ -268,6 +277,7 @@ class Twizz {
       'is_liked': isLiked,
       'is_bookmarked': isBookmarked,
       'parent_twizz': parentTwizz?.toJson(),
+      'recommendation_info': recommendationInfo?.toJson(),
     };
   }
 }
@@ -436,5 +446,34 @@ class NewFeedsResponse {
       totalPage: result['total_page'] as int? ?? 0,
       globalTotal: result['global_total'] as int? ?? 0,
     );
+  }
+}
+
+/// Recommendation Info Class
+class RecommendationInfo {
+  final String algorithm;
+  final String reason;
+  final double score;
+
+  RecommendationInfo({
+    required this.algorithm,
+    required this.reason,
+    required this.score,
+  });
+
+  factory RecommendationInfo.fromJson(Map<String, dynamic> json) {
+    return RecommendationInfo(
+      algorithm: json['algorithm'] as String? ?? '',
+      reason: json['reason'] as String? ?? '',
+      score: (json['score'] as num? ?? 0.0).toDouble(),
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'algorithm': algorithm,
+      'reason': reason,
+      'score': score,
+    };
   }
 }
