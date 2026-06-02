@@ -42,6 +42,8 @@ class NewsFeedViewModel extends ChangeNotifier {
         quoteCount: updatedTwizz.quoteCount,
         userViews: updatedTwizz.userViews,
         guestViews: updatedTwizz.guestViews,
+        mentions: updatedTwizz.mentions,
+        content: updatedTwizz.content,
         broadcast: false, // Don't broadcast back
       );
     } else if (event.type == TwizzSyncEventType.delete &&
@@ -381,6 +383,8 @@ class NewsFeedViewModel extends ChangeNotifier {
     int? quoteCount,
     int? userViews,
     int? guestViews,
+    List<dynamic>? mentions,
+    String? content,
     bool broadcast = true,
   }) {
     bool modified = false;
@@ -396,6 +400,8 @@ class NewsFeedViewModel extends ChangeNotifier {
           quoteCount: quoteCount,
           userViews: userViews,
           guestViews: guestViews,
+          mentions: mentions,
+          content: content,
         );
         modified = true;
 
@@ -415,6 +421,8 @@ class NewsFeedViewModel extends ChangeNotifier {
             quoteCount: quoteCount,
             userViews: userViews,
             guestViews: guestViews,
+            mentions: mentions,
+            content: content,
           ),
         );
         modified = true;

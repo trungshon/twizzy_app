@@ -78,6 +78,8 @@ class ApiConstants {
   static String getTwizz(String twizzId) => '/twizzs/$twizzId';
   static String getTwizzChildren(String twizzId) =>
       '/twizzs/$twizzId/children';
+  static String unmentionTwizz(String twizzId) =>
+      '/twizzs/$twizzId/mentions';
 
   // Media Upload
   static const String uploadImage = '/medias/upload-image';

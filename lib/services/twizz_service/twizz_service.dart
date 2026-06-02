@@ -317,6 +317,22 @@ class TwizzService {
     }
   }
 
+  /// Remove self mention from a twizz
+  Future<void> unmentionTwizz(String twizzId) async {
+    try {
+      await _apiClient.delete(
+        ApiConstants.unmentionTwizz(twizzId),
+      );
+    } catch (e) {
+      if (e is ApiErrorResponse) {
+        rethrow;
+      }
+      throw ApiErrorResponse(
+        message: 'Lỗi gỡ nhắc tên: ${e.toString()}',
+      );
+    }
+  }
+
   String _getImageMimeType(String extension) {
     switch (extension) {
       case 'jpg':

@@ -13,6 +13,8 @@ import 'report_dialog.dart';
 import '../../services/report_service/report_service.dart';
 import '../../core/utils/snackbar_utils.dart';
 import '../../models/auth/auth_models.dart';
+import '../../services/twizz_service/twizz_service.dart';
+import '../../services/twizz_service/twizz_sync_service.dart';
 
 /// TwizzItem Widget
 ///
@@ -406,6 +408,13 @@ class TwizzItem extends StatelessWidget {
     final parentContext = context;
     final isOwner =
         currentUserId != null && currentUserId == twizz.userId;
+    final isMentioned = currentUserId != null &&
+        twizz.mentions.any((mention) {
+          if (mention == null) return false;
+          if (mention is String) return mention == currentUserId;
+          if (mention is Map) return mention['_id'] == currentUserId || mention['id'] == currentUserId;
+          return false;
+        });
 
     showModalBottomSheet(
       context: context,
@@ -444,6 +453,21 @@ class TwizzItem extends StatelessWidget {
                     _confirmDelete(context, twizz);
                   },
                 ),
+              if (isMentioned)
+                ListTile(
+                  leading: const Icon(
+                    Icons.person_remove_outlined,
+                    color: Colors.orange,
+                  ),
+                  title: const Text(
+                    'Gỡ nhắc tên tôi',
+                    style: TextStyle(color: Colors.orange),
+                  ),
+                  onTap: () {
+                    Navigator.pop(context);
+                    _confirmUnmention(parentContext, twizz);
+                  },
+                ),
               ListTile(
                 leading: const Icon(Icons.bar_chart),
                 title: const Text('Xem tương tác'),
@@ -472,6 +496,94 @@ class TwizzItem extends StatelessWidget {
               const SizedBox(height: 8),
             ],
           ),
+        );
+      },
+    );
+  }
+
+  void _confirmUnmention(BuildContext context, Twizz twizz) {
+    showDialog(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: const Text('Gỡ nhắc tên?'),
+          content: const Text(
+            'Bạn có chắc chắn muốn gỡ nhắc tên mình khỏi bài viết này? Bạn sẽ không còn được tag trong bài viết này nữa.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: const Text('Hủy'),
+            ),
+            TextButton(
+              onPressed: () async {
+                Navigator.pop(dialogContext);
+                try {
+                  final twizzService = context.read<TwizzService>();
+                  final syncService = context.read<TwizzSyncService>();
+
+                  await twizzService.unmentionTwizz(twizz.id);
+
+                  // Create new mentions list without the current user
+                  final updatedMentions = List<dynamic>.from(twizz.mentions)
+                    ..removeWhere((m) {
+                      if (m is String) return m == currentUserId;
+                      if (m is Map) return m['_id'] == currentUserId || m['id'] == currentUserId;
+                      if (m is User) return m.id == currentUserId;
+                      return false;
+                    });
+
+                  // Find username of the unmentioned user from the mentions list to update content locally
+                  String? currentUsername;
+                  for (final m in twizz.mentions) {
+                    if (m is Map) {
+                      final id = m['_id'] ?? m['id'];
+                      if (id == currentUserId) {
+                        currentUsername = m['username'] as String?;
+                        break;
+                      }
+                    } else if (m is User) {
+                      if (m.id == currentUserId) {
+                        currentUsername = m.username;
+                        break;
+                      }
+                    }
+                  }
+
+                  String updatedContent = twizz.content;
+                  if (currentUsername != null) {
+                    updatedContent = twizz.content.replaceAll('@$currentUsername', currentUsername);
+                  }
+
+                  final updatedTwizz = twizz.copyWith(
+                    mentions: updatedMentions,
+                    content: updatedContent,
+                  );
+
+                  // Broadcast update across the system
+                  syncService.emitUpdate(updatedTwizz);
+
+                  if (context.mounted) {
+                    SnackBarUtils.showSuccess(
+                      context,
+                      message: 'Gỡ nhắc tên thành công',
+                    );
+                  }
+                } catch (e) {
+                  if (context.mounted) {
+                    SnackBarUtils.showError(
+                      context,
+                      message: 'Lỗi gỡ nhắc tên: ${e.toString()}',
+                    );
+                  }
+                }
+              },
+              style: TextButton.styleFrom(
+                foregroundColor: Colors.orange,
+              ),
+              child: const Text('Gỡ nhắc tên'),
+            ),
+          ],
         );
       },
     );

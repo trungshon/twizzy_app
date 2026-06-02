@@ -1,3 +1,4 @@
+// ignore_for_file: deprecated_member_use
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:twizzy_app/widgets/common/app_drawer.dart';
@@ -95,6 +96,7 @@ class _NotificationsContentState
                     message: 'Đã đánh dấu tất cả là đã đọc',
                   );
                 }
+
               } else if (value == 'delete_read') {
                 _showDeleteReadConfirmation(context, viewModel);
               }
@@ -111,6 +113,7 @@ class _NotificationsContentState
                       ],
                     ),
                   ),
+
                   const PopupMenuItem(
                     value: 'delete_read',
                     child: Row(

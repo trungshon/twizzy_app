@@ -78,6 +78,17 @@ class _MainScreenState extends State<MainScreen> {
               }
             }
 
+            // Reload chat conversations when entering the chat tab
+            if (index == 3) {
+              final currentUserId =
+                  context.read<AuthViewModel>().currentUser?.id;
+              if (currentUserId != null) {
+                context
+                    .read<ChatViewModel>()
+                    .loadConversationsList(currentUserId);
+              }
+            }
+
             // Nếu đang ở home và tap lại home thì scroll lên đầu
             if (index == 0 && mainViewModel.currentIndex == 0) {
               _homeContentKey.currentState?.scrollToTop();

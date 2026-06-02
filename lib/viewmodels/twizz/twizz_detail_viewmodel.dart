@@ -39,6 +39,8 @@ class TwizzDetailViewModel extends ChangeNotifier {
         quoteCount: updatedTwizz.quoteCount,
         userViews: updatedTwizz.userViews,
         guestViews: updatedTwizz.guestViews,
+        mentions: updatedTwizz.mentions,
+        content: updatedTwizz.content,
         broadcast: false,
       );
     } else if (event.type == TwizzSyncEventType.delete &&
@@ -68,6 +70,8 @@ class TwizzDetailViewModel extends ChangeNotifier {
     int? quoteCount,
     int? userViews,
     int? guestViews,
+    List<dynamic>? mentions,
+    String? content,
     bool broadcast = true,
   }) {
     bool modified = false;
@@ -83,6 +87,8 @@ class TwizzDetailViewModel extends ChangeNotifier {
         quoteCount: quoteCount,
         userViews: userViews,
         guestViews: guestViews,
+        mentions: mentions,
+        content: content,
       );
       modified = true;
       if (broadcast) _syncService.emitUpdate(_twizz!);
@@ -100,9 +106,34 @@ class TwizzDetailViewModel extends ChangeNotifier {
           quoteCount: quoteCount,
           userViews: userViews,
           guestViews: guestViews,
+          mentions: mentions,
+          content: content,
         );
         modified = true;
         if (broadcast) _syncService.emitUpdate(_comments[i]);
+      }
+    }
+
+    // Update replies
+    for (final commentId in _repliesMap.keys) {
+      final replies = _repliesMap[commentId]!;
+      for (int i = 0; i < replies.length; i++) {
+        if (replies[i].id == id) {
+          replies[i] = replies[i].copyWith(
+            isLiked: isLiked,
+            likes: likes,
+            isBookmarked: isBookmarked,
+            bookmarks: bookmarks,
+            commentCount: commentCount,
+            quoteCount: quoteCount,
+            userViews: userViews,
+            guestViews: guestViews,
+            mentions: mentions,
+            content: content,
+          );
+          modified = true;
+          if (broadcast) _syncService.emitUpdate(replies[i]);
+        }
       }
     }
 

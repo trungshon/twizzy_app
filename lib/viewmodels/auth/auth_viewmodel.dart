@@ -512,6 +512,36 @@ class AuthViewModel extends ChangeNotifier {
     }
   }
 
+  /// Update notification setting
+  Future<bool> updateNotificationSetting(int setting) async {
+    _isLoading = true;
+    _error = null;
+    _apiError = null;
+    notifyListeners();
+
+    try {
+      final request = UpdateProfileRequest(notificationSetting: setting);
+      await _authService.updateMe(request);
+
+      // Refresh current user info
+      await getMe();
+
+      _isLoading = false;
+      notifyListeners();
+      return true;
+    } catch (e) {
+      _isLoading = false;
+      if (e is ApiErrorResponse) {
+        _apiError = e;
+        _error = e.message;
+      } else {
+        _error = 'Có lỗi xảy ra khi cập nhật cài đặt thông báo';
+      }
+      notifyListeners();
+      return false;
+    }
+  }
+
   /// Google Sign-In
   ///
   /// Returns:

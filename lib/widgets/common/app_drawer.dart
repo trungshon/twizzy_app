@@ -8,6 +8,7 @@ import '../../viewmodels/auth/auth_viewmodel.dart';
 import '../../routes/route_names.dart';
 import '../../core/utils/number_formatter.dart';
 import '../../viewmodels/theme/theme_viewmodel.dart';
+import '../../core/utils/snackbar_utils.dart';
 
 /// App Drawer
 ///
@@ -407,6 +408,15 @@ class AppDrawer extends StatelessWidget {
                       ).pushNamed(RouteNames.reportsList);
                     },
                   ),
+                  _buildMenuItem(
+                    context,
+                    icon: Icons.notifications_none_outlined,
+                    title: 'Cài đặt nhận thông báo',
+                    onTap: () {
+                      // Navigator.pop(context);
+                      _showNotificationSettingsBottomSheet(context);
+                    },
+                  ),
                   _buildThemeItem(context),
 
                   Consumer<AuthViewModel>(
@@ -488,6 +498,147 @@ class AppDrawer extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+
+  void _showNotificationSettingsBottomSheet(BuildContext context) {
+    final themeData = Theme.of(context);
+    final authViewModel = context.read<AuthViewModel>();
+    int selectedSetting = authViewModel.currentUser?.notificationSetting ?? 0;
+
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(
+          top: Radius.circular(16),
+        ),
+      ),
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            return SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 8,
+                      ),
+                      child: Text(
+                        'Cài đặt nhận thông báo',
+                        style: themeData.textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                    const Divider(),
+                    RadioListTile<int>(
+                      title: const Text(
+                        'Nhận từ tất cả mọi người',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      subtitle: const Text(
+                        'Nhận thông báo từ bất kỳ ai tương tác với bạn',
+                        style: TextStyle(fontSize: 12),
+                      ),
+                      value: 0,
+                      groupValue: selectedSetting,
+                      activeColor: themeData.colorScheme.primary,
+                      onChanged: (value) async {
+                        if (value != null) {
+                          setModalState(() {
+                            selectedSetting = value;
+                          });
+                          final success = await authViewModel
+                              .updateNotificationSetting(value);
+                          if (context.mounted && success) {
+                            Navigator.pop(context);
+                            SnackBarUtils.showSuccess(
+                              context,
+                              message:
+                                  'Đã cập nhật cài đặt thông báo',
+                            );
+                          }
+                        }
+                      },
+                    ),
+                    RadioListTile<int>(
+                      title: const Text(
+                        'Chỉ những người tôi theo dõi',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      subtitle: const Text(
+                        'Chỉ nhận thông báo từ những tài khoản bạn đang theo dõi',
+                        style: TextStyle(fontSize: 12),
+                      ),
+                      value: 1,
+                      groupValue: selectedSetting,
+                      activeColor: themeData.colorScheme.primary,
+                      onChanged: (value) async {
+                        if (value != null) {
+                          setModalState(() {
+                            selectedSetting = value;
+                          });
+                          final success = await authViewModel
+                              .updateNotificationSetting(value);
+                          if (context.mounted && success) {
+                            Navigator.pop(context);
+                            SnackBarUtils.showSuccess(
+                              context,
+                              message:
+                                  'Đã cập nhật cài đặt thông báo',
+                            );
+                          }
+                        }
+                      },
+                    ),
+                    RadioListTile<int>(
+                      title: const Text(
+                        'Tắt hoàn toàn thông báo',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      subtitle: const Text(
+                        'Bạn sẽ không nhận được bất kỳ thông báo xã hội nào',
+                        style: TextStyle(fontSize: 12),
+                      ),
+                      value: 2,
+                      groupValue: selectedSetting,
+                      activeColor: themeData.colorScheme.primary,
+                      onChanged: (value) async {
+                        if (value != null) {
+                          setModalState(() {
+                            selectedSetting = value;
+                          });
+                          final success = await authViewModel
+                              .updateNotificationSetting(value);
+                          if (context.mounted && success) {
+                            Navigator.pop(context);
+                            SnackBarUtils.showSuccess(
+                              context,
+                              message:
+                                  'Đã cập nhật cài đặt thông báo',
+                            );
+                          }
+                        }
+                      },
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
     );
   }
 

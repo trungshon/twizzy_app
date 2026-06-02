@@ -313,6 +313,7 @@ class User {
   final bool? isFollower;
   final List<User>? twizzCircle;
   final List<String>? twizzCircleIds;
+  final int? notificationSetting;
 
   User({
     required this.id,
@@ -334,6 +335,7 @@ class User {
     this.isFollower,
     this.twizzCircle,
     this.twizzCircleIds,
+    this.notificationSetting,
   });
 
   factory User.fromJson(Map<String, dynamic> json) {
@@ -461,6 +463,7 @@ class User {
                   .where((e) => e.isNotEmpty)
                   .toList()
               : null,
+      notificationSetting: json['notification_setting'] as int?,
     );
   }
 
@@ -478,6 +481,7 @@ class User {
     bool? isFollower,
     String? verify,
     List<User>? twizzCircle,
+    int? notificationSetting,
   }) {
     return User(
       id: id,
@@ -498,6 +502,7 @@ class User {
       isFollowing: isFollowing ?? this.isFollowing,
       isFollower: isFollower ?? this.isFollower,
       twizzCircle: twizzCircle ?? this.twizzCircle,
+      notificationSetting: notificationSetting ?? this.notificationSetting,
     );
   }
 
@@ -521,6 +526,7 @@ class User {
       'following_count': followingCount,
       'is_following': isFollowing,
       'is_follower': isFollower,
+      'notification_setting': notificationSetting,
     };
   }
 }
@@ -644,6 +650,7 @@ class UpdateProfileRequest {
   final String? username;
   final String? avatar;
   final String? coverPhoto;
+  final int? notificationSetting;
 
   UpdateProfileRequest({
     this.name,
@@ -654,6 +661,7 @@ class UpdateProfileRequest {
     this.username,
     this.avatar,
     this.coverPhoto,
+    this.notificationSetting,
   });
 
   Map<String, dynamic> toJson() {
@@ -666,6 +674,7 @@ class UpdateProfileRequest {
     if (username != null) json['username'] = username;
     if (avatar != null) json['avatar'] = avatar;
     if (coverPhoto != null) json['cover_photo'] = coverPhoto;
+    if (notificationSetting != null) json['notification_setting'] = notificationSetting;
     return json;
   }
 }

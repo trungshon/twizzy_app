@@ -409,6 +409,8 @@ class UserProfileViewModel extends ChangeNotifier {
     int? likes,
     bool? isBookmarked,
     int? bookmarks,
+    List<dynamic>? mentions,
+    String? content,
     bool broadcast = true,
   }) {
     Twizz? updatedTwizz;
@@ -425,6 +427,8 @@ class UserProfileViewModel extends ChangeNotifier {
             likes: likes ?? twizz.likes,
             isBookmarked: isBookmarked ?? twizz.isBookmarked,
             bookmarks: bookmarks ?? twizz.bookmarks,
+            mentions: mentions ?? twizz.mentions,
+            content: content ?? twizz.content,
           );
           list[i] = updated;
           updatedTwizz = updated;
@@ -437,6 +441,8 @@ class UserProfileViewModel extends ChangeNotifier {
             likes: likes ?? target.likes,
             isBookmarked: isBookmarked ?? target.isBookmarked,
             bookmarks: bookmarks ?? target.bookmarks,
+            mentions: mentions ?? target.mentions,
+            content: content ?? target.content,
           );
 
           // If it's a Repost (type twizz), sync top-level state with parent
@@ -458,6 +464,14 @@ class UserProfileViewModel extends ChangeNotifier {
                 isRepost
                     ? (bookmarks ?? twizz.bookmarks)
                     : twizz.bookmarks,
+            mentions:
+                isRepost
+                    ? (mentions ?? twizz.mentions)
+                    : twizz.mentions,
+            content:
+                isRepost
+                    ? (content ?? twizz.content)
+                    : twizz.content,
           );
 
           if (updatedTwizz == null || isRepost) {
@@ -485,6 +499,8 @@ class UserProfileViewModel extends ChangeNotifier {
       likes: updatedTwizz.likes,
       isBookmarked: updatedTwizz.isBookmarked,
       bookmarks: updatedTwizz.bookmarks,
+      mentions: updatedTwizz.mentions,
+      content: updatedTwizz.content,
       broadcast: broadcast,
     );
   }

@@ -40,6 +40,8 @@ class RecommendationsViewModel extends ChangeNotifier {
         quoteCount: updatedTwizz.quoteCount,
         userViews: updatedTwizz.userViews,
         guestViews: updatedTwizz.guestViews,
+        mentions: updatedTwizz.mentions,
+        content: updatedTwizz.content,
         broadcast: false,
       );
     } else if (event.type == TwizzSyncEventType.delete && event.twizzId != null) {
@@ -289,6 +291,8 @@ class RecommendationsViewModel extends ChangeNotifier {
     int? quoteCount,
     int? userViews,
     int? guestViews,
+    List<dynamic>? mentions,
+    String? content,
     bool broadcast = true,
   }) {
     bool modified = false;
@@ -303,6 +307,8 @@ class RecommendationsViewModel extends ChangeNotifier {
           quoteCount: quoteCount,
           userViews: userViews,
           guestViews: guestViews,
+          mentions: mentions,
+          content: content,
         );
         modified = true;
         if (broadcast) _syncService.emitUpdate(_twizzs[i]);
@@ -318,6 +324,8 @@ class RecommendationsViewModel extends ChangeNotifier {
             quoteCount: quoteCount,
             userViews: userViews,
             guestViews: guestViews,
+            mentions: mentions,
+            content: content,
           ),
         );
         modified = true;
