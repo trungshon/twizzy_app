@@ -78,6 +78,11 @@ class RecommendationsViewModel extends ChangeNotifier {
 
     if (refresh) {
       await _viewTracker.flushNow();
+      try {
+        await _twizzService.clearRecommendationsCache();
+      } catch (e) {
+        debugPrint('Clear recommendations cache error: $e');
+      }
       _currentPage = 1;
       _globalTotal = 0;
       _hasMore = true;

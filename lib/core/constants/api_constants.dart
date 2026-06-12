@@ -87,6 +87,7 @@ class ApiConstants {
 
   // Recommendations
   static const String getRecommendations = '/recommendations';
+  static const String clearRecommendationsCache = '/recommendations/cache';
   static const String markRecommendationViews = '/recommendations/views';
   static const String resetRecommendationViews = '/recommendations/views/following';
   static const String resetAllRecommendationViews = '/recommendations/views';

@@ -72,6 +72,23 @@ class TwizzService {
     }
   }
 
+  /// Xóa cache gợi ý của user
+  Future<void> clearRecommendationsCache() async {
+    try {
+      await _apiClient.delete(
+        ApiConstants.clearRecommendationsCache,
+        includeAuth: true,
+      );
+    } catch (e) {
+      if (e is ApiErrorResponse) {
+        rethrow;
+      }
+      throw ApiErrorResponse(
+        message: 'Lỗi xóa bộ nhớ đệm gợi ý: ${e.toString()}',
+      );
+    }
+  }
+
   /// Đánh dấu danh sách bài viết đã xem
   Future<void> markTwizzsAsViewed(List<String> twizzIds) async {
     try {
